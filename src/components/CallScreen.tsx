@@ -3,6 +3,7 @@
 // text ever leaves the device. Caller audio: pre-made clip if present, else the
 // browser's own voice. Replies: hold to talk (browser speech-to-text) or type.
 import { CommitStrategy, RealtimeEvents, Scribe, type RealtimeConnection } from "@elevenlabs/client";
+import { Mic } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -25,6 +26,19 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   const [thinking, setThinking] = useState(false);
   const [canTalk, setCanTalk] = useState(false);
   const [micHint, setMicHint] = useState("");
+  const [showType, setShowType] = useState(false);
+
+  // Voice first: answering asks for the microphone straight away. Typing is the fallback.
+  async function answer() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      stream.getTracks().forEach((t) => t.stop()); // permission granted; Scribe opens its own stream
+    } catch {
+      setMicHint("The microphone isn't available, so you can type your replies instead.");
+      setShowType(true);
+    }
+    setAnswered(true);
+  }
   const rec = useRef<SR | null>(null);
   const scribe = useRef<RealtimeConnection | null>(null);
   const pressed = useRef(false);
@@ -119,6 +133,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         pressed.current = false;
         setListening(false);
         setMicHint("The microphone isn't available. Type your reply instead.");
+        setShowType(true);
       };
       conn.on(RealtimeEvents.ERROR, fail);
       conn.on(RealtimeEvents.AUTH_ERROR, fail);
@@ -129,6 +144,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
       const r = speechRecognition();
       if (!r) {
         setMicHint("Talking isn't available on this browser. Type your reply instead.");
+        setShowType(true);
         return setListening(false);
       }
       r.lang = "en-GB";
@@ -170,7 +186,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
           <p className="text-center text-white/85">
             This is practice. Never say a real card number, code or password. You can hang up or ask &ldquo;is this real?&rdquo; at any time.
           </p>
-          <button type="button" onClick={() => setAnswered(true)} className="btn-chunky w-full bg-safe text-lg text-white" style={{ "--btn-edge": "#0f5a37" } as React.CSSProperties}>
+          <button type="button" onClick={answer} className="btn-chunky w-full bg-safe text-lg text-white" style={{ "--btn-edge": "#0f5a37" } as React.CSSProperties}>
             Answer call
           </button>
           <Link href="/" className="block py-2 text-center font-bold text-white/80">Not now</Link>
@@ -206,19 +222,28 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
 
       {!state.outcome && (
         <footer className="space-y-3 bg-navy-2 px-5 pb-6 pt-4">
+          {micHint && <p role="status" className="text-sm text-mark">{micHint}</p>}
+          {canTalk && !showType && (
+            <button type="button" onPointerDown={hold} onPointerUp={release} onPointerCancel={release} onPointerLeave={() => listening && release()}
+              onContextMenu={(e) => e.preventDefault()}
+              className={`btn-chunky flex w-full touch-none select-none items-center justify-center gap-2 text-lg text-white ${listening ? "bg-safe" : "bg-tide"}`}
+              style={{ minHeight: 72 }}>
+              <Mic aria-hidden className="size-6" />
+              {listening ? "Listening… let go to send" : "Hold to talk"}
+            </button>
+          )}
+          {(showType || !canTalk) && (
           <form onSubmit={(e) => { e.preventDefault(); reply(typed, "typed"); setTyped(""); }} className="flex gap-2">
             <label className="sr-only" htmlFor="reply">Type what you would say</label>
             <input id="reply" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Type what you'd say" autoComplete="off"
-              className="min-h-14 flex-1 rounded-2xl bg-white px-4 text-lg text-ink" />
-            <button className="rounded-2xl bg-tide px-4 font-bold">Send</button>
+              className="min-h-14 flex-1 rounded-full bg-[#1f1f1f] px-5 text-lg text-white placeholder:text-white/50" />
+            <button className="rounded-full bg-white px-5 font-semibold text-black">Send</button>
           </form>
-          <div className="flex flex-wrap gap-3">
-            {micHint && <p role="status" className="basis-full text-sm text-mark">{micHint}</p>}
+          )}
+          <div className="flex items-center gap-3">
             {canTalk && (
-              <button type="button" onPointerDown={hold} onPointerUp={release} onPointerCancel={release} onPointerLeave={() => listening && release()}
-                onContextMenu={(e) => e.preventDefault()}
-                className={`btn-chunky flex-1 touch-none select-none text-white ${listening ? "bg-safe" : "bg-tide"}`}>
-                {listening ? "Listening… let go to send" : "Hold to talk"}
+              <button type="button" onClick={() => setShowType((v) => !v)} className="min-h-12 flex-1 rounded-full px-4 text-left font-medium text-white/80 underline-offset-4 hover:underline">
+                {showType ? "Talk instead" : "Type instead"}
               </button>
             )}
             <button type="button" onClick={hangUp} className="btn-chunky flex-1 bg-alarm text-white" style={{ "--btn-edge": "#8e2219" } as React.CSSProperties}>
