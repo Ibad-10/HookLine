@@ -24,7 +24,7 @@ async function sendRealCode(learner: string) {
 }
 
 // Hands the call to the ElevenLabs voice agent (live listening and replies; its brain is
-// /api/agent/llm). Hookline's notice plays first. Returns null if ElevenLabs refuses.
+// /api/agent/llm). Returns null if ElevenLabs refuses.
 async function agentTwiml(base: string, sc: Scenario, learner: string, params: Record<string, string>): Promise<string | null> {
   const res = await fetch("https://api.elevenlabs.io/v1/convai/twilio/register-call", {
     method: "POST",
@@ -45,7 +45,7 @@ async function agentTwiml(base: string, sc: Scenario, learner: string, params: R
     return null;
   }
   const twiml = await res.text();
-  return twiml.replace(/<Response>/, `<Response><Play>${base}/audio/hookline/notice.mp3</Play>`);
+  return twiml;
 }
 
 export async function POST(req: Request) {
@@ -66,7 +66,9 @@ export async function POST(req: Request) {
   if (!sc || !learner) return xml(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
   const base = PUBLIC_URL();
   if (sp.get("start")) {
-    const live = process.env.ELEVENLABS_AGENT_ID ? await agentTwiml(base, sc, learner, params) : null;
+    // Live agent needs Twilio Media Streams, which Twilio's shared trial numbers don't allow;
+    // turn it on (PHONE_AGENT=on) once Hookline has its own Twilio number.
+    const live = process.env.PHONE_AGENT === "on" && process.env.ELEVENLABS_AGENT_ID ? await agentTwiml(base, sc, learner, params) : null;
     if (live) {
       if ((sc.nodes.verify?.ask ?? null) === "code") sendRealCode(learner); // arrives as the caller asks for it
       return xml(live);

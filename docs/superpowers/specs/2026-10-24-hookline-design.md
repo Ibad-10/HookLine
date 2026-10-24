@@ -214,3 +214,8 @@ checks for every number and address, a legal check) stays as section 10 describe
   recorded call. Each caller has a human ElevenLabs voice (male or female); Hookline's own notices
   use one narrator voice. At the "read me the code" step a real Twilio Verify code arrives by text
   to the learner's own confirmed number, so they practise refusing a genuine-looking code.
+- **Update (24 Oct, Ibad): no opening notice on real calls.** The learner asked for the call and
+  confirmed their number, so the call opens like a real one. Hookline still speaks at the end, the
+  moment they ask "is this real?", and whenever the Gatekeeper stops the call. The ElevenLabs live
+  agent is built (`/api/agent/llm`) but off on the phone (`PHONE_AGENT`), because Twilio's shared
+  trial number can't open a media stream; it needs Hookline's own Twilio number.

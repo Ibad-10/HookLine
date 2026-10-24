@@ -62,7 +62,9 @@ function finish(base: string, k: Narration, callerUrl?: string): string {
 }
 
 export function firstTurn(base: string, sc: Scenario, learner: string): string {
-  return gather(base, sc, sc.start, learner, `${narrate(base, "notice")}<Pause length="1"/>`, [lineUrl(base, sc, sc.start, learner)]);
+  // No opening notice: the learner asked for this call and confirmed their number; the call
+  // opens like a real one. Hookline speaks at the end, or the moment they ask "is this real?".
+  return gather(base, sc, sc.start, learner, "", [lineUrl(base, sc, sc.start, learner)]);
 }
 
 const FAST: Intent[] = ["hang_up", "is_real", "distress"];

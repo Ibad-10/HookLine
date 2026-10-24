@@ -15,9 +15,9 @@ test("Twilio signatures: valid passes, tampered fails", () => {
   expect(validTwilio("", url, params, sig)).toBe(false);
 });
 
-test("first turn says it is practice, then plays the opening clip and listens", () => {
+test("first turn opens like a real call: the opening clip, listening", () => {
   const x = firstTurn(base, sc, "l1");
-  expect(x).toContain("/audio/hookline/notice.mp3");
+  expect(x).not.toContain("notice.mp3");
   expect(x).toContain("/audio/safe-account/open.mp3");
   expect(x).toContain('<Gather input="speech"');
 });
