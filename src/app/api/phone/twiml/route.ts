@@ -2,6 +2,7 @@
 // X-Twilio-Signature or our own call token; only masked text ever reaches the coach.
 import { startCall } from "@/lib/call/engine";
 import { getScenario } from "@/lib/call/getScenario";
+import type { Scenario } from "@/lib/call/types";
 import { firstTurn, nextTurn, validToken, validTwilio } from "@/lib/phone";
 import { contactPrefs, PUBLIC_URL } from "@/lib/practice";
 import { saveOutcome } from "@/lib/profile";
@@ -22,6 +23,31 @@ async function sendRealCode(learner: string) {
   }).catch(() => undefined);
 }
 
+// Hands the call to the ElevenLabs voice agent (live listening and replies; its brain is
+// /api/agent/llm). Hookline's notice plays first. Returns null if ElevenLabs refuses.
+async function agentTwiml(base: string, sc: Scenario, learner: string, params: Record<string, string>): Promise<string | null> {
+  const res = await fetch("https://api.elevenlabs.io/v1/convai/twilio/register-call", {
+    method: "POST",
+    headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "", "content-type": "application/json" },
+    body: JSON.stringify({
+      agent_id: process.env.ELEVENLABS_AGENT_ID,
+      from_number: params.From ?? process.env.TWILIO_FROM_NUMBER,
+      to_number: params.To ?? "",
+      direction: "outbound",
+      conversation_initiation_client_data: {
+        conversation_config_override: { agent: { first_message: sc.nodes[sc.start].line }, tts: { voice_id: sc.voice } },
+        custom_llm_extra_body: { scenario: sc.id, learner },
+      },
+    }),
+  }).catch(() => null);
+  if (!res?.ok) {
+    console.error("phone: agent register failed", res?.status, res ? (await res.text()).slice(0, 300) : "");
+    return null;
+  }
+  const twiml = await res.text();
+  return twiml.replace(/<Response>/, `<Response><Play>${base}/audio/hookline/notice.mp3</Play>`);
+}
+
 export async function POST(req: Request) {
   const t0 = Date.now();
   const url = new URL(req.url);
@@ -39,7 +65,14 @@ export async function POST(req: Request) {
   const learner = sp.get("l") ?? "";
   if (!sc || !learner) return xml(`<?xml version="1.0" encoding="UTF-8"?><Response><Hangup/></Response>`);
   const base = PUBLIC_URL();
-  if (sp.get("start")) return xml(firstTurn(base, sc, learner));
+  if (sp.get("start")) {
+    const live = process.env.ELEVENLABS_AGENT_ID ? await agentTwiml(base, sc, learner, params) : null;
+    if (live) {
+      if ((sc.nodes.verify?.ask ?? null) === "code") sendRealCode(learner); // arrives as the caller asks for it
+      return xml(live);
+    }
+    return xml(firstTurn(base, sc, learner)); // fallback: the scripted call
+  }
 
   const node = sp.get("node") ?? sc.start;
   const quiet = Number(sp.get("q") ?? 0);
