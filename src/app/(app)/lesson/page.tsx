@@ -19,7 +19,7 @@ export default function LessonPage() {
   if (error)
     return (
       <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="text-2xl font-extrabold">Your lesson didn't load</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">Your lesson didn't load</h1>
         <p className="mt-2 text-ink-soft">Check your connection and try again. If you haven't started yet, set up first.</p>
         <Link href="/start" className="btn-chunky mt-6 grid place-items-center bg-tide text-white">Set up</Link>
       </main>

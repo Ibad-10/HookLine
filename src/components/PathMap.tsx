@@ -33,16 +33,16 @@ export default function PathMap({ stops }: { stops: Stop[] }) {
               href={`/lesson?topic=${s.key}`}
               aria-label={`${s.label}${s.next ? ", recommended next" : ""}`}
               className={`relative grid place-items-center rounded-full transition-transform active:translate-y-1 ${
-                s.next ? "size-20 bg-tide text-white shadow-[0_6px_0_var(--tide-dark)]"
-                : s.state === "strong" ? "size-16 bg-mark text-navy shadow-[0_5px_0_#c9a900]"
-                : s.state === "practising" ? "size-16 bg-card text-tide shadow-[0_5px_0_var(--line)] ring-4 ring-tide/30"
-                : "size-16 bg-card text-ink-soft shadow-[0_5px_0_var(--line)]"
+                s.next ? "size-20 bg-tide text-white ring-8 ring-glow/20"
+                : s.state === "strong" ? "size-16 bg-mark text-navy"
+                : s.state === "practising" ? "size-16 bg-card text-tide ring-4 ring-tide/30"
+                : "size-16 bg-card text-ink-soft ring-1 ring-line"
               }`}
             >
               {s.next && <span aria-hidden className="ring absolute inset-0 rounded-full bg-tide/40" />}
               {s.state === "strong" && !s.next ? <Check className="relative size-8" aria-hidden /> : <Icon className="relative size-8" aria-hidden />}
               {s.next && (
-                <span className="absolute -top-9 whitespace-nowrap rounded-xl bg-navy px-3 py-1 text-sm font-extrabold text-white after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-8 after:border-transparent after:border-t-navy">
+                <span className="absolute -top-9 whitespace-nowrap rounded-xl bg-navy px-3 py-1 text-sm font-semibold tracking-tight text-white after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-8 after:border-transparent after:border-t-navy">
                   Start
                 </span>
               )}

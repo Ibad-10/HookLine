@@ -50,7 +50,7 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
       <header className="bg-navy text-white">
         <div className="mx-auto max-w-5xl px-5 py-8">
           <Link href="/" className="text-sm font-bold text-white/80 hover:text-white">Back to Hookline</Link>
-          <h1 className="mt-4 max-w-2xl text-[2.2rem] font-extrabold leading-tight">Same lesson, three ways to write it</h1>
+          <h1 className="mt-4 max-w-2xl text-[2.2rem] font-semibold tracking-tight leading-tight">Same lesson, three ways to write it</h1>
           <p className="mt-3 max-w-2xl text-lg text-white/85">
             Every AI call in Hookline goes through Mubit. Here we send the same inputs three ways and measure what each costs, how fast it is, and
             how often the output passes our checks. All numbers below come from real calls unless they say projected or estimated.
@@ -70,7 +70,7 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
         </Tabs>
 
         <section>
-          <h2 className="text-2xl font-extrabold">Projected monthly cost, one lesson a day per learner</h2>
+          <h2 className="text-2xl font-semibold tracking-tight">Projected monthly cost, one lesson a day per learner</h2>
           <p className="mt-1 text-ink-soft">Projected from the measured cost per lesson above. Not a quote.</p>
           <div className="mt-4 overflow-x-auto rounded-2xl bg-card">
             <table className="w-full min-w-[560px] text-left">
@@ -96,14 +96,14 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
 
         <section className="grid gap-4 md:grid-cols-2">
           <div className="rounded-2xl bg-card p-5">
-            <h2 className="text-xl font-extrabold">Where the learner's profile goes</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Where the learner's profile goes</h2>
             <ul className="mt-3 space-y-2">
               <li><span className="font-bold">Big model, profile pasted in:</span> every call sends their history of mistakes to the model provider.</li>
               <li><span className="font-bold">Mubit adapter:</span> the model is trained for this one job and can run on infrastructure you control. The profile need not leave it.</li>
             </ul>
           </div>
           <div className="rounded-2xl bg-card p-5">
-            <h2 className="text-xl font-extrabold">Trained adapters (from the Mubit console)</h2>
+            <h2 className="text-xl font-semibold tracking-tight">Trained adapters (from the Mubit console)</h2>
             <p className="mt-1 text-sm text-ink-soft">
               Mubit has no API for adapter results yet, so these are copied by hand{adapter.copied_at ? ` at ${adapter.copied_at}` : ""}.
             </p>
@@ -120,7 +120,7 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
         <SimChart sim={sim} />
 
         <section className="rounded-2xl bg-card p-5 text-ink-soft">
-          <h2 className="text-lg font-extrabold text-ink">How we estimate carbon</h2>
+          <h2 className="text-lg font-semibold tracking-tight text-ink">How we estimate carbon</h2>
           <p className="mt-2">
             We can't measure the energy a hosted AI model uses, so carbon is an estimate. We count the tokens each call uses and multiply by
             published energy-per-token figures (Google 2025, Epoch AI 2025, Jegham et al. 2025, ML.ENERGY) and an assumed grid intensity of{" "}
@@ -158,7 +158,7 @@ function Table({ title, s, coach }: { title: string; s: Record<string, ArmSummar
   ];
   return (
     <section>
-      <h2 className="text-2xl font-extrabold">{title}</h2>
+      <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
       <div className="mt-4 overflow-x-auto rounded-2xl bg-card">
         <table className="w-full min-w-[640px] text-left">
           <thead>
@@ -214,7 +214,7 @@ function SimChart({ sim }: { sim: ReturnType<typeof simulate> }) {
   const sorted = [...sim.quizzesToFind].sort((a, b) => a - b);
   return (
     <section>
-      <h2 className="text-2xl font-extrabold">Does the profile find what each person finds hard?</h2>
+      <h2 className="text-2xl font-semibold tracking-tight">Does the profile find what each person finds hard?</h2>
       <p className="mt-1 max-w-3xl text-ink-soft">
         200 simulated learners, each given 1 to 3 hidden weak spots in code. We count how many short sessions it takes before the profile ranks a
         hidden weak spot in its top three. This tests the profile, not whether people learn.
@@ -255,7 +255,7 @@ function SimChart({ sim }: { sim: ReturnType<typeof simulate> }) {
 function Stat({ value, label }: { value: string; label: string }) {
   return (
     <div className="rounded-2xl bg-card p-5">
-      <p className="text-4xl font-extrabold tabular-nums">{value}</p>
+      <p className="text-4xl font-semibold tracking-tight tabular-nums">{value}</p>
       <p className="mt-1 text-ink-soft">{label}</p>
     </div>
   );

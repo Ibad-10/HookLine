@@ -21,7 +21,7 @@ export default function HeroQuote() {
           className="rounded-[3px] px-0.5 text-navy"
           style={{ backgroundImage: "linear-gradient(var(--mark), var(--mark))", backgroundRepeat: "no-repeat" }}
           initial={{ backgroundSize: "0% 100%", color: "rgba(255,255,255,0.9)" }}
-          animate={{ backgroundSize: "100% 100%", color: "#13223b" }}
+          animate={{ backgroundSize: "100% 100%", color: "#000000" }}
           transition={{ delay: 0.08 * (flagAt + AFTER.length) + 0.3, duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
         >
           {FLAG}

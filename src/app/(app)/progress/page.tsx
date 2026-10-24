@@ -1,3 +1,4 @@
+import AppNav from "@/components/AppNav";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { learnerId } from "@/lib/learner";
@@ -21,20 +22,21 @@ export default async function Progress() {
   ];
 
   return (
-    <main className="mx-auto max-w-md px-5 py-6">
-      <Link href="/" className="font-bold text-tide">Back</Link>
-      <h1 className="mt-4 text-[2rem] font-extrabold">My progress</h1>
+    <>
+    <AppNav />
+    <main className="mx-auto max-w-xl px-4 py-8">
+      <h1 className="text-[2.6rem] font-medium leading-none tracking-[-0.045em]">My <span className="font-serif font-light italic">progress</span></h1>
       <p className="mt-2 text-ink-soft">The longer the bar, the more confidently you spot it. Tricky ones come back sooner.</p>
       {!skills.length && <p className="mt-8 text-lg">Nothing yet. Finish a lesson and your progress shows here.</p>}
       {groups.map((g) =>
         g.list.length ? (
           <section key={g.title} className="mt-8">
-            <h2 className="text-xl font-extrabold">{g.title}</h2>
+            <h2 className="text-xl font-semibold tracking-tight">{g.title}</h2>
             <ul className="mt-3 space-y-3">
               {g.list.map((s) => {
                 const strength = Math.round((1 - weakness(s)) * 100);
                 return (
-                  <li key={s.key} className="rounded-2xl bg-card p-4 shadow-[0_2px_0_var(--line)]">
+                  <li key={s.key} className="rounded-2xl bg-card p-4 border border-line">
                     <div className="flex items-baseline justify-between gap-3">
                       <span className="font-bold">{(LABELS as Record<string, string>)[s.key] ?? s.key}</span>
                       <span className="shrink-0 text-sm text-ink-soft">{when(s.due_at)}</span>
@@ -51,5 +53,6 @@ export default async function Progress() {
         ) : null,
       )}
     </main>
+    </>
   );
 }

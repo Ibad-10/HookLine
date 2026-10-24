@@ -98,7 +98,7 @@ export default function Quiz({
     onFinish?.(score);
     playDone();
     if (!reduce)
-      confetti({ particleCount: 90, spread: 70, origin: { y: 0.35 }, colors: ["#ffe14d", "#0e7c86", "#13223b", "#17804f"], disableForReducedMotion: true });
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.35 }, colors: ["#ffb840", "#0e7c86", "#000000", "#17804f"], disableForReducedMotion: true });
   }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -116,8 +116,8 @@ export default function Quiz({
     return (
       <main className="mx-auto max-w-md px-5 py-10 text-center">
         <div className="mx-auto mb-4 w-fit"><Buoy mood="cheer" size={120} /></div>
-        <h1 className="text-3xl font-extrabold">{after.href === "/sign-up" ? "Check done" : "Lesson done"}</h1>
-        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-4 text-5xl font-extrabold tabular-nums text-tide">
+        <h1 className="text-3xl font-semibold tracking-tight">{after.href === "/sign-up" ? "Check done" : "Lesson done"}</h1>
+        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-4 text-5xl font-semibold tracking-tight tabular-nums text-tide">
           <CountUp to={score} />
           <span className="text-2xl text-ink-soft"> of {items.length} spotted</span>
         </motion.p>
@@ -145,7 +145,7 @@ export default function Quiz({
         <AnimatePresence>
           {inARow >= 2 && result?.ok && (
             <motion.span initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }}
-              className="shrink-0 rounded-full bg-mark px-3 py-1 text-sm font-extrabold text-navy">
+              className="shrink-0 rounded-full bg-mark px-3 py-1 text-sm font-semibold tracking-tight text-navy">
               {inARow} in a row
             </motion.span>
           )}
@@ -158,7 +158,7 @@ export default function Quiz({
         transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}>
       {card && (
         <section className="mt-3">
-          <h1 className="text-[1.7rem] font-extrabold leading-tight">{card.heading}</h1>
+          <h1 className="text-[1.7rem] font-semibold tracking-tight leading-tight">{card.heading}</h1>
           <p className="mt-4 text-lg leading-relaxed">{card.body}</p>
         </section>
       )}
@@ -170,7 +170,7 @@ export default function Quiz({
               {result ? (result.ok ? `Nice. That's the "${label(q.technique).toLowerCase()}" trick.` : `Easy to miss. Watch for "${label(q.technique).toLowerCase()}".`) : TIP[q.kind]}
             </BuoyTip>
           </div>
-          <h1 className="text-[1.5rem] font-extrabold leading-tight">{q.prompt}</h1>
+          <h1 className="text-[1.5rem] font-semibold tracking-tight leading-tight">{q.prompt}</h1>
           {q.kind === "red_flags" && !result && <p className="mt-2 text-ink-soft">Tap the words that make you suspicious.</p>}
           {q.kind === "real_or_scam" && (
             <div className="mt-5 grid grid-cols-2 gap-3">
@@ -218,7 +218,7 @@ export default function Quiz({
         <div className="mx-auto max-w-md px-5 py-4">
           {result && q && (
             <div className="mb-4">
-              <p className={`text-xl font-extrabold ${result.ok ? "text-safe" : "text-alarm"}`}>
+              <p className={`text-xl font-semibold tracking-tight ${result.ok ? "text-safe" : "text-alarm"}`}>
                 {result.ok ? "Well spotted" : "Not quite, here's the trick"}
               </p>
               <p className="mt-1 font-bold">Trick: {label(q.technique)}</p>
@@ -274,7 +274,7 @@ function Choice({
       onClick={() => !result && onPick(n)}
       aria-pressed={picked}
       className={`btn-chunky w-full text-left text-[1.05rem] font-bold border-2 bg-card text-ink ${
-        right ? "border-safe" : wrong ? "border-alarm" : picked ? "border-tide bg-[#e3f4f5]" : "border-line"
+        right ? "border-safe" : wrong ? "border-alarm" : picked ? "border-tide bg-accent" : "border-line"
       }`}
       style={{ "--btn-edge": right ? "var(--safe)" : wrong ? "var(--alarm)" : picked ? "var(--tide)" : "var(--line)" } as React.CSSProperties}
     >

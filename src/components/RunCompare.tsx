@@ -15,7 +15,7 @@ export default function RunCompare() {
     <div className="flex flex-wrap items-center gap-3">
 
       <button type="button" onClick={run} disabled={state === "running"}
-        className="btn-chunky bg-mark text-navy" style={{ "--btn-edge": "#c9a900" } as React.CSSProperties}>
+        className="btn-chunky bg-mark text-navy" style={{ "--btn-edge": "#c98a1c" } as React.CSSProperties}>
         {state === "running" ? "Running 30 calls, about a minute…" : "Run the comparison again"}
       </button>
       {state === "error" && <span role="alert" className="font-bold text-mark">The run didn't finish. Check you're signed in as an admin and try again.</span>}

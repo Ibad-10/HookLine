@@ -26,7 +26,7 @@ export default function Debrief() {
   if (!data)
     return (
       <main className="mx-auto max-w-md px-5 py-16">
-        <h1 className="text-2xl font-extrabold">No call to review</h1>
+        <h1 className="text-2xl font-semibold tracking-tight">No call to review</h1>
         <Link href="/" className="btn-chunky mt-6 grid place-items-center bg-tide text-white">Back to home</Link>
       </main>
     );
@@ -39,10 +39,10 @@ export default function Debrief() {
   return (
     <main className="mx-auto max-w-md px-5 py-8">
       <p className="rounded-full bg-mark px-3 py-1 text-sm font-bold text-navy w-fit">Practice call review</p>
-      <h1 className="mt-4 text-[2rem] font-extrabold leading-tight">{head.title}</h1>
+      <h1 className="mt-4 text-[2rem] font-semibold tracking-tight leading-tight">{head.title}</h1>
       <p className="mt-2 text-lg text-ink-soft">{head.body}</p>
 
-      <h2 className="mt-8 text-xl font-extrabold">The tricks the caller used</h2>
+      <h2 className="mt-8 text-xl font-semibold tracking-tight">The tricks the caller used</h2>
       <ol className="mt-3 space-y-3">
         {steps.map((t, k) => {
           const n = sc.nodes[t.node!];
@@ -57,7 +57,7 @@ export default function Debrief() {
       </ol>
 
       <section className="mt-8 rounded-2xl bg-navy p-5 text-white">
-        <h2 className="text-xl font-extrabold">On a real call</h2>
+        <h2 className="text-xl font-semibold tracking-tight">On a real call</h2>
         <ul className="mt-3 list-disc space-y-2 pl-5">
           <li>Hang up. Wait five minutes, or use a different phone.</li>
           <li>Call the number on the back of your card or on the company's own website.</li>

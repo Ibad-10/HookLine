@@ -38,7 +38,7 @@ export default function MessageMock({
 }) {
   const parts = chunks(text, flags ?? []);
   return (
-    <figure className="rounded-[22px] bg-card border border-line p-4 shadow-[0_2px_0_var(--line)]">
+    <figure className="rounded-[22px] bg-card border border-line p-4 border border-line">
       <figcaption className="flex items-center gap-3 pb-3 border-b border-line mb-3">
         <span aria-hidden className="grid place-items-center size-10 rounded-full bg-navy text-white font-bold">
           {from.slice(0, 1).toUpperCase()}

@@ -1,15 +1,16 @@
 "use client";
+import AppNav from "@/components/AppNav";
 import Link from "next/link";
 import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 
 function readPrefs() {
   const v = document.cookie.match(/hl_prefs=([^;]*)/)?.[1] ?? "";
-  return { large: v.includes("large"), slow: v.includes("slow"), mute: v.includes("mute") };
+  return { large: v.includes("large"), slow: v.includes("slow"), mute: v.includes("mute"), dark: v.includes("dark") };
 }
 
 export default function Settings() {
-  const [prefs, setPrefs] = useState({ large: false, slow: false, mute: false });
+  const [prefs, setPrefs] = useState({ large: false, slow: false, mute: false, dark: false });
   useEffect(() => setPrefs(readPrefs()), []);
 
   async function save(next: typeof prefs) {
@@ -19,12 +20,14 @@ export default function Settings() {
   }
 
   return (
-    <main className="mx-auto max-w-md px-5 py-6">
-      <Link href="/" className="font-bold text-tide">Back</Link>
-      <h1 className="mt-4 text-[2rem] font-extrabold">Settings</h1>
+    <>
+    <AppNav />
+    <main className="mx-auto max-w-xl px-4 py-8">
+      <h1 className="text-[2.6rem] font-medium leading-none tracking-[-0.045em]">Settings</h1>
       <div className="mt-6 space-y-3">
         <Toggle label="Larger text" hint="Makes every word on Hookline bigger." on={prefs.large} onChange={(v) => save({ ...prefs, large: v })} />
         <Toggle label="Slower voice on calls" hint="The caller speaks more slowly." on={prefs.slow} onChange={(v) => save({ ...prefs, slow: v })} />
+        <Toggle label="Dark theme" hint="Light text on a black background." on={prefs.dark} onChange={(v) => { document.documentElement.classList.toggle("dark", v); save({ ...prefs, dark: v }); }} />
         <Toggle label="Mute lesson sounds" hint="No chimes when you answer." on={prefs.mute} onChange={(v) => save({ ...prefs, mute: v })} />
         <div className="rounded-2xl bg-card p-4">
           <p className="font-bold">Captions on calls</p>
@@ -40,6 +43,7 @@ export default function Settings() {
         them and never stores them.
       </p>
     </main>
+    </>
   );
 }
 

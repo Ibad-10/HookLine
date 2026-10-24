@@ -45,7 +45,7 @@ export default function Start() {
 
   return (
     <main className="mx-auto max-w-md px-5 py-8">
-      <h1 className="text-[2rem] font-extrabold leading-tight">Let's set you up</h1>
+      <h1 className="text-[2rem] font-semibold tracking-tight leading-tight">Let's set you up</h1>
       <p className="mt-2 text-lg text-ink-soft">Three questions, then a quick check of what you already spot.</p>
       <form onSubmit={go} className="mt-8 space-y-8">
         <label className="block">
@@ -64,7 +64,7 @@ export default function Start() {
           <div className="mt-2 grid grid-cols-2 gap-2">
             {AGES.map(([v, l]) => (
               <button type="button" key={v} aria-pressed={age === v} onClick={() => setAge(v)}
-                className={`rounded-2xl border-2 px-3 py-4 font-bold ${age === v ? "border-tide bg-[#e3f4f5]" : "border-line bg-card"}`}>
+                className={`rounded-2xl border-2 px-3 py-4 font-bold ${age === v ? "border-tide bg-accent" : "border-line bg-card"}`}>
                 {l}
               </button>
             ))}
@@ -77,7 +77,7 @@ export default function Start() {
               const on = services.includes(v);
               return (
                 <button type="button" key={v} aria-pressed={on} onClick={() => setServices((s) => (on ? s.filter((x) => x !== v) : [...s, v]))}
-                  className={`rounded-full border-2 px-4 py-3 font-bold ${on ? "border-tide bg-[#e3f4f5]" : "border-line bg-card"}`}>
+                  className={`rounded-full border-2 px-4 py-3 font-bold ${on ? "border-tide bg-accent" : "border-line bg-card"}`}>
                   {l}
                 </button>
               );

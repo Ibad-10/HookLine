@@ -19,24 +19,24 @@ export default function Buoy({ mood = "idle", size = 72 }: { mood?: Mood; size?:
       transition={{ type: "spring", stiffness: 300, damping: 14, ...(mood === "cheer" ? { repeat: 2, duration: 0.6 } : {}) }}
     >
       {/* ring with four navy bands */}
-      <circle cx="50" cy="50" r="40" fill="#ffe14d" stroke="#13223b" strokeWidth="4" />
+      <circle cx="50" cy="50" r="40" fill="#ffb840" stroke="#000000" strokeWidth="4" />
       {[0, 90, 180, 270].map((a) => (
-        <path key={a} d="M50 10 A40 40 0 0 1 78 22 L66 34 A22 22 0 0 0 50 28 Z" fill="#13223b" transform={`rotate(${a + 20} 50 50)`} />
+        <path key={a} d="M50 10 A40 40 0 0 1 78 22 L66 34 A22 22 0 0 0 50 28 Z" fill="#000000" transform={`rotate(${a + 20} 50 50)`} />
       ))}
-      <circle cx="50" cy="50" r="22" fill="#ffffff" stroke="#13223b" strokeWidth="4" />
+      <circle cx="50" cy="50" r="22" fill="#ffffff" stroke="#000000" strokeWidth="4" />
       {/* face */}
       {mood === "cheer" ? (
         <>
-          <path d="M40 46 Q43 42 46 46" stroke="#13223b" strokeWidth="3" fill="none" strokeLinecap="round" />
-          <path d="M54 46 Q57 42 60 46" stroke="#13223b" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M40 46 Q43 42 46 46" stroke="#000000" strokeWidth="3" fill="none" strokeLinecap="round" />
+          <path d="M54 46 Q57 42 60 46" stroke="#000000" strokeWidth="3" fill="none" strokeLinecap="round" />
         </>
       ) : (
         <>
-          <circle cx="43" cy="46" r="3" fill="#13223b" />
-          <circle cx="57" cy="46" r="3" fill="#13223b" />
+          <circle cx="43" cy="46" r="3" fill="#000000" />
+          <circle cx="57" cy="46" r="3" fill="#000000" />
         </>
       )}
-      <path d={mouth} stroke="#13223b" strokeWidth="3" fill="none" strokeLinecap="round" transform="translate(0 -6)" />
+      <path d={mouth} stroke="#000000" strokeWidth="3" fill="none" strokeLinecap="round" transform="translate(0 -6)" />
     </motion.svg>
   );
 }
@@ -49,7 +49,7 @@ export function BuoyTip({ mood, children }: { mood: Mood; children: React.ReactN
         key={String(children)}
         initial={{ opacity: 0, y: 6 }}
         animate={{ opacity: 1, y: 0 }}
-        className="relative mb-2 rounded-2xl rounded-bl-sm border border-line bg-card px-4 py-2 text-[0.95rem] leading-snug shadow-[0_2px_0_var(--line)]"
+        className="relative mb-2 rounded-2xl rounded-bl-sm border border-line bg-card px-4 py-2 text-[0.95rem] leading-snug border border-line"
       >
         {children}
       </motion.p>

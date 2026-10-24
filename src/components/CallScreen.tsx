@@ -161,9 +161,9 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         <div className="text-center">
           <div className="relative mx-auto grid size-28 place-items-center">
             <span aria-hidden className="ring absolute inset-0 rounded-full bg-safe/50" />
-            <span className="relative grid size-28 place-items-center rounded-full bg-navy-2 text-4xl font-extrabold">{sc.caller[0]}</span>
+            <span className="relative grid size-28 place-items-center rounded-full bg-navy-2 text-4xl font-semibold tracking-tight">{sc.caller[0]}</span>
           </div>
-          <h1 className="mt-6 text-3xl font-extrabold">{sc.caller}</h1>
+          <h1 className="mt-6 text-3xl font-semibold tracking-tight">{sc.caller}</h1>
           <p className="mt-2 text-white/80">Incoming call</p>
         </div>
         <div className="w-full max-w-md space-y-4">
@@ -181,9 +181,9 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   return (
     <main className="flex h-dvh flex-col bg-navy text-white">
       <header className="flex items-center gap-3 px-5 pb-3 pt-5">
-        <span className="grid size-12 place-items-center rounded-full bg-navy-2 text-xl font-extrabold">{sc.caller[0]}</span>
+        <span className="grid size-12 place-items-center rounded-full bg-navy-2 text-xl font-semibold tracking-tight">{sc.caller[0]}</span>
         <div className="flex-1">
-          <p className="font-extrabold">{sc.caller}</p>
+          <p className="font-semibold tracking-tight">{sc.caller}</p>
           <p className="text-sm text-white/70">{state.outcome ? "Call ended" : thinking ? "Caller is thinking…" : "On call"}</p>
         </div>
         <span className="rounded-full bg-mark px-3 py-1 text-sm font-bold text-navy">Practice</span>
