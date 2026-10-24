@@ -8,6 +8,15 @@ export default function ContactSettings() {
   const [p, setP] = useState<Stored | null>(null);
   const [number, setNumber] = useState("");
   const [msg, setMsg] = useState("");
+  const [busy, setBusy] = useState("");
+
+  async function trigger(kind: "phone" | "email") {
+    setBusy(kind);
+    const r = await fetch(kind === "phone" ? "/api/phone/call" : "/api/practice/email", { method: "POST" }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    setMsg(r?.ok ? (kind === "phone" ? "Calling your phone now. Answer it and practise." : `Practice email sent to ${j.to}. Check your inbox.`) : (j.error ?? "That didn't work. Try again."));
+    setBusy("");
+  }
 
   useEffect(() => {
     fetch("/api/contact").then((r) => (r.ok ? r.json() : null)).then((v: Stored | null) => {
@@ -62,6 +71,11 @@ export default function ContactSettings() {
             <button className="rounded-full bg-foreground px-5 font-semibold text-background">Save</button>
           </form>
         )}
+        {p.phone.on && p.phone.number && (
+          <button type="button" onClick={() => trigger("phone")} disabled={busy === "phone"} className="btn-chunky btn-grad lift mt-3 w-full">
+            {busy === "phone" ? "Calling…" : "Call me now"}
+          </button>
+        )}
       </div>
 
       <label className="flex items-center justify-between gap-4 rounded-2xl bg-card p-4 ring-1 ring-line">
@@ -71,9 +85,14 @@ export default function ContactSettings() {
         </span>
         <Switch checked={p.email.on} onCheckedChange={(v) => save({ ...p, email: { ...p.email, on: Boolean(v) } })} />
       </label>
+      {p.email.on && (
+        <button type="button" onClick={() => trigger("email")} disabled={busy === "email"} className="btn-chunky lift w-full bg-foreground text-background">
+          {busy === "email" ? "Sending…" : "Send me a practice email"}
+        </button>
+      )}
 
       <p className="text-sm text-ink-soft">
-        Coming soon: reminders and real phone and email practice aren’t sent yet. We’ll confirm your number or address before the first one, and you can turn any of these off at any time.
+        Practice calls and emails only go to you, from Hookline’s published number and address, and always say they’re practice. Reminders are coming soon. You can turn any of these off at any time.
       </p>
       {msg && <p role="status" className="text-sm font-medium">{msg}</p>}
     </section>
