@@ -5,7 +5,11 @@ import { project, summarize, type ArmSummary, type CallRow } from "@/lib/compare
 import { db, migrate } from "@/lib/db";
 import { modelFor, type Arm, type TaskName } from "@/lib/llm";
 import { simulate } from "@/lib/sim";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RunCompare from "./RunCompare";
+
+// Each model keeps one colour everywhere: frontier warm, small model cool.
+const HUE: Record<Arm, string> = { plain: "#b5652a", stuffed: "#b5652a", small: "#4f5bd5" };
 
 const ARMS: { arm: Arm; name: string; note: string }[] = [
   { arm: "plain", name: "Big model, no memory", note: "A frontier model writes every lesson. It knows nothing about the learner." },
@@ -47,8 +51,14 @@ export default async function MubitPage() {
       </header>
 
       <main className="mx-auto max-w-5xl space-y-10 px-5 py-8">
-        <Table title="Writing a lesson (Teacher)" s={teacher} />
-        <Table title="Answering off-script on a practice call (Coach)" s={coach} coach />
+        <Tabs defaultValue="teacher">
+          <TabsList className="h-12">
+            <TabsTrigger value="teacher" className="px-4 text-base">Writing a lesson</TabsTrigger>
+            <TabsTrigger value="coach" className="px-4 text-base">Practice call turns</TabsTrigger>
+          </TabsList>
+          <TabsContent value="teacher"><Table title="Writing a lesson (Teacher)" s={teacher} /></TabsContent>
+          <TabsContent value="coach"><Table title="Answering off-script on a practice call (Coach)" s={coach} coach /></TabsContent>
+        </Tabs>
 
         <section>
           <h2 className="text-2xl font-extrabold">Projected monthly cost, one lesson a day per learner</h2>
@@ -146,8 +156,11 @@ function Table({ title, s, coach }: { title: string; s: Record<string, ArmSummar
             <tr className="border-b border-line align-bottom">
               <th className="p-3 w-56" />
               {ARMS.map((a) => (
-                <th key={a.arm} className="p-3">
-                  <span className="block">{a.name}</span>
+                <th key={a.arm} className="p-3" style={{ borderTop: `4px solid ${HUE[a.arm]}` }}>
+                  <span className="flex items-center gap-2">
+                    <span aria-hidden className="size-3 shrink-0 rounded-full" style={{ background: HUE[a.arm] }} />
+                    {a.name}
+                  </span>
                   <span className="block text-sm font-normal text-ink-soft">{coach ? COACH_NOTES[a.arm] : a.note}</span>
                 </th>
               ))}

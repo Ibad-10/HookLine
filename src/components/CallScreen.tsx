@@ -3,6 +3,7 @@
 // text ever leaves the device. Caller audio: pre-made clip if present, else the
 // browser's own voice. Replies: hold to talk (browser speech-to-text) or type.
 import { CommitStrategy, RealtimeEvents, Scribe, type RealtimeConnection } from "@elevenlabs/client";
+import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { applyIntent, startCall, step } from "@/lib/call/engine";
@@ -173,9 +174,10 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
 
       <section aria-live="polite" aria-label="Call captions" className="flex-1 space-y-3 overflow-y-auto px-5 py-3">
         {state.transcript.map((t, k) => (
-          <p key={k} className={`max-w-[85%] rounded-2xl px-4 py-3 text-[1.05rem] leading-snug ${t.who === "caller" ? "bg-navy-2" : "ml-auto bg-tide"}`}>
+          <motion.p key={k} initial={{ opacity: 0, y: 10, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} transition={{ type: "spring", stiffness: 300, damping: 26 }}
+            className={`max-w-[85%] rounded-2xl px-4 py-3 text-[1.05rem] leading-snug ${t.who === "caller" ? "rounded-tl-sm bg-navy-2" : "ml-auto rounded-tr-sm bg-tide"}`}>
             {t.text}
-          </p>
+          </motion.p>
         ))}
         {state.outcome === "stopped" && (
           <p role="alert" className="rounded-2xl bg-mark px-4 py-3 font-bold text-navy">

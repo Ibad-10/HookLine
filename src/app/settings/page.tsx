@@ -1,14 +1,15 @@
 "use client";
 import Link from "next/link";
+import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 
 function readPrefs() {
   const v = document.cookie.match(/hl_prefs=([^;]*)/)?.[1] ?? "";
-  return { large: v.includes("large"), slow: v.includes("slow") };
+  return { large: v.includes("large"), slow: v.includes("slow"), mute: v.includes("mute") };
 }
 
 export default function Settings() {
-  const [prefs, setPrefs] = useState({ large: false, slow: false });
+  const [prefs, setPrefs] = useState({ large: false, slow: false, mute: false });
   useEffect(() => setPrefs(readPrefs()), []);
 
   async function save(next: typeof prefs) {
@@ -24,6 +25,7 @@ export default function Settings() {
       <div className="mt-6 space-y-3">
         <Toggle label="Larger text" hint="Makes every word on Hookline bigger." on={prefs.large} onChange={(v) => save({ ...prefs, large: v })} />
         <Toggle label="Slower voice on calls" hint="The caller speaks more slowly." on={prefs.slow} onChange={(v) => save({ ...prefs, slow: v })} />
+        <Toggle label="Mute lesson sounds" hint="No chimes when you answer." on={prefs.mute} onChange={(v) => save({ ...prefs, mute: v })} />
         <div className="rounded-2xl bg-card p-4">
           <p className="font-bold">Captions on calls</p>
           <p className="text-ink-soft">Always on, so you can read every word the caller says.</p>
@@ -43,15 +45,12 @@ export default function Settings() {
 
 function Toggle({ label, hint, on, onChange }: { label: string; hint: string; on: boolean; onChange: (v: boolean) => void }) {
   return (
-    <button type="button" role="switch" aria-checked={on} onClick={() => onChange(!on)}
-      className="flex w-full items-center justify-between gap-4 rounded-2xl bg-card p-4 text-left">
+    <label className="flex w-full cursor-pointer items-center justify-between gap-4 rounded-2xl bg-card p-4">
       <span>
         <span className="block font-bold">{label}</span>
         <span className="block text-ink-soft">{hint}</span>
       </span>
-      <span className={`relative h-8 w-14 shrink-0 rounded-full transition-colors ${on ? "bg-tide" : "bg-line"}`}>
-        <span className={`absolute top-1 size-6 rounded-full bg-white transition-[left] ${on ? "left-7" : "left-1"}`} />
-      </span>
-    </button>
+      <Switch checked={on} onCheckedChange={(v) => onChange(Boolean(v))} className="scale-125" />
+    </label>
   );
 }

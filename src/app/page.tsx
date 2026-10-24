@@ -1,5 +1,6 @@
 import { Flame, Phone, Settings, TrendingUp } from "lucide-react";
 import Link from "next/link";
+import HeroQuote from "@/components/HeroQuote";
 import PathMap, { type Stop } from "@/components/PathMap";
 import { db, migrate } from "@/lib/db";
 import { allSkills, getLearner, learnerId } from "@/lib/learner";
@@ -106,9 +107,7 @@ function Welcome() {
       <main className="mx-auto flex min-h-dvh max-w-md flex-col justify-between px-5 py-10">
         <span className="text-lg font-extrabold">Hookline</span>
         <div>
-          <p className="text-xl leading-relaxed text-white/90">
-            "Your parcel is waiting. Pay a <span className="mark text-navy">£1.45 fee within 30 minutes</span> or it goes back."
-          </p>
+          <HeroQuote />
           <h1 className="mt-8 text-[2.4rem] font-extrabold leading-[1.05]">Learn to spot the hook before it catches you.</h1>
           <p className="mt-4 text-lg text-white/80">
             Three-minute lessons from scams reported this week, and practice phone calls you're allowed to hang up on.
