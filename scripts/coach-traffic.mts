@@ -41,8 +41,9 @@ const one = async (i: number) => {
   const sc = scenarios[i % scenarios.length];
   const nodes = Object.keys(sc.nodes).filter((k) => !sc.nodes[k].end);
   const state = { ...startCall(sc), node: nodes[i % nodes.length] };
-  const text = `${openers[i % openers.length]} ${middles[(i * 7) % middles.length]}${closers[(i * 3) % closers.length]}`;
-  const arm: Arm = i % 2 ? "small" : "plain";
+  const k = i + Number(process.argv[4] ?? 0);
+  const text = `${openers[k % openers.length]} ${middles[(k * 7) % middles.length]}${closers[(k * 3) % closers.length]}`;
+  const arm: Arm = process.argv[3] === "plain" ? "plain" : i % 2 ? "small" : "plain";
   const r = await coachMove(state, sc, text, `coach-traffic-${i}`, arm);
   if (r) ok++;
 };
