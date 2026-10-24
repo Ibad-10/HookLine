@@ -146,3 +146,17 @@ models and let Mubit take over; Phase 2 real-channel listed.
   real details. Hookline itself only stores masked text.
 - Deploy to a public HTTPS URL so the call works on the presenter's phone
   (microphone needs HTTPS); presenter laptop on localhost is the fallback.
+
+## 14. Look and feel (decided by Ibad, 24 Oct)
+
+- A mix: a calm, trustworthy base (deep navy, large type, high contrast) for Home,
+  the practice call and Settings, with playful touches in lessons (chunky buttons,
+  a green or red feedback sheet, small celebrations).
+- Animations: smooth transitions between questions, feedback sheet sliding up, a
+  small celebration at the end of a lesson. All of it turns off when the device
+  asks for reduced motion.
+- Phone first: one-hand use, big tap targets, lessons designed for a phone screen
+  and scaled up for desktop.
+- Patterns (not visuals) come from Duolingo (lesson flow, feedback sheet, path) and
+  Google's phishing quiz (answer buttons above a realistic message, "Show me" flags).
+  The visual identity is Hookline's own.
