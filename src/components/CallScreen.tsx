@@ -101,7 +101,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     if (!r.needCoach) return;
     setThinking(true);
     try {
-      const res = await fetch("/api/call/coach", { method: "POST", body: JSON.stringify({ scenarioId: sc.id, node: r.state.node, masked: r.masked, sessionId }) });
+      const res = await fetch("/api/call/coach", { method: "POST", body: JSON.stringify({ scenarioId: sc.id, node: r.state.node, masked: r.masked, sessionId, recent: r.state.transcript.slice(-7, -1).map(({ who, text }) => ({ who, text })) }) });
       const move = await res.json();
       if (move.stop) setState((s) => ({ ...s, outcome: "stopped", checkpoints: [...s.checkpoints, "gave_secret"] }));
       else {

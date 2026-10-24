@@ -5,7 +5,7 @@ import { getScenario } from "@/lib/call/getScenario";
 import { firstTurn, nextTurn, validToken, validTwilio } from "@/lib/phone";
 import { contactPrefs, PUBLIC_URL } from "@/lib/practice";
 import { saveOutcome } from "@/lib/profile";
-import { coachMove } from "@/lib/tasks/coach";
+import { talkMove } from "@/lib/tasks/coach";
 
 const xml = (body: string) => new Response(body, { headers: { "content-type": "text/xml" } });
 
@@ -44,10 +44,11 @@ export async function POST(req: Request) {
   const node = sp.get("node") ?? sc.start;
   const quiet = Number(sp.get("q") ?? 0);
   const speech = params.SpeechResult ?? "";
-  let turn = nextTurn(base, sc, node, learner, speech, undefined, quiet);
+  const answers = Number(sp.get("a") ?? 0);
+  let turn = nextTurn(base, sc, node, learner, speech, undefined, quiet, answers);
   if (turn.needCoach) {
-    const move = await coachMove({ ...startCall(sc), node }, sc, turn.masked, `phone-${params.CallSid ?? learner}`);
-    turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet);
+    const move = await talkMove({ ...startCall(sc), node }, sc, turn.masked, `phone-${params.CallSid ?? learner}`);
+    turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet, answers);
   }
   if (!turn.end && turn.node !== node && sc.nodes[turn.node]?.ask === "code") await sendRealCode(learner);
   if (turn.end) {

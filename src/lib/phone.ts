@@ -51,8 +51,8 @@ export const sayUrl = (base: string, sc: Scenario, learner: string, text: string
   `${base}/api/phone/audio?${auth(sc, learner)}&say=${encodeURIComponent(text)}`;
 
 // Listen while the caller talks (barge-in), and always come back to us, even on silence.
-function gather(base: string, sc: Scenario, node: string, learner: string, before: string, plays: string[], quiet = 0): string {
-  const action = esc(`${base}/api/phone/twiml?${auth(sc, learner)}&node=${node}&q=${quiet}`);
+function gather(base: string, sc: Scenario, node: string, learner: string, before: string, plays: string[], quiet = 0, answers = 0): string {
+  const action = esc(`${base}/api/phone/twiml?${auth(sc, learner)}&node=${node}&q=${quiet}&a=${answers}`);
   const hints = esc(["yes", "no", "who is this", "is this real", "hang up", ...sc.keyterms].join(", "));
   return xml(`${before}<Gather input="speech" action="${action}" method="POST" speechTimeout="auto" timeout="6" actionOnEmptyResult="true" speechModel="phone_call" enhanced="true" language="en-GB" hints="${hints}">${plays.map(play).join("")}</Gather>`);
 }
@@ -65,24 +65,24 @@ export function firstTurn(base: string, sc: Scenario, learner: string): string {
   return gather(base, sc, sc.start, learner, `${narrate(base, "notice")}<Pause length="1"/>`, [lineUrl(base, sc, sc.start, learner)]);
 }
 
-const question = (line: string) => line.match(/[^.?!]*\?\s*$/)?.[0].trim() ?? "";
+const FAST: Intent[] = ["hang_up", "is_real", "distress"];
 
-// One caller reply. Off-script replies go to the coach (needCoach); small talk gets one short
-// answer plus the step's question, like the web call. Silence gets one "hello?" then ends.
-export function nextTurn(base: string, sc: Scenario, node: string, learner: string, speech: string, coach?: { intent: Intent; say?: string }, quiet = 0): Turn {
+// One caller reply. Only the safety exits are decided here; everything else goes to the live
+// caller (needCoach), who answers what was said. Questions and small talk keep the call on this
+// step up to twice; silence gets one "hello?" then ends.
+export function nextTurn(base: string, sc: Scenario, node: string, learner: string, speech: string, coach?: { intent: Intent; say?: string }, quiet = 0, answers = 0): Turn {
   if (!speech.trim()) {
     if (quiet >= 1) return { twiml: finish(base, "quiet"), end: "pass", node, masked: "" };
-    return { twiml: gather(base, sc, node, learner, "", [sayUrl(base, sc, learner, "Hello? Are you still there?")], quiet + 1), end: null, node, masked: "" };
+    return { twiml: gather(base, sc, node, learner, "", [sayUrl(base, sc, learner, "Hello? Are you still there?")], quiet + 1, answers), end: null, node, masked: "" };
   }
   const g = gate(speech, sc.nodes[node]?.ask ?? null);
   if (g.stop) return { twiml: finish(base, "stopped"), end: "stopped", node, masked: g.masked };
-  const intent = coach?.intent ?? matchIntent(speech);
+  const fast = matchIntent(speech);
+  const intent = coach?.intent ?? (fast && FAST.includes(fast) ? fast : null);
   if (!intent) return { twiml: "", end: null, node, masked: g.masked, needCoach: true };
   if (intent === "hang_up") return { twiml: finish(base, "hung_up"), end: "pass", node, masked: g.masked };
-  if (intent === "stall" && coach?.say && quiet < 5) {
-    const text = [coach.say, question(sc.nodes[node].line)].filter(Boolean).join(" ");
-    return { twiml: gather(base, sc, node, learner, "", [sayUrl(base, sc, learner, text)], 5), end: null, node, masked: g.masked };
-  }
+  if ((intent === "stall" || intent === "question_identity") && coach?.say && answers < 2)
+    return { twiml: gather(base, sc, node, learner, "", [sayUrl(base, sc, learner, coach.say)], 0, answers + 1), end: null, node, masked: g.masked };
   const s = applyIntent({ ...startCall(sc), node }, sc, intent);
   if (s.outcome === "pass") return { twiml: finish(base, "pass", lineUrl(base, sc, s.node, learner)), end: "pass", node: s.node, masked: g.masked };
   if (s.outcome === "scammed") return { twiml: finish(base, "scammed", lineUrl(base, sc, s.node, learner)), end: "scammed", node: s.node, masked: g.masked };

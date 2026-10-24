@@ -30,11 +30,6 @@ test("hanging up is a pass", () => {
   expect(r.state.checkpoints).toContain("hung_up");
 });
 
-test("questioning the caller follows the identity branch", () => {
-  const r = step(startCall(sc), sc, "who is this exactly?", "voice");
-  expect(r.state.node).toBe("identity");
-  expect(r.state.checkpoints).toContain("asked_identity");
-});
 
 test("off-script talk asks for the coach", () => {
   const r = step(startCall(sc), sc, "the weather is lovely today", "voice");
@@ -42,15 +37,7 @@ test("off-script talk asks for the coach", () => {
   expect(r.state.node).toBe("open");
 });
 
-test("typed input behaves the same as voice", () => {
-  expect(step(startCall(sc), sc, "who is this exactly?", "typed").state.node).toBe("identity");
-});
 
-test("complying all the way ends as scammed", () => {
-  let s = at("secrecy");
-  s = step(s, sc, "okay, done", "voice").state;
-  expect(s.outcome).toBe("scammed");
-});
 
 test("applyIntent follows a coach decision", () => {
   expect(applyIntent(startCall(sc), sc, "comply").node).toBe("verify");
@@ -79,15 +66,21 @@ test("C1: distress or goodbye on a step asking for a code ends kindly as a pass"
   expect(step(at("verify"), sc, "I'm scared, it's 4829", "voice").state.outcome).toBe("stopped");
 });
 
-test("an off-topic reply gets one short answer that repeats the question, then the call moves on", () => {
-  const sc = SCENARIOS["safe-account"];
+
+test("questions and agreement go to the live caller; only safety exits are decided locally", () => {
+  expect(step(startCall(sc), sc, "who is this exactly?", "typed").needCoach).toBe(true);
+  expect(step(startCall(sc), sc, "okay, done", "voice").needCoach).toBe(true);
+  expect(step(startCall(sc), sc, "is this a scam?", "typed").state.outcome).toBe("pass");
+});
+
+test("the caller answers questions in place twice, then moves on; agreeing moves on", () => {
   const s0 = startCall(sc);
-  const s1 = coachTurn(s0, sc, { intent: "stall", say: "I'm here to help verify your account." });
+  const s1 = coachTurn(s0, sc, { intent: "question_identity", say: "I'm Daniel, from Northgate's fraud team." });
   expect(s1.node).toBe("open");
-  expect(s1.transcript.at(-1)?.text).toBe("I'm here to help verify your account. Did you make that payment?");
-  const s2 = coachTurn(s1, sc, { intent: "stall", say: "Still there?" });
-  expect(s2.node).toBe("verify");
-  const s3 = coachTurn(s0, sc, { intent: "comply", say: "Great." });
-  expect(s3.node).toBe("verify");
-  expect(s3.transcript.filter((t) => t.who === "caller").length).toBe(2);
+  expect(s1.checkpoints).toContain("asked_identity");
+  const s2 = coachTurn(s1, sc, { intent: "stall", say: "I'm well, thanks for asking." });
+  expect(s2.node).toBe("open");
+  expect(coachTurn(s2, sc, { intent: "stall", say: "Still there?" }).node).toBe("verify");
+  expect(coachTurn(s0, sc, { intent: "comply", say: "Great." }).node).toBe("verify");
+  expect(coachTurn({ ...s0, node: "secrecy" }, sc, { intent: "comply" }).outcome).toBe("scammed");
 });

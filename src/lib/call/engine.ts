@@ -38,6 +38,8 @@ export function applyIntent(s: CallState, sc: Scenario, intent: Intent): CallSta
   return next ? goTo(marked, sc, next) : marked;
 }
 
+const FAST: Intent[] = ["hang_up", "is_real", "distress"];
+
 export function step(
   s: CallState,
   sc: Scenario,
@@ -47,23 +49,21 @@ export function step(
   const g = gate(userText, sc.nodes[s.node].ask);
   const withTurn = { ...s, transcript: [...s.transcript, { who: "you" as const, text: g.masked }] };
   if (g.stop) return { state: { ...withTurn, outcome: "stopped", checkpoints: [...s.checkpoints, "gave_secret"] }, needCoach: false, masked: g.masked };
+  // Only the safety exits are decided here; everything else gets a real answer from the caller.
   const intent = matchIntent(userText);
-  if (!intent) return { state: withTurn, needCoach: true, masked: g.masked };
+  if (!intent || !FAST.includes(intent)) return { state: withTurn, needCoach: true, masked: g.masked };
   return { state: applyIntent(withTurn, sc, intent), needCoach: false, masked: g.masked };
 }
 
-// The node's own question (its last sentence ending in "?"), used to steer back after small talk.
-const question = (line: string) => line.match(/[^.?!]*\?\s*$/)?.[0].trim() ?? "";
-
-// Applies the Coach's move. Small talk gets one short answer plus the node's question, with no
-// jump ahead; a second off-topic reply on the same step moves on as before. Other moves skip
-// the extra line so the caller doesn't talk twice in a row.
+// Applies the caller's move. Questions and small talk get a real answer and the call stays on
+// this step (up to twice in a row, then it moves on as a pushy caller would). Agreeing or
+// refusing moves the call to its next scripted step.
 export function coachTurn(s: CallState, sc: Scenario, move: { intent: Intent; say?: string }): CallState {
-  const lastCaller = [...s.transcript].reverse().find((t) => t.who === "caller");
-  const alreadyNudged = lastCaller && !lastCaller.node;
-  if (move.intent === "stall" && move.say && !alreadyNudged) {
-    const text = [move.say, question(sc.nodes[s.node].line)].filter(Boolean).join(" ");
-    return { ...s, transcript: [...s.transcript, { who: "caller", text }] };
+  const sinceLine = s.transcript.length - 1 - [...s.transcript].reverse().findIndex((t) => t.who === "caller" && t.node);
+  const answers = s.transcript.slice(sinceLine + 1).filter((t) => t.who === "caller").length;
+  if ((move.intent === "stall" || move.intent === "question_identity") && move.say && answers < 2) {
+    const cp = move.intent === "question_identity" && !s.checkpoints.includes("asked_identity") ? ["asked_identity"] : [];
+    return { ...s, checkpoints: [...s.checkpoints, ...cp], transcript: [...s.transcript, { who: "caller", text: move.say }] };
   }
   return applyIntent(s, sc, move.intent);
 }

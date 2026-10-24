@@ -29,14 +29,15 @@ test("reading out a code ends the call with no digits echoed", () => {
   expect(t.masked).not.toMatch(/\d{4}/);
 });
 
-test("asking who it is moves on; hanging up passes; off-script asks the coach", () => {
-  expect(nextTurn(base, sc, "open", "l1", "who is this?").node).toBe("identity");
+test("safety exits are instant; everything else asks the live caller, who answers in place", () => {
   expect(nextTurn(base, sc, "open", "l1", "I'm going to hang up").end).toBe("pass");
-  expect(nextTurn(base, sc, "open", "l1", "the weather is nice").needCoach).toBe(true);
-  expect(nextTurn(base, sc, "open", "l1", "the weather is nice", { intent: "stall" }).node).toBe("verify");
-  const small = nextTurn(base, sc, "open", "l1", "hello", { intent: "stall", say: "Hi there." });
-  expect(small.node).toBe("open");
-  expect(small.twiml).toContain("say=Hi%20there.%20Did%20you%20make%20that%20payment%3F");
+  expect(nextTurn(base, sc, "open", "l1", "who is this?").needCoach).toBe(true);
+  const asked = nextTurn(base, sc, "open", "l1", "what's your name?", { intent: "question_identity", say: "It's Daniel." });
+  expect(asked.node).toBe("open");
+  expect(asked.twiml).toContain("say=It's%20Daniel.");
+  expect(asked.twiml).toContain("a=1");
+  expect(nextTurn(base, sc, "open", "l1", "hmm", { intent: "stall", say: "x" }, 0, 2).node).toBe("verify");
+  expect(nextTurn(base, sc, "open", "l1", "yes", { intent: "comply" }).node).toBe("verify");
 });
 
 test("call URLs carry a token that only matches its own scenario and learner", async () => {
