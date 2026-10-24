@@ -36,7 +36,7 @@ export default async function Admin() {
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <h1 className="text-4xl font-medium tracking-[-0.04em]">Admin console</h1>
-        <Link href="/" className="text-ink-soft underline">Back to Hookline</Link>
+        <Link href="/home" className="text-ink-soft underline">Back to Hookline</Link>
       </div>
       <Tabs defaultValue="mubit" className="mt-6">
         <TabsList className="h-12 flex-wrap">

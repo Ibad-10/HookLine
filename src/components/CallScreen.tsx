@@ -193,7 +193,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
           <button type="button" onClick={answer} className="btn-chunky w-full bg-safe text-lg text-white" style={{ "--btn-edge": "#0f5a37" } as React.CSSProperties}>
             Answer call
           </button>
-          <Link href="/" className="block py-2 text-center font-bold text-white/80">Not now</Link>
+          <Link href="/home" className="block py-2 text-center font-bold text-white/80">Not now</Link>
         </div>
       </main>
     );
@@ -201,7 +201,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   return (
     <main className="flex h-dvh flex-col bg-navy text-white">
       <nav aria-label="Call" className="mx-4 mt-3 flex items-center justify-between rounded-full bg-white/[0.06] p-1.5 ring-1 ring-white/12">
-        <Link href="/" onClick={() => { window.speechSynthesis?.cancel(); audio.current?.pause(); }} aria-label="Back to home" className="flex h-10 items-center gap-1 rounded-full pl-2 pr-3.5 font-semibold">
+        <Link href="/home" onClick={() => { window.speechSynthesis?.cancel(); audio.current?.pause(); }} aria-label="Back to home" className="flex h-10 items-center gap-1 rounded-full pl-2 pr-3.5 font-semibold">
           <ChevronLeft className="size-5" strokeWidth={2.4} aria-hidden />
           Home
         </Link>

@@ -27,7 +27,7 @@ export default function Debrief() {
     return (
       <main className="mx-auto max-w-md px-5 py-16">
         <h1 className="text-2xl font-semibold tracking-tight">No call to review</h1>
-        <Link href="/" className="btn-chunky mt-6 grid place-items-center bg-tide text-white">Back to home</Link>
+        <Link href="/home" className="btn-chunky mt-6 grid place-items-center bg-tide text-white">Back to home</Link>
       </main>
     );
 
@@ -66,7 +66,7 @@ export default function Debrief() {
       </section>
       <div className="mt-6 grid gap-3">
         <Link href={`/call/${sc.id}`} className="btn-chunky grid place-items-center bg-tide text-white">Try this call again</Link>
-        <Link href="/" className="py-3 text-center font-bold text-tide">Back to home</Link>
+        <Link href="/home" className="py-3 text-center font-bold text-tide">Back to home</Link>
       </div>
     </main>
   );

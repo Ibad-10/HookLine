@@ -38,15 +38,17 @@ export default function MessageMock({
 }) {
   const parts = chunks(text, flags ?? []);
   return (
-    <figure className="rounded-[22px] bg-card border border-line p-4 border border-line">
-      <figcaption className="flex items-center gap-3 pb-3 border-b border-line mb-3">
-        <span aria-hidden className="grid place-items-center size-10 rounded-full bg-navy text-white font-bold">
+    <figure className="overflow-hidden rounded-[26px] bg-card shadow-[0_24px_60px_-28px_rgba(0,40,80,0.45)] ring-1 ring-line">
+      <figcaption className="flex items-center gap-3 bg-gradient-to-b from-[#eaf4fc] to-card px-4 pb-3 pt-4 dark:from-[#0b2a44]">
+        <span aria-hidden className="grid size-10 place-items-center rounded-full bg-gradient-to-b from-[#1a8ff0] to-[#0068ad] font-semibold text-white">
           {from.slice(0, 1).toUpperCase()}
         </span>
-        <span className="font-bold">{from}</span>
-        <span className="ml-auto text-sm text-ink-soft">Text message</span>
+        <span className="leading-tight">
+          <span className="block font-semibold">{from}</span>
+          <span className="block text-xs text-ink-soft">Text message · now</span>
+        </span>
       </figcaption>
-      <p className="text-[1.1rem] leading-relaxed bg-mist rounded-2xl rounded-tl-sm p-3">
+      <p className="mx-4 mb-4 rounded-[20px] rounded-tl-md bg-secondary p-4 text-[1.15rem] leading-[1.9]">
         {parts.map((c, i) => {
           if (/^\s+$/.test(c.text)) return c.text;
           const isTapped = tapped?.has(i);
@@ -64,7 +66,7 @@ export default function MessageMock({
               type="button"
               onClick={() => onTap(i)}
               aria-pressed={isTapped}
-              className={`inline rounded px-0.5 -mx-0.5 cursor-pointer hover:bg-mark/40 ${marked ? "mark" : ""}`}
+              className={`-mx-0.5 inline cursor-pointer rounded px-0.5 underline decoration-ink-soft/40 decoration-dotted decoration-2 underline-offset-[6px] transition-colors hover:bg-mark/35 hover:decoration-transparent ${marked ? "mark decoration-transparent" : ""}`}
             >
               {c.text}
             </button>

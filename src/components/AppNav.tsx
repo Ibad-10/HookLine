@@ -7,7 +7,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const LINKS = [
-  { href: "/", label: "Home", Icon: Home },
+  { href: "/home", label: "Home", Icon: Home },
   { href: "/progress", label: "Progress", Icon: TrendingUp },
   { href: "/settings", label: "Settings", Icon: Settings },
 ];
@@ -30,7 +30,7 @@ export default function AppNav() {
 
   return (
     <nav aria-label="Main" className="glass sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-2rem)] max-w-xl items-center gap-1 rounded-full px-2 py-1.5">
-      <Link href="/" className="px-3 text-lg font-semibold tracking-tight">Hookline</Link>
+      <Link href="/home" className="px-3 text-lg font-semibold tracking-tight">Hookline</Link>
       <div className="ml-auto flex items-center gap-1">
         {LINKS.map(({ href, label, Icon }) => (
           <Link key={href} href={href} aria-label={label} aria-current={path === href ? "page" : undefined}

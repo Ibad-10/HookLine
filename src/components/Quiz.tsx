@@ -39,6 +39,7 @@ export default function Quiz({
   onFinish,
   finishLabel = "Back to home",
   next: after = { href: "/call/safe-account", label: "Try a practice call" },
+  homeHref = "/home",
 }: {
   items: Item[];
   cards?: { heading: string; body: string }[];
@@ -46,6 +47,7 @@ export default function Quiz({
   onFinish?: (score: number) => void;
   finishLabel?: string;
   next?: { href: string; label: string };
+  homeHref?: string;
 }) {
   const [i, setI] = useState(0); // position across cards + questions
   const [choice, setChoice] = useState<number | null>(null);
@@ -126,15 +128,16 @@ export default function Quiz({
           <Link href={after.href} className="btn-chunky grid place-items-center bg-tide text-white">
             {after.label}
           </Link>
-          <Link href="/" className="font-bold text-tide py-3">{finishLabel}</Link>
+          <Link href={homeHref} className="font-bold text-tide py-3">{finishLabel}</Link>
         </div>
       </main>
     );
 
   return (
-    <main className={`mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-4 ${result ? "pb-[30rem]" : "pb-40"}`}>
+    <div className="min-h-dvh bg-[radial-gradient(90%_50%_at_50%_0%,#e3f1fd_0%,transparent_70%)] dark:bg-[radial-gradient(90%_50%_at_50%_0%,#0b2a44_0%,transparent_70%)]">
+    <main className={`mx-auto flex min-h-dvh w-full max-w-xl flex-col px-5 pt-4 ${result ? "pb-[30rem]" : "pb-44"}`}>
       <header className="flex items-center gap-4">
-        <Link href="/" aria-label="Back to home" className="flex h-11 shrink-0 items-center gap-1 rounded-full bg-secondary pl-2.5 pr-3.5 text-[0.95rem] font-semibold ring-1 ring-line">
+        <Link href={homeHref} aria-label="Back to home" className="flex h-11 shrink-0 items-center gap-1 rounded-full bg-secondary pl-2.5 pr-3.5 text-[0.95rem] font-semibold ring-1 ring-line">
           <ChevronLeft aria-hidden className="size-5" strokeWidth={2.4} />
           Home
         </Link>
@@ -172,7 +175,12 @@ export default function Quiz({
             </BuoyTip>
           </div>
           <h1 className="text-[1.5rem] font-semibold tracking-tight leading-tight">{q.prompt}</h1>
-          {q.kind === "red_flags" && !result && <p className="mt-2 text-ink-soft">Tap the words that make you suspicious.</p>}
+          {q.kind === "red_flags" && !result && (
+            <p className="mt-3 inline-flex items-center gap-2 rounded-full bg-mark/20 px-3 py-1.5 text-sm font-medium text-ink">
+              <span aria-hidden className="size-2 animate-pulse rounded-full bg-mark" />
+              Tap the words that make you suspicious{tapped.size ? ` · ${tapped.size} picked` : ""}
+            </p>
+          )}
           {q.kind === "real_or_scam" && (
             <div className="mt-5 grid grid-cols-2 gap-3">
               {["Scam", "Real"].map((t, k) => (
@@ -214,9 +222,9 @@ export default function Quiz({
         initial={result ? { y: "100%" } : false}
         animate={{ y: 0 }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
-        className={`fixed inset-x-0 bottom-0 border-t-2 ${result ? (result.ok ? "border-safe bg-safe-bg" : "border-alarm bg-alarm-bg") : "border-line bg-mist"}`}
+        className={`fixed inset-x-0 bottom-0 border-t-2 ${result ? (result.ok ? "border-safe bg-safe-bg" : "border-alarm bg-alarm-bg") : "border-line bg-background/85 backdrop-blur-xl"}`}
       >
-        <div className="mx-auto max-w-md px-5 py-4">
+        <div className="mx-auto max-w-xl px-5 py-4">
           {result && q && (
             <div className="mb-4">
               <div className="flex items-center gap-3">
@@ -248,15 +256,16 @@ export default function Quiz({
             type="button"
             disabled={!card && !result && (!ready || busy)}
             onClick={card || result ? next : check}
-            className={`btn-chunky lift flex w-full items-center justify-center gap-2 text-lg ${!card && !result && (!ready || busy) ? "" : `btn-grad shine ${result ? "ready" : ""}`}`}
+            className={`btn-chunky lift flex w-full items-center justify-center gap-2 text-lg ${!card && !result && (!ready || busy) ? "!bg-transparent ring-2 ring-dashed ring-line !text-ink-soft" : `btn-grad shine ${result ? "ready" : ""}`}`}
             style={result && !result.ok ? ({ background: "linear-gradient(180deg, #e0574c, #c9342a)" } as React.CSSProperties) : undefined}
           >
-            {card ? "Next" : result ? "Continue" : busy ? "Checking…" : "Check"}
+            {card ? "Next" : result ? "Continue" : busy ? "Checking…" : ready ? "Check" : q?.kind === "red_flags" ? "Tap a word to start" : "Pick an answer"}
             {(card || result) && <ArrowRight className="size-5" aria-hidden />}
           </button>
         </div>
       </motion.footer>
     </main>
+    </div>
   );
 }
 
