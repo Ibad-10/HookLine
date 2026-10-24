@@ -36,7 +36,7 @@ test("skip means no brief", async () => {
 
 test("same source url is stored once", async () => {
   const b = { category: "delivery_fee", technique: "urgency", title: "Parcel fee text", what_it_asks_for: "w", warning_signs: ["a", "b"],
-    safe_action: "s", source_url: "https://example.org/dup", source_name: "E", published_at: "2026-10-22" } as const;
+    safe_action: "s", source_url: "https://example.org/dup", source_name: "E", published_at: "2026-10-22" } as Parameters<typeof saveBrief>[0];
   expect(await saveBrief(b)).toBe(true);
   expect(await saveBrief(b)).toBe(false);
 });

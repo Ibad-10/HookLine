@@ -44,7 +44,7 @@ export function gate(text: string, ask: Ask): { stop: boolean; kinds: string[]; 
   if (!kinds.size && runs.some((r) => r.length >= 6 && r.length <= 8)) kinds.add("code");
   if (SECRET_WORD.test(norm)) kinds.add("password");
 
-  const context = ask !== null && !SAFE_REPLY.test(text) && !ASSENT.test(text);
+  const context = ask !== null && ask !== "money" && !SAFE_REPLY.test(text) && !ASSENT.test(text);
   if (context) kinds.add(`answered_${ask}`);
 
   const masked = norm

@@ -1,0 +1,53 @@
+{
+  "id": "safe-account",
+  "title": "Your bank's fraud team calls",
+  "category": "bank_impersonation",
+  "caller": "Daniel, Northgate Bank",
+  "brand": "Northgate Bank",
+  "start": "open",
+  "keyterms": ["Northgate", "fraud team", "code", "safe account", "payment", "card"],
+  "nodes": {
+    "open": {
+      "line": "Hello, this is Daniel from the Northgate Bank fraud team. We've just spotted a payment of one thousand two hundred and forty pounds to an online shop from your account. Did you make that payment?",
+      "ask": null, "technique": "authority",
+      "branches": { "comply": "verify", "question_identity": "identity", "refuse": "pressure", "stall": "verify" }
+    },
+    "identity": {
+      "line": "Of course, you're right to check. My staff number is four four seven one, and if you look, this call is coming from the number on the back of your card. So, did you make that payment?",
+      "ask": null, "technique": "spoofing",
+      "branches": { "comply": "verify", "question_identity": "pressure", "refuse": "pressure", "stall": "verify" }
+    },
+    "verify": {
+      "line": "Right. To stop it, I need to confirm it's really you. We've just sent a six-digit code to your phone. Can you read it out to me?",
+      "ask": "code", "technique": "urgency",
+      "branches": { "comply": "safe_account", "question_identity": "pressure", "refuse": "pressure", "stall": "pressure" }
+    },
+    "pressure": {
+      "line": "I have to be honest with you. If we don't act in the next few minutes, that money is gone, and the bank may not be able to refund you. Your savings could be next.",
+      "ask": null, "technique": "fear",
+      "branches": { "comply": "safe_account", "question_identity": "end_safe", "refuse": "end_safe", "stall": "safe_account" }
+    },
+    "safe_account": {
+      "line": "We've set up a secure holding account in your name. Move your savings there now and we'll keep them safe. Do you have your banking app open?",
+      "ask": "money", "technique": "payment_method",
+      "branches": { "comply": "secrecy", "question_identity": "end_safe", "refuse": "end_safe", "stall": "secrecy" }
+    },
+    "secrecy": {
+      "line": "Good. Please don't mention this to anyone, not even staff in your branch, as they may be involved. Send the money now and tell me when it's done.",
+      "ask": "money", "technique": "secrecy",
+      "branches": { "comply": "end_scammed", "question_identity": "end_safe", "refuse": "end_safe", "stall": "pressure" }
+    },
+    "end_safe": {
+      "line": "Fine. Have it your way.",
+      "ask": null, "technique": "fear", "branches": {}, "end": "safe"
+    },
+    "end_scammed": {
+      "line": "Thank you. That's all done now.",
+      "ask": null, "technique": "secrecy", "branches": {}, "end": "scammed"
+    },
+    "truth": {
+      "line": "This is a Hookline practice call, not a real one. Well done for checking. That's exactly the right thing to do.",
+      "ask": null, "technique": "authority", "branches": {}, "end": "safe"
+    }
+  }
+}
