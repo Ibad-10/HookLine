@@ -1,4 +1,5 @@
-import { Flame, Phone } from "lucide-react";
+import IncomingCall from "@/components/IncomingCall";
+import { StreakBadge, WeekRow } from "@/components/Streak";
 import Link from "next/link";
 import AppNav from "@/components/AppNav";
 import Landing from "@/components/Landing";
@@ -35,53 +36,34 @@ export default async function Home() {
   return (
     <div className="min-h-dvh">
       <AppNav />
-      <main className="mx-auto max-w-xl space-y-5 px-4 pb-16 pt-8">
+      <main className="mx-auto max-w-xl space-y-5 px-4 pb-16 pt-8 md:grid md:max-w-5xl md:grid-cols-2 md:items-start md:gap-6 md:space-y-0">
         <header className="px-1">
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-[2.6rem] font-medium leading-none tracking-[-0.045em]">
               Hi <span className="font-serif font-light italic tracking-[-0.02em]">{first}</span>.
             </h1>
-            <span className="flex items-center gap-1.5 rounded-full border border-line px-3 py-1.5 text-sm font-semibold" title="Days practised in a row">
-              <Flame aria-hidden className={`size-5 ${run.days ? "fill-mark text-mark" : "text-ink-soft"}`} />
-              {run.days}<span className="sr-only"> days in a row</span>
-            </span>
+            <StreakBadge days={run.days} />
           </div>
           <p className="mt-3 text-lg text-ink-soft">
             {run.days > 1 ? `${run.days} days in a row. One short session a day is plenty.` : run.days === 1 ? "You practised today. See you tomorrow." : "Today's session takes about 3 minutes."}
             {run.freezeUsed && " We kept your streak through a missed day."}
           </p>
+          <WeekRow times={times} now={Date.now()} />
         </header>
 
         <section className="relative overflow-hidden rounded-2xl border border-line bg-mist p-6">
           <p className="text-sm font-medium text-ink-soft">Next lesson</p>
           <h2 className="mt-1 text-3xl font-medium tracking-[-0.03em]">{(LABELS as Record<string, string>)[pick.key]}</h2>
           <p className="mt-3 text-ink-soft"><span className="font-medium text-ink">Why this one: </span>{why}</p>
-          <Link href="/lesson" className="btn-chunky mt-6 inline-grid w-full place-items-center bg-foreground text-lg text-background sm:w-auto">Start lesson</Link>
+          <Link href="/lesson" className="btn-chunky lift shine btn-grad ready mt-6 grid w-full place-items-center text-lg">Start lesson</Link>
         </section>
 
-        <section className="relative overflow-hidden rounded-2xl bg-black p-6 text-white">
-          <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 flex h-full items-end justify-around opacity-60">
-            {[0, 1, 2].map((k) => <span key={k} className="glow-bar h-3/4 w-16" style={{ animationDelay: `${k * 1.3}s` }} />)}
-          </div>
-          <div className="relative">
-            <p className="text-sm font-medium text-white/60">Practice call</p>
-            <h2 className="mt-1 text-3xl font-medium tracking-[-0.03em]">Can you spot it on the <span className="font-serif font-light italic">phone</span>?</h2>
-            <p className="mt-3 text-white/70">A pretend caller tries a trick. Hang up, ask questions, or ask if it&rsquo;s real. Nothing you say is kept.</p>
-            <div className="mt-5 grid gap-2">
-              {Object.values(SCENARIOS).map((s) => (
-                <Link key={s.id} href={`/call/${s.id}`} className="glass flex items-center justify-between rounded-full py-2 pl-5 pr-2 font-medium transition-colors hover:bg-white/10" style={{ background: "rgba(255,255,255,0.06)" }}>
-                  {s.title}
-                  <span aria-hidden className="grid size-11 shrink-0 place-items-center rounded-full bg-safe"><Phone className="size-5" /></span>
-                </Link>
-              ))}
-            </div>
-          </div>
-        </section>
+        <IncomingCall main={SCENARIOS["safe-account"]} other={SCENARIOS["parcel-fee"]} />
 
-        <section className="rounded-2xl border border-line px-5 pb-8 pt-6">
+        <section id="path" className="rounded-2xl border border-line px-5 pb-8 pt-6 md:col-start-2 md:row-span-4 md:row-start-1">
           <h2 className="text-3xl font-medium tracking-[-0.03em]">Your <span className="font-serif font-light italic">path</span></h2>
           <p className="mt-2 text-ink-soft">Tap any stop. Amber ones you spot well; they still come back now and then.</p>
-          <div className="mt-12"><PathMap stops={stops} /></div>
+          <div className="mt-10"><PathMap stops={stops} /></div>
         </section>
 
         {news && (
