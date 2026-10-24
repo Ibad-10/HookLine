@@ -1,8 +1,13 @@
 "use client";
 // Lesson player: teach cards, then questions. Pick, Check, a feedback sheet slides
 // up, Continue. Number keys pick, Enter checks or continues.
+import confetti from "canvas-confetti";
+import { X } from "lucide-react";
+import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { playDone, playRight, playWrong } from "@/lib/sound";
+import Buoy, { BuoyTip } from "./Buoy";
 import type { Question } from "@/lib/schemas";
 import { LABELS } from "@/lib/taxonomy";
 import MessageMock, { chunks } from "./MessageMock";
@@ -11,6 +16,21 @@ export type Item = { lessonId: string; q: number; question: Question };
 type Result = { ok: boolean; answer_index?: number };
 
 const label = (k: string) => (LABELS as Record<string, string>)[k] ?? k;
+
+const TIP: Record<Question["kind"], string> = {
+  red_flags: "Look at who it's from, what it wants, and how fast it wants it.",
+  real_or_scam: "Would a real company really contact you like this?",
+  mc: "Think about what the real organisation would do.",
+};
+
+function CountUp({ to }: { to: number }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const c = animate(0, to, { duration: 0.9, ease: [0.16, 1, 0.3, 1], onUpdate: (v) => ref.current && (ref.current.textContent = String(Math.round(v))) });
+    return () => c.stop();
+  }, [to]);
+  return <span ref={ref}>0</span>;
+}
 
 export default function Quiz({
   items,
@@ -33,6 +53,8 @@ export default function Quiz({
   const [result, setResult] = useState<Result | null>(null);
   const [busy, setBusy] = useState(false);
   const [score, setScore] = useState(0);
+  const [inARow, setInARow] = useState(0);
+  const reduce = useReducedMotion();
 
   const total = cards.length + items.length;
   const done = i >= total;
@@ -58,14 +80,25 @@ export default function Quiz({
     try {
       const r: Result = await (await fetch("/api/answer", { method: "POST", body: JSON.stringify(body) })).json();
       setResult(r);
-      if (r.ok) setScore((s) => s + 1);
+      if (r.ok) {
+        setScore((s) => s + 1);
+        setInARow((n) => n + 1);
+        playRight();
+      } else {
+        setInARow(0);
+        playWrong();
+      }
     } finally {
       setBusy(false);
     }
   }, [item, q, ready, busy, tapped, parts, choice, i, total]);
 
   useEffect(() => {
-    if (done) onFinish?.(score);
+    if (!done) return;
+    onFinish?.(score);
+    playDone();
+    if (!reduce)
+      confetti({ particleCount: 90, spread: 70, origin: { y: 0.35 }, colors: ["#ffe14d", "#0e7c86", "#13223b", "#17804f"], disableForReducedMotion: true });
   }, [done]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -82,11 +115,13 @@ export default function Quiz({
   if (done)
     return (
       <main className="mx-auto max-w-md px-5 py-10 text-center">
-        <div aria-hidden className="pop mx-auto mb-6 grid size-28 place-items-center rounded-full bg-mark text-5xl">✓</div>
+        <div className="mx-auto mb-4 w-fit"><Buoy mood="cheer" size={120} /></div>
         <h1 className="text-3xl font-extrabold">{after.href === "/lesson" ? "Check done" : "Lesson done"}</h1>
-        <p className="mt-3 text-lg text-ink-soft">
-          You spotted {score} of {items.length}. Anything you found tricky comes back in a few days.
-        </p>
+        <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-4 text-5xl font-extrabold tabular-nums text-tide">
+          <CountUp to={score} />
+          <span className="text-2xl text-ink-soft"> of {items.length} spotted</span>
+        </motion.p>
+        <p className="mt-3 text-lg text-ink-soft">Anything you found tricky comes back in a few days.</p>
         <div className="mt-8 grid gap-3">
           <Link href={after.href} className="btn-chunky grid place-items-center bg-tide text-white">
             {after.label}
@@ -100,14 +135,27 @@ export default function Quiz({
     <main className={`mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-4 ${result ? "pb-[30rem]" : "pb-40"}`}>
       <header className="flex items-center gap-4">
         <Link href="/" aria-label="Close lesson" className="grid size-11 place-items-center rounded-full text-2xl text-ink-soft hover:bg-white">
-          ×
+          <X aria-hidden className="size-7" />
         </Link>
-        <div className="h-4 flex-1 rounded-full bg-line" role="progressbar" aria-label="Lesson progress" aria-valuemin={0} aria-valuemax={total} aria-valuenow={i}>
-          <div className="h-full rounded-full bg-tide transition-[width] duration-300" style={{ width: `${(i / total) * 100}%` }} />
+        <div className="h-4 flex-1 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Lesson progress" aria-valuemin={0} aria-valuemax={total} aria-valuenow={i}>
+          <motion.div className="relative h-full overflow-hidden rounded-full bg-tide" animate={{ width: `${Math.max(4, (i / total) * 100)}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }}>
+            <span aria-hidden className="absolute inset-x-2 top-1 h-1 rounded-full bg-white/35" />
+          </motion.div>
         </div>
+        <AnimatePresence>
+          {inARow >= 2 && result?.ok && (
+            <motion.span initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ opacity: 0 }}
+              className="shrink-0 rounded-full bg-mark px-3 py-1 text-sm font-extrabold text-navy">
+              {inARow} in a row
+            </motion.span>
+          )}
+        </AnimatePresence>
       </header>
       <p className="mt-5 text-sm font-bold text-ink-soft">{title}</p>
 
+      <AnimatePresence mode="wait" initial={false}>
+      <motion.div key={i} initial={{ x: 40, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -40, opacity: 0 }}
+        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}>
       {card && (
         <section className="mt-3">
           <h1 className="text-[1.7rem] font-extrabold leading-tight">{card.heading}</h1>
@@ -117,6 +165,11 @@ export default function Quiz({
 
       {q && (
         <section className="mt-3">
+          <div className="mb-4">
+            <BuoyTip mood={result ? (result.ok ? "happy" : "hmm") : "idle"}>
+              {result ? (result.ok ? `Nice. That's the "${label(q.technique).toLowerCase()}" trick.` : `Easy to miss. Watch for "${label(q.technique).toLowerCase()}".`) : TIP[q.kind]}
+            </BuoyTip>
+          </div>
           <h1 className="text-[1.5rem] font-extrabold leading-tight">{q.prompt}</h1>
           {q.kind === "red_flags" && !result && <p className="mt-2 text-ink-soft">Tap the words that make you suspicious.</p>}
           {q.kind === "real_or_scam" && (
@@ -148,12 +201,19 @@ export default function Quiz({
         </section>
       )}
 
+      </motion.div>
+      </AnimatePresence>
+
       <div aria-live="polite" className="sr-only">
         {result ? (result.ok ? "Correct." : "Not quite.") : ""}
       </div>
 
-      <footer
-        className={`fixed inset-x-0 bottom-0 border-t-2 ${result ? (result.ok ? "border-safe bg-safe-bg sheet-in" : "border-alarm bg-alarm-bg sheet-in") : "border-line bg-mist"}`}
+      <motion.footer
+        key={result ? "result" : "ask"}
+        initial={result ? { y: "100%" } : false}
+        animate={{ y: 0 }}
+        transition={{ type: "spring", stiffness: 380, damping: 32 }}
+        className={`fixed inset-x-0 bottom-0 border-t-2 ${result ? (result.ok ? "border-safe bg-safe-bg" : "border-alarm bg-alarm-bg") : "border-line bg-mist"}`}
       >
         <div className="mx-auto max-w-md px-5 py-4">
           {result && q && (
@@ -186,7 +246,7 @@ export default function Quiz({
             {card ? "Next" : result ? "Continue" : busy ? "Checking…" : "Check"}
           </button>
         </div>
-      </footer>
+      </motion.footer>
     </main>
   );
 }
