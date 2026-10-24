@@ -197,3 +197,8 @@ checks for every number and address, a legal check) stays as section 10 describe
   It reuses an existing seed message with a made-up brand; its only link goes to a Hookline review
   page that records the outcome. No forms or input fields anywhere; a practice note in the footer.
 - Ibad approves the first real call and the first real email before they are sent.
+- **Update (24 Oct, Ibad):** each practice email is now written fresh by a Mailer task (through Mubit)
+  from a random public scam brief, so no two are the same. It returns structured fields only; the app
+  builds the HTML, adds the one review link, and refuses any draft that names a real brand or carries a
+  web address, phone number or email address. The review page shows that email's own red flags.
+  Phone numbers are confirmed by a texted 6-digit code before "Call me now" appears.

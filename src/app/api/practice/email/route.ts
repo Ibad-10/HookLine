@@ -1,8 +1,30 @@
 // Sends one practice email to the signed-in learner's own account address (opted in).
-// Made-up brand, one link back to Hookline's review page, no forms.
+// Written fresh each time by the Mailer from a public scam brief (made-up brand, checked);
+// one link back to Hookline's review page, no forms.
 import { currentUser } from "@clerk/nextjs/server";
 import { requireLearner } from "@/lib/learner";
+import seedBriefs from "@/data/seed-briefs.json";
+import { db } from "@/lib/db";
 import { contactPrefs, PUBLIC_URL, recentlySent, recordSend } from "@/lib/practice";
+import type { Brief } from "@/lib/schemas";
+import { writeEmail, type Email } from "@/lib/tasks/mailer";
+
+const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+
+// Used only if the Mailer fails, so the button still works.
+const FALLBACK: Email = {
+  brand: "SwiftParcel",
+  subject: "Your parcel is waiting: small fee due",
+  paragraphs: [
+    "We tried to deliver your parcel today but a redelivery fee of £1.45 is unpaid.",
+    "Pay within 30 minutes or the parcel will be returned to the sender.",
+  ],
+  button: "Pay the fee now",
+  flags: [
+    { span: "within 30 minutes", why: "A short deadline rushes you so you don't check." },
+    { span: "redelivery fee of £1.45", why: "Small fees feel safe; the real aim is your card details." },
+  ],
+};
 
 export async function POST() {
   const id = await requireLearner({ signedIn: true });
@@ -15,25 +37,33 @@ export async function POST() {
   const to = (await currentUser())?.primaryEmailAddress?.emailAddress;
   if (!to) return Response.json({ error: "Your account has no email address." }, { status: 400 });
 
-  const sendId = await recordSend(id, "email", "parcel-fee");
+  const used = (await db().execute({ sql: "SELECT detail FROM practice_sends WHERE learner_id = ? AND channel = 'email' AND detail IS NOT NULL ORDER BY sent_at DESC LIMIT 20", args: [id] }))
+    .rows.map((r) => (JSON.parse(String(r.detail)) as { subject: string }).subject);
+  const row = (await db().execute("SELECT brief_json FROM briefs ORDER BY RANDOM() LIMIT 1")).rows[0];
+  const seeds = Object.values(seedBriefs) as Brief[];
+  const brief: Brief = row ? JSON.parse(String(row.brief_json)) : seeds[Math.floor(Math.random() * seeds.length)];
+  const mail = (await writeEmail(brief, used, `mailer-${id}`)) ?? FALLBACK;
+
+  const sendId = await recordSend(id, "email", brief.category);
+  await db().execute({ sql: "UPDATE practice_sends SET detail = ? WHERE id = ?", args: [JSON.stringify({ brand: mail.brand, subject: mail.subject, flags: mail.flags }), sendId] });
   const link = `${PUBLIC_URL()}/practice/${sendId}`;
   const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
-  <p style="font-size:20px;font-weight:bold;color:#c0392b">SwiftParcel</p>
+  <p style="font-size:20px;font-weight:bold;color:#c0392b">${esc(mail.brand)}</p>
   <p>Hello,</p>
-  <p>We tried to deliver your parcel today but a redelivery fee of <b>£1.45</b> is unpaid. Pay within <b>30 minutes</b> or the parcel will be returned to the sender.</p>
-  <p><a href="${link}" style="display:inline-block;background:#c0392b;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none">Pay the fee now</a></p>
-  <p style="color:#555">SwiftParcel Customer Care</p>
+  ${mail.paragraphs.map((t) => `<p>${esc(t)}</p>`).join("")}
+  <p><a href="${link}" style="display:inline-block;background:#c0392b;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none">${esc(mail.button)}</a></p>
+  <p style="color:#555">${esc(mail.brand)}</p>
   <hr style="margin-top:40px;border:none;border-top:1px solid #ddd">
-  <p style="font-size:12px;color:#777">This is a Hookline practice email you opted in to. SwiftParcel is made up. Turn practice emails off in Hookline Settings at any time.</p>
+  <p style="font-size:12px;color:#777">This is a Hookline practice email you opted in to. ${esc(mail.brand)} is made up. Turn practice emails off in Hookline Settings at any time.</p>
 </div>`;
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${key}`, "content-type": "application/json" },
     body: JSON.stringify({
-      from: process.env.PRACTICE_EMAIL_FROM || "SwiftParcel (Hookline practice) <onboarding@resend.dev>",
+      from: process.env.PRACTICE_EMAIL_FROM || `${mail.brand.replace(/[<>"]/g, "")} (Hookline practice) <onboarding@resend.dev>`,
       to: [to],
-      subject: "Your parcel is waiting: small fee due",
+      subject: mail.subject,
       html,
     }),
   });

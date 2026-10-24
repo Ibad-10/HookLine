@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { db, migrate } from "./db";
 
 export type Arm = "plain" | "stuffed" | "small";
-export type TaskName = "teacher" | "coach" | "learner" | "gatecheck";
+export type TaskName = "teacher" | "coach" | "learner" | "gatecheck" | "mailer";
 
 export type CallMeta = {
   model: string;
