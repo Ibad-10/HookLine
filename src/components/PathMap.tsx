@@ -41,7 +41,7 @@ export default function PathMap({ stops }: { stops: Stop[] }) {
             : s.state === "strong"
               ? { cls: "size-16 bg-mark text-black", edge: "#c98a1c" }
               : s.state === "practising"
-                ? { cls: "size-16 bg-card text-tide ring-4 ring-tide/25", edge: "#b9c7d6" }
+                ? { cls: "size-16 bg-card text-tide outline outline-4 outline-tide/25", edge: "#b9c7d6" }
                 : { cls: "size-16 bg-secondary text-ink-soft", edge: "#d4d4d4" };
           return (
             <motion.li

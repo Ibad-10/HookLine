@@ -29,15 +29,19 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   const [showType, setShowType] = useState(false);
 
   // Voice first: answering asks for the microphone straight away. Typing is the fallback.
-  async function answer() {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach((t) => t.stop()); // permission granted; Scribe opens its own stream
-    } catch {
-      setMicHint("The microphone isn't available, so you can type your replies instead.");
-      setShowType(true);
-    }
+  function answer() {
+    // iPhones only allow sound that starts inside the tap, so the caller's first line plays
+    // here, before any await; the microphone prompt follows.
+    speak(sc.nodes[sc.start].line, sc.start);
+    spoken.current = 1;
     setAnswered(true);
+    navigator.mediaDevices
+      ?.getUserMedia({ audio: true })
+      .then((stream) => stream.getTracks().forEach((t) => t.stop())) // permission granted; Scribe opens its own stream
+      .catch(() => {
+        setMicHint("The microphone isn't available, so you can type your replies instead.");
+        setShowType(true);
+      }) ?? (setMicHint("The microphone isn't available, so you can type your replies instead."), setShowType(true));
   }
   const rec = useRef<SR | null>(null);
   const scribe = useRef<RealtimeConnection | null>(null);
