@@ -7,7 +7,7 @@ import { ChevronLeft, Mic } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
-import { applyIntent, startCall, step } from "@/lib/call/engine";
+import { applyIntent, coachTurn, startCall, step } from "@/lib/call/engine";
 import type { CallState, Scenario } from "@/lib/call/types";
 
 type SR = { start(): void; stop(): void; onresult: ((e: { results: ArrayLike<ArrayLike<{ transcript: string }>> }) => void) | null; onend: (() => void) | null; lang: string; interimResults: boolean };
@@ -74,7 +74,14 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   function speak(text: string, node?: string) {
     window.speechSynthesis?.cancel();
     audio.current?.pause();
-    const clip = new Audio(`/audio/${sc.id}/${node}.mp3`);
+    // Recorded clip for script lines; the same voice made on the fly for the Coach's short replies.
+    const clip = node ? new Audio(`/audio/${sc.id}/${node}.mp3`) : new Audio();
+    if (!node) {
+      fetch("/api/tts", { method: "POST", body: JSON.stringify({ text }) })
+        .then((r) => (r.ok ? r.blob() : Promise.reject()))
+        .then((b) => { if (audio.current !== clip) return; clip.src = URL.createObjectURL(b); clip.play().catch(() => clip.onerror?.(new Event("error"))); })
+        .catch(() => clip.onerror?.(new Event("error")));
+    }
     clip.playbackRate = slow ? 0.8 : 1;
     clip.onerror = () => {
       const u = new SpeechSynthesisUtterance(text);
@@ -83,7 +90,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
       window.speechSynthesis?.speak(u);
     };
     audio.current = clip;
-    clip.play().catch(() => clip.onerror?.(new Event("error")));
+    if (node) clip.play().catch(() => clip.onerror?.(new Event("error")));
   }
 
   async function reply(text: string, input: "voice" | "typed") {
@@ -97,10 +104,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
       const move = await res.json();
       if (move.stop) setState((s) => ({ ...s, outcome: "stopped", checkpoints: [...s.checkpoints, "gave_secret"] }));
       else {
-        setState((s) => {
-          const said = move.say ? { ...s, transcript: [...s.transcript, { who: "caller" as const, text: move.say }] } : s;
-          return applyIntent(said, sc, move.intent ?? "stall");
-        });
+        setState((s) => coachTurn(s, sc, { intent: move.intent ?? "stall", say: move.say }));
       }
     } catch {
       setState((s) => applyIntent(s, sc, "stall")); // server trouble: the caller just carries on

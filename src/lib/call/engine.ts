@@ -51,3 +51,19 @@ export function step(
   if (!intent) return { state: withTurn, needCoach: true, masked: g.masked };
   return { state: applyIntent(withTurn, sc, intent), needCoach: false, masked: g.masked };
 }
+
+// The node's own question (its last sentence ending in "?"), used to steer back after small talk.
+const question = (line: string) => line.match(/[^.?!]*\?\s*$/)?.[0].trim() ?? "";
+
+// Applies the Coach's move. Small talk gets one short answer plus the node's question, with no
+// jump ahead; a second off-topic reply on the same step moves on as before. Other moves skip
+// the extra line so the caller doesn't talk twice in a row.
+export function coachTurn(s: CallState, sc: Scenario, move: { intent: Intent; say?: string }): CallState {
+  const lastCaller = [...s.transcript].reverse().find((t) => t.who === "caller");
+  const alreadyNudged = lastCaller && !lastCaller.node;
+  if (move.intent === "stall" && move.say && !alreadyNudged) {
+    const text = [move.say, question(sc.nodes[s.node].line)].filter(Boolean).join(" ");
+    return { ...s, transcript: [...s.transcript, { who: "caller", text }] };
+  }
+  return applyIntent(s, sc, move.intent);
+}

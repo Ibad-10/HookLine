@@ -86,18 +86,15 @@ export default function ContactSettings() {
         {p.phone.on && p.phone.number && !p.phone.verified && (
           <div className="mt-3 space-y-2">
             <p className="text-ink-soft">Confirm this number is yours. We’ll text you a 6-digit code.</p>
-            {codeSent ? (
-              <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); verify(code); }}>
-                <label className="sr-only" htmlFor="code">Code from the text</label>
-                <input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
-                  placeholder="123456" className="h-12 min-w-0 flex-1 rounded-xl bg-secondary px-3 text-lg tracking-widest" />
-                <button disabled={busy === "verify" || code.length !== 6} className="rounded-full bg-foreground px-5 font-semibold text-background disabled:opacity-50">Confirm</button>
-              </form>
-            ) : (
-              <button type="button" onClick={() => verify()} disabled={busy === "verify"} className="btn-chunky lift w-full bg-foreground text-background">
-                {busy === "verify" ? "Sending…" : "Text me a code"}
-              </button>
-            )}
+            <button type="button" onClick={() => verify()} disabled={busy === "verify"} className="btn-chunky lift w-full bg-foreground text-background">
+              {busy === "verify" ? "Sending…" : codeSent ? "Text me a new code" : "Text me a code"}
+            </button>
+            <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); verify(code); }}>
+              <label className="sr-only" htmlFor="code">Code from the text</label>
+              <input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                placeholder="Code from the text" className="h-12 min-w-0 flex-1 rounded-xl bg-secondary px-3 text-lg tracking-widest" />
+              <button disabled={busy === "verify" || code.length !== 6} className="rounded-full bg-foreground px-5 font-semibold text-background disabled:opacity-50">Confirm</button>
+            </form>
           </div>
         )}
         {p.phone.on && p.phone.number && p.phone.verified && (

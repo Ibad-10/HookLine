@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { applyIntent, startCall, step } from "./engine";
+import { applyIntent, coachTurn, startCall, step } from "./engine";
 import { matchIntent } from "./matcher";
 import { SCENARIOS } from "./scenarios";
 import { TECHNIQUES } from "../taxonomy";
@@ -77,4 +77,17 @@ test("C1: distress or goodbye on a step asking for a code ends kindly as a pass"
   expect(step(at("verify"), sc, "I'm scared", "voice").state.outcome).toBe("pass");
   expect(step(at("verify"), sc, "ok bye", "voice").state.outcome).toBe("pass");
   expect(step(at("verify"), sc, "I'm scared, it's 4829", "voice").state.outcome).toBe("stopped");
+});
+
+test("an off-topic reply gets one short answer that repeats the question, then the call moves on", () => {
+  const sc = SCENARIOS["safe-account"];
+  const s0 = startCall(sc);
+  const s1 = coachTurn(s0, sc, { intent: "stall", say: "I'm here to help verify your account." });
+  expect(s1.node).toBe("open");
+  expect(s1.transcript.at(-1)?.text).toBe("I'm here to help verify your account. Did you make that payment?");
+  const s2 = coachTurn(s1, sc, { intent: "stall", say: "Still there?" });
+  expect(s2.node).toBe("verify");
+  const s3 = coachTurn(s0, sc, { intent: "comply", say: "Great." });
+  expect(s3.node).toBe("verify");
+  expect(s3.transcript.filter((t) => t.who === "caller").length).toBe(2);
 });
