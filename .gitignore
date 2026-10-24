@@ -45,3 +45,7 @@ next-env.d.ts
 .superpowers/
 /data/sim-result.json
 /data/
+
+.vercel
+.env*
+!.env.example
