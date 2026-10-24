@@ -7,9 +7,8 @@ import seedBriefs from "@/data/seed-briefs.json";
 import { db } from "@/lib/db";
 import { contactPrefs, PUBLIC_URL, recentlySent, recordSend } from "@/lib/practice";
 import type { Brief } from "@/lib/schemas";
+import { renderEmail } from "@/lib/emailLayouts";
 import { writeEmail, type Email } from "@/lib/tasks/mailer";
-
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 // Used only if the Mailer fails, so the button still works.
 const FALLBACK: Email = {
@@ -47,15 +46,7 @@ export async function POST() {
   const sendId = await recordSend(id, "email", brief.category);
   await db().execute({ sql: "UPDATE practice_sends SET detail = ? WHERE id = ?", args: [JSON.stringify({ brand: mail.brand, subject: mail.subject, flags: mail.flags }), sendId] });
   const link = `${PUBLIC_URL()}/practice/${sendId}`;
-  const html = `<div style="font-family:Arial,sans-serif;max-width:520px;margin:auto;color:#111">
-  <p style="font-size:20px;font-weight:bold;color:#c0392b">${esc(mail.brand)}</p>
-  <p>Hello,</p>
-  ${mail.paragraphs.map((t) => `<p>${esc(t)}</p>`).join("")}
-  <p><a href="${link}" style="display:inline-block;background:#c0392b;color:#fff;padding:12px 20px;border-radius:6px;text-decoration:none">${esc(mail.button)}</a></p>
-  <p style="color:#555">${esc(mail.brand)}</p>
-  <hr style="margin-top:40px;border:none;border-top:1px solid #ddd">
-  <p style="font-size:12px;color:#777">This is a Hookline practice email you opted in to. ${esc(mail.brand)} is made up. Turn practice emails off in Hookline Settings at any time.</p>
-</div>`;
+  const html = renderEmail(mail, link);
 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
