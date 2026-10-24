@@ -34,7 +34,7 @@ export default async function Caught({ params }: PageProps<"/practice/[id]">) {
         ))}
         <li className="rounded-2xl bg-card p-4 ring-1 ring-line"><span className="mark font-semibold">A button to act now</span>: check with the company’s own app or website instead{detail ? `. ${detail.brand} is made up.` : "."}</li>
       </ul>
-      <Link href="/home" className="btn-chunky btn-grad lift mt-8 grid place-items-center text-lg">Back to Hookline</Link>
+      <Link href="/" className="btn-chunky btn-grad lift mt-8 grid place-items-center text-lg">Open Hookline</Link>
     </main>
   );
 }
