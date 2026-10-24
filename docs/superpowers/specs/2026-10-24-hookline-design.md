@@ -181,3 +181,19 @@ This replaces "guest start with a nickname" in section 13 and the look in sectio
   grey surface ladder instead of shadows, blue glow bars behind the dark hero, one motion curve
   `cubic-bezier(0.22, 0.61, 0.36, 1)`. Components from shadcn/ui; Aceternity-style effects only on
   the hero and call screen. Reduced-motion is honoured everywhere.
+
+## 16. Phase 2 demo: one real call and one real email (decided by Ibad, 24 Oct)
+
+Section 10 said the Claude build would not include real-channel practice. Ibad has asked for a
+demo of it. Only this narrow version is built; the full Phase 2 (opt-in for anyone, ownership
+checks for every number and address, a legal check) stays as section 10 describes.
+
+- **Phone:** a Twilio trial account, which can only call numbers verified on that account (Ibad's
+  own). A signed-in user who has opted in presses "Call me now"; Hookline dials only the number on
+  file. The call opens with a one-line practice notice, then plays the existing scenario clips
+  (`<Play>`), takes replies with `<Gather input="speech">`, and runs the existing engine and
+  Gatekeeper on the server. The webhook checks `X-Twilio-Signature`. No new scam scripts.
+- **Email:** sent with Resend's test sender, which only delivers to the account owner's address.
+  It reuses an existing seed message with a made-up brand; its only link goes to a Hookline review
+  page that records the outcome. No forms or input fields anywhere; a practice note in the footer.
+- Ibad approves the first real call and the first real email before they are sent.
