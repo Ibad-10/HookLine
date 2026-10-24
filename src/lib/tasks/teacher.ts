@@ -1,4 +1,4 @@
-import { checkBrands } from "../brands";
+import { checkBrands, scrubBrands } from "../brands";
 import { callLLM, type Arm, type Complete } from "../llm";
 import { LessonRepaired, type Brief, type Lesson } from "../schemas";
 import { TECHNIQUES } from "../taxonomy";
@@ -30,7 +30,9 @@ export function teacherUser(
   arm: Arm,
   history: string[] = [],
 ): string {
-  const payload: Record<string, unknown> = { brief, learner };
+  // Real names in the news brief are swapped out before the Teacher sees them; the source link stays.
+  const safe = JSON.parse(scrubBrands(JSON.stringify({ ...brief, source_url: "", source_name: "" })));
+  const payload: Record<string, unknown> = { brief: { ...safe, source_url: brief.source_url, source_name: brief.source_name }, learner };
   // The "normal" way to personalise a frontier model: paste the learner's whole history in.
   if (arm === "stuffed") payload.learner_history = history;
   return JSON.stringify(payload);
@@ -48,14 +50,19 @@ export async function writeLesson(
   history: string[] = [],
   complete?: Complete,
 ): Promise<Lesson | null> {
+  let raw = true;
   const r = await callLLM({
     task: "teacher",
     arm,
     system: TEACHER_SYSTEM,
     user: teacherUser(brief, learner, arm, history),
-    schema: LessonRepaired,
+    // Real names the model still writes are rewritten (counted as info_brands_raw for the dashboard).
+    schema: LessonRepaired.transform((l) => {
+      raw = checkBrands(JSON.stringify(l)).ok;
+      return JSON.parse(scrubBrands(JSON.stringify(l))) as Lesson;
+    }),
     sessionId,
-    checks: (l) => ({ brands: checkBrands(JSON.stringify(l)).ok, answer_key: answerKeyOk(l) }),
+    checks: (l) => ({ brands: checkBrands(JSON.stringify(l)).ok, answer_key: answerKeyOk(l), info_brands_raw: raw }),
     complete,
   });
   return r.ok ? r.data : null;

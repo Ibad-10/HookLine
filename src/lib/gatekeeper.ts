@@ -9,7 +9,11 @@ const WORDS: Record<string, string> = {
 export function normalizeSpoken(text: string): string {
   const words = text
     .toLowerCase()
-    .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => WORDS[w]);
+    .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => WORDS[w])
+    // British reading: "double eight" -> 88, "triple seven" -> 777
+    .replace(/\b(double|triple)\s+(\d)\b/g, (_, n, d) => d.repeat(n === "double" ? 2 : 3))
+    // "oh" is a zero only next to another digit: "four oh two"
+    .replace(/(\d[\s.-]*)\b(oh|o)\b(?=[\s.-]*\d)/g, "$10");
   // join digit groups split by spaces, dashes or dots: "4 8 2-9" -> "4829"
   return words.replace(/(\d)[\s.-]+(?=\d)/g, "$1");
 }
@@ -44,6 +48,8 @@ export function gate(text: string, ask: Ask): { stop: boolean; kinds: string[]; 
   if (!kinds.size && runs.some((r) => r.length >= 6 && r.length <= 8)) kinds.add("code");
   if (SECRET_WORD.test(norm)) kinds.add("password");
 
+  // On a step asking for a number, any run of 4+ digits stops the call, even inside a question.
+  if ((ask === "code" || ask === "card" || ask === "bank") && runs.some((r) => r.length >= 4)) kinds.add(`answered_${ask}`);
   const context = ask !== null && ask !== "money" && !SAFE_REPLY.test(text) && !ASSENT.test(text);
   if (context) kinds.add(`answered_${ask}`);
 

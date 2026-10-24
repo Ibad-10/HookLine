@@ -38,7 +38,13 @@ export function summarize(rows: CallRow[], task: TaskName): Record<string, ArmSu
     const all = rows.filter((r) => r.task === task && r.arm === arm);
     // Provider errors (rate limits, outages) are not the model's output quality: count them apart.
     const rs = all.filter((r) => !JSON.parse(r.checks || "{}").error);
-    if (!rs.length) continue;
+    if (!all.length) continue;
+    if (!rs.length) {
+      const none = { low: 0, central: 0, high: 0 };
+      out[arm] = { n: 0, model: all[all.length - 1].model, costPer1k: null, p50: 0, p95: 0, ttftP50: 0, tokPerSec: 0, inTokAvg: 0,
+        outTokAvg: 0, schemaRate: 0, brandRate: 0, keyRate: 0, okRate: 0, errorRate: 1, carbon: none, requestIds: [] };
+      continue;
+    }
     const checks = rs.map((r) => JSON.parse(r.checks || "{}") as Record<string, boolean>);
     const rate = (k: string) => checks.filter((c) => c.schema && c[k] !== false).length / rs.length;
     const model = rs[rs.length - 1].model;
@@ -47,7 +53,8 @@ export function summarize(rows: CallRow[], task: TaskName): Record<string, ArmSu
     out[arm] = {
       n: rs.length,
       model,
-      costPer1k: unit === null ? null : unit * 1000,
+      // Don't quote a cost from a handful of calls or from output that never passed.
+      costPer1k: unit === null || rs.length < 5 || !rs.some((r) => r.ok) ? null : unit * 1000,
       p50: pct(rs.map((r) => r.ms), 0.5),
       p95: pct(rs.map((r) => r.ms), 0.95),
       ttftP50: pct(rs.map((r) => r.ttft_ms), 0.5),
@@ -56,7 +63,7 @@ export function summarize(rows: CallRow[], task: TaskName): Record<string, ArmSu
       inTokAvg,
       outTokAvg,
       schemaRate: rate("schema"),
-      brandRate: rate("brands"),
+      brandRate: checks.some((c) => "info_brands_raw" in c) ? rate("info_brands_raw") : rate("brands"),
       keyRate: rate("answer_key"),
       okRate: rs.filter((r) => r.ok).length / rs.length,
       errorRate: (all.length - rs.length) / all.length,

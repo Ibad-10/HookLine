@@ -27,3 +27,16 @@ test("summary per arm: percentiles, rates, cost per 1,000", () => {
 test("projection: users x lessons per month x cost per lesson", () => {
   expect(project(0.001, 1_000_000)).toBe(30_000);
 });
+
+test("an arm whose calls all errored is shown, with no cost to project", () => {
+  const err = { ...row("small", 10), checks: JSON.stringify({ error: true }), ok: 0 };
+  const s = summarize([err, err], "teacher");
+  expect(s.small.n).toBe(0);
+  expect(s.small.errorRate).toBe(1);
+  expect(s.small.costPer1k).toBeNull();
+});
+
+test("cost is not quoted from fewer than 5 good calls", () => {
+  const s = summarize([row("small", 10), row("small", 20)], "teacher");
+  expect(s.small.costPer1k).toBeNull();
+});

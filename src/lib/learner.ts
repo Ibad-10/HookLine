@@ -57,11 +57,11 @@ export async function nextLesson(id: string, now = Date.now()): Promise<NextLess
   const skills = await allSkills(id);
   const pick: Pick = pickNext(skills, now, 3)[0];
   const lastMissRow = await db().execute({
-    sql: "SELECT key, at FROM events WHERE learner_id = ? AND ok = 0 ORDER BY at DESC LIMIT 1",
-    args: [id],
+    sql: "SELECT key, at FROM events WHERE learner_id = ? AND key = ? AND ok = 0 ORDER BY at DESC LIMIT 1",
+    args: [id, pick.key],
   });
   const lastMiss = lastMissRow.rows[0] ? { key: String(lastMissRow.rows[0].key), at: Number(lastMissRow.rows[0].at) } : undefined;
-  const { id: briefId, brief } = await briefFor(pick.key);
+  let { id: briefId, brief } = await briefFor(pick.key);
 
   const existing = await db().execute({
     sql: "SELECT id, lesson_json FROM lessons WHERE learner_id = ? AND brief_id = ? ORDER BY created_at DESC LIMIT 1",
@@ -78,7 +78,10 @@ export async function nextLesson(id: string, now = Date.now()): Promise<NextLess
     const known = skills.filter((s) => s.seen > 0 && s.correct === s.seen).map((s) => s.key);
     // ponytail: 20s cap on the live Teacher call, seed lesson after that; stream the lesson if users wait too long.
     const timeout = new Promise<null>((r) => setTimeout(() => r(null), 20_000));
-    lesson = (await Promise.race([writeLesson(brief, { weak, known }, "plain", id), timeout])) ?? seedLesson(pick.key);
+    const fresh = await Promise.race([writeLesson(brief, { weak, known }, "plain", id), timeout]);
+    lesson = fresh ?? seedLesson(pick.key);
+    // The backup lesson is credited to its own backup brief, never to this week's report.
+    if (!fresh) ({ id: briefId, brief } = { id: `seed-${pick.key}`, brief: Brief.parse(seedBriefs.find((b) => b.category === pick.key)) });
     lessonId = randomUUID();
     await db().execute({
       sql: "INSERT INTO lessons (id, brief_id, learner_id, lesson_json, arm, created_at) VALUES (?, ?, ?, ?, 'plain', ?)",

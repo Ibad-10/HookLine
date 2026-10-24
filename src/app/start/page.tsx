@@ -34,7 +34,7 @@ export default function Start() {
   const [error, setError] = useState("");
   const [started, setStarted] = useState(false);
 
-  if (started) return <Quiz items={items} title="Starting check: 5 quick questions" finishLabel="See my first lesson" />;
+  if (started) return <Quiz items={items} title="Starting check: 5 quick questions" finishLabel="Back to home" next={{ href: "/lesson", label: "See my first lesson" }} />;
 
   async function go(e: React.FormEvent) {
     e.preventDefault();

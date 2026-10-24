@@ -20,3 +20,18 @@ export function checkBrands(text: string): { ok: boolean; found: string[] } {
   const found = [...new Set((text.match(PATTERN) ?? []).map((m) => m.toLowerCase()))];
   return { ok: found.length === 0, found };
 }
+
+// Rewrite: swap each real name for a made-up one of the same kind, so a lesson
+// about "people pretending to be the FTC" still works without naming the FTC.
+const KIND: [RegExp, string][] = [
+  [/^(Barclays|HSBC|Lloyds|NatWest|Santander|Halifax|Nationwide|Monzo|Starling|Revolut|TSB|Metro Bank|Virgin Money|First Direct|Co-operative Bank|Chase|Bank of America|Wells Fargo|Citibank|Capital One)$/, "Northgate Bank"],
+  [/^(American Express|Amex|Visa|Mastercard|PayPal|Venmo|Zelle|Cash App|Coinbase|Binance)$/, "PayWell"],
+  [/^(Royal Mail|Parcelforce|Evri|Hermes|DPD|DHL|UPS|FedEx|USPS|Yodel)$/, "SwiftParcel"],
+  [/^(Amazon|eBay|Vinted|Gumtree|Depop|Etsy)$/, "ShopLane"],
+  [/^(BT|Vodafone|EE|O2|Sky|Virgin Media|Netflix)$/, "BrightLine Mobile"],
+  [/^(Facebook|Meta|Instagram|WhatsApp|Google|Apple|Microsoft)$/, "a big tech company"],
+];
+
+export function scrubBrands(text: string): string {
+  return text.replace(PATTERN, (m) => KIND.find(([re]) => re.test(m))?.[1] ?? "a government agency");
+}

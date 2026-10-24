@@ -195,8 +195,9 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
           </form>
           <div className="flex gap-3">
             {canTalk && (
-              <button type="button" onPointerDown={hold} onPointerUp={release} onPointerLeave={() => listening && release()}
-                className={`btn-chunky flex-1 text-white ${listening ? "bg-safe" : "bg-tide"}`}>
+              <button type="button" onPointerDown={hold} onPointerUp={release} onPointerCancel={release} onPointerLeave={() => listening && release()}
+                onContextMenu={(e) => e.preventDefault()}
+                className={`btn-chunky flex-1 touch-none select-none text-white ${listening ? "bg-safe" : "bg-tide"}`}>
                 {listening ? "Listening… let go to send" : "Hold to talk"}
               </button>
             )}

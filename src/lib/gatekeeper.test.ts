@@ -56,3 +56,25 @@ test("context rule: bare assent or stalling is not giving the secret", () => {
   expect(gate("hold on a moment", "code").stop).toBe(false);
   expect(gate("ok it's 4 8 2 9 1 3", "code").stop).toBe(true);
 });
+
+test("British ways of reading digits are caught on a code step", () => {
+  for (const t of [
+    "four oh two nine one three, right?",
+    "four double eight two one three, is that right?",
+    "4829, who is this?",
+    "no wait, it's 4829",
+    "why do you need 4829",
+    "triple seven two",
+  ]) expect(gate(t, "code").stop, t).toBe(true);
+});
+
+test("oh and double are normalised", () => {
+  expect(normalizeSpoken("four oh two")).toContain("402");
+  expect(normalizeSpoken("double eight")).toContain("88");
+  expect(normalizeSpoken("oh no")).toBe("oh no");
+});
+
+test("questions without digits still pass on a code step", () => {
+  expect(gate("why do you need my code?", "code").stop).toBe(false);
+  expect(gate("no, I won't give it", "code").stop).toBe(false);
+});

@@ -48,7 +48,7 @@ export default async function MubitPage() {
 
       <main className="mx-auto max-w-5xl space-y-10 px-5 py-8">
         <Table title="Writing a lesson (Teacher)" s={teacher} />
-        <Table title="Answering off-script on a practice call (Coach)" s={coach} />
+        <Table title="Answering off-script on a practice call (Coach)" s={coach} coach />
 
         <section>
           <h2 className="text-2xl font-extrabold">Projected monthly cost, one lesson a day per learner</h2>
@@ -86,8 +86,7 @@ export default async function MubitPage() {
           <div className="rounded-2xl bg-card p-5">
             <h2 className="text-xl font-extrabold">Trained adapters (from the Mubit console)</h2>
             <p className="mt-1 text-sm text-ink-soft">
-              Mubit has no API for adapter results yet, so these are copied by hand
-              {adapter.copied_at ? ` at ${adapter.copied_at}` : ""}.
+              Mubit has no API for adapter results yet, so these are copied by hand{adapter.copied_at ? ` at ${adapter.copied_at}` : ""}.
             </p>
             {(["teacher", "coach"] as const).map((t) => (
               <p key={t} className="mt-3">
@@ -115,18 +114,25 @@ export default async function MubitPage() {
   );
 }
 
-function Table({ title, s }: { title: string; s: Record<string, ArmSummary> }) {
+const COACH_NOTES: Record<Arm, string> = {
+  plain: "A frontier model reads the reply and picks the caller's next move.",
+  stuffed: "Same, with the learner's history pasted into the prompt.",
+  small: "A small model of adapter size picks the move. Untrained here.",
+};
+
+function Table({ title, s, coach }: { title: string; s: Record<string, ArmSummary>; coach?: boolean }) {
   const rowsDef: [string, (a: ArmSummary) => string][] = [
     ["Model", (a) => a.model],
     ["Calls measured", (a) => String(a.n)],
-    ["Cost per 1,000", (a) => money(a.costPer1k)],
+    ["Cost per 1,000", (a) => (a.costPer1k === null ? "n/a (under 5 good calls)" : money(a.costPer1k))],
     ["Time to finish (median)", (a) => secs(a.p50)],
     ["Time to finish (slowest 5%)", (a) => secs(a.p95)],
     ["Time to first word", (a) => secs(a.ttftP50)],
     ["Words out per second (tokens)", (a) => String(Math.round(a.tokPerSec))],
     ["Prompt size (tokens)", (a) => String(Math.round(a.inTokAvg))],
     ["Valid output", (a) => pctf(a.schemaRate)],
-    ["No real brand names", (a) => pctf(a.brandRate)],
+    ["Wrote no real company names (before our rewrite)", (a) => pctf(a.brandRate)],
+    ["Answer key present", (a) => pctf(a.keyRate)],
     ["Passed every check", (a) => pctf(a.okRate)],
     ["Calls that errored (rate limit, outage)", (a) => pctf(a.errorRate)],
     ["Carbon per call, estimated", (a) => `${g(a.carbon.central)} g (${g(a.carbon.low)} to ${g(a.carbon.high)})`],
@@ -142,7 +148,7 @@ function Table({ title, s }: { title: string; s: Record<string, ArmSummary> }) {
               {ARMS.map((a) => (
                 <th key={a.arm} className="p-3">
                   <span className="block">{a.name}</span>
-                  <span className="block text-sm font-normal text-ink-soft">{a.note}</span>
+                  <span className="block text-sm font-normal text-ink-soft">{coach ? COACH_NOTES[a.arm] : a.note}</span>
                 </th>
               ))}
             </tr>
@@ -153,7 +159,7 @@ function Table({ title, s }: { title: string; s: Record<string, ArmSummary> }) {
                 <th scope="row" className="p-3 font-bold">{label}</th>
                 {ARMS.map((a) => (
                   <td key={a.arm} className="p-3 tabular-nums" title={s[a.arm]?.requestIds.join(", ")}>
-                    {s[a.arm] ? f(s[a.arm]) : "No calls yet"}
+                    {!s[a.arm] ? "No calls yet" : s[a.arm].n === 0 ? (label === "Model" ? s[a.arm].model : "All calls failed (rate limit)") : f(s[a.arm])}
                   </td>
                 ))}
               </tr>

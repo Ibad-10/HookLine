@@ -27,11 +27,19 @@ test("stuffed arm carries the learner history, plain does not", () => {
   expect(teacherUser(brief, learner, "plain", h)).not.toContain("missed delivery_fee");
 });
 
-test("a lesson naming a real brand is rejected", async () => {
-  expect(await writeLesson(brief, learner, "plain", "t", [], fake(lesson("Your HMRC refund")))).toBeNull();
-});
 
 test("a clean lesson is returned", async () => {
   const l = await writeLesson(brief, learner, "plain", "t", [], fake(lesson("Parcel fees")));
   expect(l?.title).toBe("Parcel fees");
+});
+
+test("a real name in the lesson is rewritten, not thrown away, and recorded as raw", async () => {
+  const l = await writeLesson(brief, learner, "plain", "t", [], fake(lesson("When HMRC calls")));
+  expect(l?.title).not.toContain("HMRC");
+});
+
+test("real names in the brief are scrubbed before the Teacher sees them", () => {
+  const u = teacherUser({ ...brief, title: "FTC impersonators call" }, learner, "plain");
+  expect(u).not.toContain("FTC impersonators");
+  expect(u).toContain(brief.source_url);
 });

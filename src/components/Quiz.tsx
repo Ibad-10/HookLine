@@ -18,12 +18,14 @@ export default function Quiz({
   title,
   onFinish,
   finishLabel = "Back to home",
+  next: after = { href: "/call/safe-account", label: "Try a practice call" },
 }: {
   items: Item[];
   cards?: { heading: string; body: string }[];
   title: string;
   onFinish?: (score: number) => void;
   finishLabel?: string;
+  next?: { href: string; label: string };
 }) {
   const [i, setI] = useState(0); // position across cards + questions
   const [choice, setChoice] = useState<number | null>(null);
@@ -81,13 +83,13 @@ export default function Quiz({
     return (
       <main className="mx-auto max-w-md px-5 py-10 text-center">
         <div aria-hidden className="pop mx-auto mb-6 grid size-28 place-items-center rounded-full bg-mark text-5xl">✓</div>
-        <h1 className="text-3xl font-extrabold">Lesson done</h1>
+        <h1 className="text-3xl font-extrabold">{after.href === "/lesson" ? "Check done" : "Lesson done"}</h1>
         <p className="mt-3 text-lg text-ink-soft">
           You spotted {score} of {items.length}. Anything you found tricky comes back in a few days.
         </p>
         <div className="mt-8 grid gap-3">
-          <Link href="/call/safe-account" className="btn-chunky grid place-items-center bg-tide text-white">
-            Try a practice call
+          <Link href={after.href} className="btn-chunky grid place-items-center bg-tide text-white">
+            {after.label}
           </Link>
           <Link href="/" className="font-bold text-tide py-3">{finishLabel}</Link>
         </div>

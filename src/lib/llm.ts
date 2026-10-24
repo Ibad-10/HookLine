@@ -183,7 +183,8 @@ export async function callLLM<T>(o: {
       checks = { schema: true, ...(o.checks?.(data) ?? {}) };
     } else if (parsed) error = "schema: " + parsed.error.message.slice(0, 300);
   }
-  const ok = error === null && Object.values(checks).every(Boolean);
+  // "info_" checks are recorded for the dashboard but don't fail the call.
+  const ok = error === null && Object.entries(checks).every(([k, v]) => k.startsWith("info_") || v);
 
   await migrate();
   await db().execute({
