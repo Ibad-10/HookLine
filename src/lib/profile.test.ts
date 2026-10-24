@@ -58,3 +58,14 @@ test("never-seen topics are introduced as new, not a refresher", () => {
   const t = whyText({ key: "bank_impersonation", reason: "due" }, undefined, true);
   expect(t).not.toMatch(/refresher/i);
 });
+
+test("streak counts practice days in a row, and one missed day is forgiven", async () => {
+  const { streak } = await import("./profile");
+  const d = (n: number) => Date.UTC(2026, 9, 24) - n * 86_400_000 + 3_600_000;
+  const now = d(0);
+  expect(streak([d(0), d(1), d(2)], now)).toEqual({ days: 3, freezeUsed: false });
+  expect(streak([d(0), d(2), d(3)], now)).toEqual({ days: 3, freezeUsed: true }); // missed yesterday, forgiven
+  expect(streak([d(1)], now)).toEqual({ days: 1, freezeUsed: false }); // not yet today: still alive
+  expect(streak([d(4)], now)).toEqual({ days: 0, freezeUsed: false });
+  expect(streak([], now)).toEqual({ days: 0, freezeUsed: false });
+});

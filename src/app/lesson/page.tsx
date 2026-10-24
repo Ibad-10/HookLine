@@ -9,7 +9,8 @@ export default function LessonPage() {
   const [error, setError] = useState(false);
 
   useEffect(() => {
-    fetch("/api/lesson/next")
+    const topic = new URLSearchParams(window.location.search).get("topic");
+    fetch(`/api/lesson/next${topic ? `?topic=${encodeURIComponent(topic)}` : ""}`)
       .then((r) => (r.ok ? r.json() : Promise.reject()))
       .then(setData)
       .catch(() => setError(true));

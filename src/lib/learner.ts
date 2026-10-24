@@ -52,10 +52,11 @@ async function briefFor(category: string): Promise<{ id: string; brief: Brief }>
 
 export type NextLesson = { lessonId: string; category: string; why: string; brief: Brief; lesson: Lesson };
 
-export async function nextLesson(id: string, now = Date.now()): Promise<NextLesson> {
+export async function nextLesson(id: string, now = Date.now(), topic?: string): Promise<NextLesson> {
   await migrate();
   const skills = await allSkills(id);
-  const pick: Pick = pickNext(skills, now, 3)[0];
+  const chosen = topic && (CATEGORIES as readonly string[]).includes(topic) ? skills.find((s) => s.key === topic) : undefined;
+  const pick: Pick = chosen ? { key: chosen.key, reason: chosen.seen > chosen.correct ? "weak" : "due" } : pickNext(skills, now, 3)[0];
   const lastMissRow = await db().execute({
     sql: "SELECT key, at FROM events WHERE learner_id = ? AND key = ? AND ok = 0 ORDER BY at DESC LIMIT 1",
     args: [id, pick.key],

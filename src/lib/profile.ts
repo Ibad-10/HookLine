@@ -83,3 +83,19 @@ export async function saveOutcome(learnerId: string, keys: string[], ok: boolean
     ], "write");
   }
 }
+
+// Days practised in a row. Not having practised yet today never breaks it, and one
+// missed day is forgiven (a free streak freeze), so a gap never reads as failure.
+export function streak(times: number[], now: number): { days: number; freezeUsed: boolean } {
+  const days = new Set(times.map((t) => Math.floor(t / DAY)));
+  let d = Math.floor(now / DAY);
+  if (!days.has(d)) d--;
+  let count = 0, freezeUsed = false;
+  while (true) {
+    if (days.has(d)) count++;
+    else if (!freezeUsed && count > 0 && days.has(d - 1)) freezeUsed = true;
+    else break;
+    d--;
+  }
+  return { days: count, freezeUsed };
+}
