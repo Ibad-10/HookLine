@@ -30,15 +30,48 @@ export type Complete = (p: {
 
 export function modelFor(task: TaskName, arm: Arm): string {
   if (arm === "small") return process.env.SMALL_MODEL || "openai/gpt-oss-20b";
-  if (task === "coach") return process.env.COACH_MODEL || "gpt-6-luna";
-  return process.env.TEACHER_MODEL || "gpt-6-luna";
+  if (task === "coach") return process.env.COACH_MODEL || "claude-haiku-4-5";
+  return process.env.TEACHER_MODEL || "claude-haiku-4-5";
 }
+
+// Claude models go through Mubit's Anthropic route; streamed so we can time the first token.
+const anthropicComplete: Complete = async ({ model, system, user }) => {
+  const base = process.env.MUBIT_ANTHROPIC_BASE_URL || "https://api.mubit.ai/anthropic";
+  const res = await fetch(`${base}/v1/messages`, {
+    method: "POST",
+    headers: { "x-api-key": process.env.MUBIT_API_KEY ?? "", "anthropic-version": "2023-06-01", "content-type": "application/json" },
+    body: JSON.stringify({ model, max_tokens: 4096, system, stream: true, messages: [{ role: "user", content: user }] }),
+  });
+  if (!res.ok || !res.body) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const body = res.body;
+  async function* chunks(): AsyncIterable<Chunk> {
+    let buf = "", inTok = 0;
+    const decoder = new TextDecoder();
+    for await (const part of body as unknown as AsyncIterable<Uint8Array>) {
+      buf += decoder.decode(part, { stream: true });
+      let nl;
+      while ((nl = buf.indexOf("\n")) >= 0) {
+        const line = buf.slice(0, nl).trim();
+        buf = buf.slice(nl + 1);
+        if (!line.startsWith("data:")) continue;
+        const ev = JSON.parse(line.slice(5));
+        if (ev.type === "message_start") inTok = ev.message?.usage?.input_tokens ?? 0;
+        if (ev.type === "content_block_delta" && ev.delta?.text) yield { choices: [{ delta: { content: ev.delta.text } }] };
+        if (ev.type === "message_delta")
+          yield { choices: [], usage: { prompt_tokens: inTok, completion_tokens: ev.usage?.output_tokens ?? 0 } };
+      }
+    }
+  }
+  return { stream: chunks(), requestId: res.headers.get("x-middleware-request-id") };
+};
 
 const clients: Partial<Record<"frontier" | "small", OpenAI>> = {};
 
 // No metadata.session_id: OpenAI rejects it without store:true and Groq rejects it outright.
 // Mubit then derives the session from the conversation start, one per single-turn call.
-const mubitComplete: Complete = async ({ arm, model, system, user }) => {
+const mubitComplete: Complete = async (p) => {
+  const { arm, model, system, user } = p;
+  if (model.startsWith("claude")) return anthropicComplete(p);
   const kind = arm === "small" ? "small" : "frontier";
   clients[kind] ??= new OpenAI({
     apiKey: process.env.MUBIT_API_KEY,
@@ -64,7 +97,9 @@ const mubitComplete: Complete = async ({ arm, model, system, user }) => {
 
 function parseJson(text: string): unknown {
   const fenced = text.match(/```(?:json)?\s*([\s\S]*?)```/);
-  return JSON.parse(fenced ? fenced[1] : text);
+  const body = fenced ? fenced[1] : text;
+  // Models without a JSON mode sometimes wrap the object in a sentence.
+  return JSON.parse(body.slice(body.indexOf("{"), body.lastIndexOf("}") + 1));
 }
 
 export async function callLLM<T>(o: {
