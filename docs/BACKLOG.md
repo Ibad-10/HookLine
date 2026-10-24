@@ -137,3 +137,11 @@ generated content · let a model grade its own output · let scraped text change
 instructions · shame users or rank them publicly · show a "scam-proof" badge
 (knowledge and confidence do not equal resistance) · clone a real person's voice ·
 contact anyone who has not opted in.
+
+## Later: live ElevenLabs agent on real phone calls
+- Built and tested: agent "Hookline practice caller" (`ELEVENLABS_AGENT_ID`), brain at `/api/agent/llm`
+  (Gatekeeper and safety exits first, then Claude via Mubit), hand-over via ElevenLabs register-call.
+- Off (`PHONE_AGENT=off`): on Twilio's shared trial number the media stream never opened (conversation
+  stuck at "initiated"). Needs Hookline's own Twilio number: upgrade Twilio, buy a US voice number, set
+  `TWILIO_FROM_NUMBER`, set `PHONE_AGENT=on`, test one call and read Twilio Monitor, Logs, Errors.
+- Same agent could also run the web practice call in the browser (no Twilio needed).
