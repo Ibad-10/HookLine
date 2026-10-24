@@ -28,6 +28,7 @@ export async function POST(req: Request) {
     const { TWILIO_ACCOUNT_SID: sid, TWILIO_AUTH_TOKEN: token, TWILIO_FROM_NUMBER: from } = process.env;
     if (!sid || !token || !from) return Response.json({ error: "Phone practice isn't set up yet." }, { status: 503 });
     const last = (await db().execute({ sql: "SELECT expires_at FROM phone_codes WHERE learner_id = ?", args: [id] })).rows[0];
+    console.log("phone verify: send requested");
     if (last && Number(last.expires_at) - 9 * 60_000 > Date.now()) return Response.json({ error: "Wait a minute before asking for another code." }, { status: 429 });
     const fresh = String(randomInt(100000, 1000000));
     await db().execute({
@@ -41,6 +42,7 @@ export async function POST(req: Request) {
     });
     if (!res.ok) {
       const j = await res.json().catch(() => ({}));
+      console.error("phone verify: text failed", res.status, j.code, j.message);
       return Response.json({ error: `The code couldn't be sent: ${j.message ?? res.status}` }, { status: 502 });
     }
     return Response.json({ sent: true });
