@@ -1,0 +1,105 @@
+{
+  "id": "tech-support",
+  "title": "Your broadband provider says you've been hacked",
+  "category": "tech_support",
+  "caller": "Sam, BrightLine Broadband",
+  "brand": "BrightLine Broadband",
+  "start": "open",
+  "keyterms": [
+    "BrightLine",
+    "broadband",
+    "router",
+    "computer",
+    "code",
+    "gift card"
+  ],
+  "nodes": {
+    "open": {
+      "line": "Hello, this is Sam from BrightLine Broadband technical support. Our system shows your internet connection has been hacked, and someone is using it right now. Are you near your computer?",
+      "ask": null,
+      "technique": "authority",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "identity",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "identity": {
+      "line": "I understand you're being careful. I'm calling from our security centre and I can see your account on my screen. Your router is sending out alerts as we speak. Are you at your computer now?",
+      "ask": null,
+      "technique": "spoofing",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "verify": {
+      "line": "Okay. I've sent a six-digit access code to your phone so I can connect and clean your computer. Can you read it out to me quickly?",
+      "ask": "code",
+      "technique": "urgency",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "pressure"
+      }
+    },
+    "pressure": {
+      "line": "I have to warn you, while we talk the hackers can see your banking and your photos. If we don't fix this in the next few minutes, your internet will be cut off today.",
+      "ask": null,
+      "technique": "fear",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "safe_account"
+      }
+    },
+    "safe_account": {
+      "line": "To stop it for good there's a one-off security fee of ninety-nine pounds. The quickest way is to buy a gift card at the shop and read me the numbers. Can you do that now?",
+      "ask": "money",
+      "technique": "payment_method",
+      "branches": {
+        "comply": "secrecy",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "secrecy"
+      }
+    },
+    "secrecy": {
+      "line": "Great. Please don't tell anyone in the shop what it's for, they'll only try to sell you something else. Just buy the card and read me the numbers when you have it.",
+      "ask": "money",
+      "technique": "secrecy",
+      "branches": {
+        "comply": "end_scammed",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "pressure"
+      }
+    },
+    "end_safe": {
+      "line": "Fine. Your problem, not mine.",
+      "ask": null,
+      "technique": "fear",
+      "branches": {},
+      "end": "safe"
+    },
+    "end_scammed": {
+      "line": "Thank you. Your computer is protected now.",
+      "ask": null,
+      "technique": "secrecy",
+      "branches": {},
+      "end": "scammed"
+    },
+    "truth": {
+      "line": "This is a Hookline practice call, not a real one. Well done for checking. That's exactly the right thing to do.",
+      "ask": null,
+      "technique": "authority",
+      "branches": {},
+      "end": "safe"
+    }
+  }
+}

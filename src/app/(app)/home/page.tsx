@@ -9,6 +9,7 @@ import { allSkills, getLearner, learnerId } from "@/lib/learner";
 import { pickNext, streak, weakness, whyText } from "@/lib/profile";
 import { LABELS } from "@/lib/taxonomy";
 import { SCENARIOS } from "@/lib/call/scenarios";
+import { suggestCalls } from "@/lib/call/suggest";
 
 
 export default async function Home() {
@@ -31,6 +32,8 @@ export default async function Home() {
   }));
   const news = (await db().execute("SELECT brief_json, source_name FROM briefs ORDER BY published_at DESC LIMIT 1")).rows[0];
 
+  const calls = suggestCalls(Object.values(SCENARIOS), skills);
+  const callWhy = whyText(calls[0].pick, undefined, (skills.find((s) => s.key === calls[0].pick.key)?.seen ?? 0) === 0);
   const first = String(learner.nickname);
   return (
     <div className="min-h-dvh">
@@ -57,7 +60,7 @@ export default async function Home() {
           <Link href="/lesson" className="btn-chunky lift shine btn-grad ready mt-6 grid w-full place-items-center text-lg">Start lesson</Link>
         </section>
 
-        <IncomingCall main={SCENARIOS["safe-account"]} other={SCENARIOS["parcel-fee"]} />
+        <IncomingCall main={calls[0].sc} why={callWhy} others={calls.slice(1).map((c) => c.sc)} />
 
         <section id="path" className="rounded-2xl border border-line px-5 pb-8 pt-6 md:col-start-2 md:row-span-4 md:row-start-1">
           <h2 className="text-3xl font-medium tracking-[-0.03em]">Your <span className="font-serif font-light italic">path</span></h2>

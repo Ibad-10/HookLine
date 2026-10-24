@@ -13,13 +13,19 @@ const HEAD = {
 
 export default function Debrief() {
   const [data, setData] = useState<{ state: CallState; scenarioId: string } | null>(null);
+  const [next, setNext] = useState<{ id: string; title: string; why: string }[]>([]);
   useEffect(() => {
     const raw = sessionStorage.getItem("hl_last_call");
     if (!raw) return;
     const d = JSON.parse(raw) as { state: CallState; scenarioId: string };
     setData(d);
     const nodes = d.state.transcript.filter((t) => t.who === "caller" && t.node).map((t) => t.node!);
-    fetch("/api/call/outcome", { method: "POST", body: JSON.stringify({ scenarioId: d.scenarioId, outcome: d.state.outcome, nodes }) });
+    // Suggest the next calls once this result is on the profile.
+    fetch("/api/call/outcome", { method: "POST", body: JSON.stringify({ scenarioId: d.scenarioId, outcome: d.state.outcome, nodes }) })
+      .then(() => fetch(`/api/call/suggest?exclude=${d.scenarioId}`))
+      .then((r) => (r.ok ? r.json() : []))
+      .then(setNext)
+      .catch(() => undefined);
     sessionStorage.removeItem("hl_last_call");
   }, []);
 
@@ -64,6 +70,22 @@ export default function Debrief() {
           <li>Your bank will never ask for a one-time code or ask you to move money to a &ldquo;safe account&rdquo;.</li>
         </ul>
       </section>
+      {next.length > 0 && (
+        <section className="mt-8">
+          <h2 className="text-xl font-semibold tracking-tight">Your next call</h2>
+          <Link href={`/call/${next[0].id}`} className="lift mt-3 block rounded-2xl bg-card p-4 ring-1 ring-line">
+            <p className="font-bold">{next[0].title}</p>
+            <p className="mt-1 text-ink-soft">{next[0].why}</p>
+          </Link>
+          <ul className="mt-3 space-y-2">
+            {next.slice(1).map((c) => (
+              <li key={c.id}>
+                <Link href={`/call/${c.id}`} className="block rounded-xl px-4 py-3 ring-1 ring-line hover:bg-card">{c.title}</Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
       <div className="mt-6 grid gap-3">
         <Link href={`/call/${sc.id}`} className="btn-chunky grid place-items-center bg-tide text-white">Try this call again</Link>
         <Link href="/home" className="py-3 text-center font-bold text-tide">Back to home</Link>

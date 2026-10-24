@@ -3,7 +3,7 @@ import { ChevronRight, Phone, PhoneOff } from "lucide-react";
 import Link from "next/link";
 import type { Scenario } from "@/lib/call/types";
 
-export default function IncomingCall({ main, other }: { main: Scenario; other?: Scenario }) {
+export default function IncomingCall({ main, why, others = [] }: { main: Scenario; why?: string; others?: Scenario[] }) {
   return (
     <section
       aria-label="Practice call"
@@ -24,6 +24,7 @@ export default function IncomingCall({ main, other }: { main: Scenario; other?: 
         </div>
         <p className="mt-3.5 text-2xl font-medium tracking-[-0.03em]">{main.brand}?</p>
         <p className="mt-1 text-white/60">{main.title}. Can you spot the trick?</p>
+        {why && <p className="mt-2 text-sm text-white/50">{why}</p>}
       </div>
       <div className="mt-6 flex justify-around">
         <a href="#path" className="flex flex-col items-center gap-2 text-sm text-white/80">
@@ -37,11 +38,16 @@ export default function IncomingCall({ main, other }: { main: Scenario; other?: 
           Answer
         </Link>
       </div>
-      {other && (
-        <Link href={`/call/${other.id}`} className="mt-5 flex items-center justify-between rounded-full bg-white/[0.06] px-4 py-3 text-white/85 ring-1 ring-white/10 hover:bg-white/10">
-          Other call: {other.title.toLowerCase()}
-          <ChevronRight className="size-5" aria-hidden />
-        </Link>
+      {others.length > 0 && (
+        <div className="mt-5 space-y-2">
+          <p className="text-sm text-white/50">More practice calls</p>
+          {others.map((o) => (
+            <Link key={o.id} href={`/call/${o.id}`} className="flex items-center justify-between rounded-full bg-white/[0.06] px-4 py-3 text-white/85 ring-1 ring-white/10 hover:bg-white/10">
+              {o.title}
+              <ChevronRight className="size-5 shrink-0" aria-hidden />
+            </Link>
+          ))}
+        </div>
       )}
     </section>
   );

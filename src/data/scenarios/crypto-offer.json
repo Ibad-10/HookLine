@@ -1,0 +1,105 @@
+{
+  "id": "crypto-offer",
+  "title": "An investment offer that's too good to be true",
+  "category": "investment_crypto",
+  "caller": "Sophie, Apex Coin Partners",
+  "brand": "Apex Coin Partners",
+  "start": "open",
+  "keyterms": [
+    "Apex",
+    "coin",
+    "crypto",
+    "investment",
+    "wallet",
+    "password"
+  ],
+  "nodes": {
+    "open": {
+      "line": "Hi, it's Sophie from Apex Coin Partners. You signed up for investment news online, and I'm calling because our members doubled their money last month. Would you like to hear how?",
+      "ask": null,
+      "technique": "too_good",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "identity",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "identity": {
+      "line": "Of course. We're a registered firm, and I can send you our certificate after the call. Thousands of people already invest with us. Shall I tell you how it works?",
+      "ask": null,
+      "technique": "authority",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "verify": {
+      "line": "Lovely. To link your account, I'll need the login for your banking app so I can connect it for you. What's your username and password?",
+      "ask": "password",
+      "technique": "urgency",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "pressure"
+      }
+    },
+    "pressure": {
+      "line": "The thing is, this offer closes at midnight. After that the price goes up and you'll miss your chance. Most people who wait end up regretting it.",
+      "ask": null,
+      "technique": "urgency",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "safe_account"
+      }
+    },
+    "safe_account": {
+      "line": "You can start with just two hundred and fifty pounds. Transfer it to our partner wallet and you'll see it grow on your dashboard by tomorrow. Shall I give you the details?",
+      "ask": "money",
+      "technique": "payment_method",
+      "branches": {
+        "comply": "secrecy",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "secrecy"
+      }
+    },
+    "secrecy": {
+      "line": "One tip: don't mention this to your bank. They don't like their customers earning more somewhere else. Send the transfer now and tell me when it's done.",
+      "ask": "money",
+      "technique": "secrecy",
+      "branches": {
+        "comply": "end_scammed",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "pressure"
+      }
+    },
+    "end_safe": {
+      "line": "Okay. Your loss.",
+      "ask": null,
+      "technique": "urgency",
+      "branches": {},
+      "end": "safe"
+    },
+    "end_scammed": {
+      "line": "Wonderful. Welcome to Apex Coin Partners.",
+      "ask": null,
+      "technique": "secrecy",
+      "branches": {},
+      "end": "scammed"
+    },
+    "truth": {
+      "line": "This is a Hookline practice call, not a real one. Well done for checking. That's exactly the right thing to do.",
+      "ask": null,
+      "technique": "authority",
+      "branches": {},
+      "end": "safe"
+    }
+  }
+}

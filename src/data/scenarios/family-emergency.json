@@ -1,0 +1,106 @@
+{
+  "id": "family-emergency",
+  "title": "A solicitor calls about your grandson",
+  "category": "family_emergency",
+  "caller": "Mr Carter, Carter and Lowe Solicitors",
+  "brand": "Carter and Lowe Solicitors",
+  "start": "open",
+  "keyterms": [
+    "Carter",
+    "Lowe",
+    "solicitor",
+    "Jamie",
+    "bail",
+    "courier",
+    "sort code"
+  ],
+  "nodes": {
+    "open": {
+      "line": "Hello, is that Jamie's grandparent? I'm Mr Carter, a solicitor. I'm sorry to call like this, but Jamie has been in a car accident and he's being held at the police station. He asked me to call you. Can you help him?",
+      "ask": null,
+      "technique": "fear",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "identity",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "identity": {
+      "line": "I understand. Jamie is very upset and can't come to the phone just now, but he gave me your number himself. He asked you not to worry his parents. Will you help him?",
+      "ask": null,
+      "technique": "authority",
+      "branches": {
+        "comply": "verify",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "verify"
+      }
+    },
+    "verify": {
+      "line": "Thank you. To arrange his bail today, I need to set up the payment from your account. Can you give me your sort code and account number?",
+      "ask": "bank",
+      "technique": "urgency",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "pressure",
+        "refuse": "pressure",
+        "stall": "pressure"
+      }
+    },
+    "pressure": {
+      "line": "I must be honest with you. If the bail isn't paid in the next hour, Jamie will be kept in overnight. He's frightened, and he's counting on you.",
+      "ask": null,
+      "technique": "urgency",
+      "branches": {
+        "comply": "safe_account",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "safe_account"
+      }
+    },
+    "safe_account": {
+      "line": "The bail is eight hundred pounds. A courier can come to your door in twenty minutes to collect it in cash. Can you get the cash ready?",
+      "ask": "money",
+      "technique": "payment_method",
+      "branches": {
+        "comply": "secrecy",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "secrecy"
+      }
+    },
+    "secrecy": {
+      "line": "Good. Jamie begged me to ask you not to tell anyone, not even his parents. It's very embarrassing for him. Is the cash ready for the courier?",
+      "ask": "money",
+      "technique": "secrecy",
+      "branches": {
+        "comply": "end_scammed",
+        "question_identity": "end_safe",
+        "refuse": "end_safe",
+        "stall": "pressure"
+      }
+    },
+    "end_safe": {
+      "line": "Very well. I'll let Jamie know.",
+      "ask": null,
+      "technique": "urgency",
+      "branches": {},
+      "end": "safe"
+    },
+    "end_scammed": {
+      "line": "Thank you. The courier is on the way.",
+      "ask": null,
+      "technique": "secrecy",
+      "branches": {},
+      "end": "scammed"
+    },
+    "truth": {
+      "line": "This is a Hookline practice call, not a real one. Well done for checking. That's exactly the right thing to do.",
+      "ask": null,
+      "technique": "authority",
+      "branches": {},
+      "end": "safe"
+    }
+  }
+}
