@@ -186,6 +186,8 @@ export async function callLLM<T>(o: {
   // "info_" checks are recorded for the dashboard but don't fail the call.
   const ok = error === null && Object.entries(checks).every(([k, v]) => k.startsWith("info_") || v);
 
+  // Logging must never turn a good answer into a failure.
+  try {
   await migrate();
   await db().execute({
     sql: `INSERT INTO calls (task, arm, model, request_id, in_tok, out_tok, ms, ttft_ms, ok, checks, at)
@@ -193,6 +195,9 @@ export async function callLLM<T>(o: {
     args: [o.task, o.arm, model, meta.requestId, meta.inTok, meta.outTok, meta.ms, meta.ttftMs, ok ? 1 : 0,
       JSON.stringify(checks), Date.now()],
   });
+  } catch (e) {
+    console.error("call log failed", e);
+  }
 
   if (ok) return { ok: true, data: data as T, meta };
   return { ok: false, error: error ?? "checks failed: " + JSON.stringify(checks), meta };

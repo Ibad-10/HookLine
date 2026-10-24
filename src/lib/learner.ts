@@ -108,3 +108,14 @@ export async function lessonById(lessonId: string): Promise<{ lesson: Lesson; ca
   const category = String(r.rows[0].category ?? String(r.rows[0].brief_id).replace(/^seed-/, ""));
   return { lesson, category };
 }
+
+// A cookie alone isn't enough: the learner must exist, so made-up ids can't run up LLM calls.
+export async function requireLearner(): Promise<string | null> {
+  const id = await learnerId();
+  return id && (await getLearner(id)) ? id : null;
+}
+
+// Paid admin actions (the 30-call comparison run) need ADMIN_KEY. No key set = turned off.
+export function adminOk(req: Request, key = process.env.ADMIN_KEY ?? ""): boolean {
+  return key.length > 0 && req.headers.get("x-admin-key") === key;
+}

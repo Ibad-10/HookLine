@@ -72,3 +72,9 @@ test("scenarios are well formed", () => {
     }
   }
 });
+
+test("C1: distress or goodbye on a step asking for a code ends kindly as a pass", () => {
+  expect(step(at("verify"), sc, "I'm scared", "voice").state.outcome).toBe("pass");
+  expect(step(at("verify"), sc, "ok bye", "voice").state.outcome).toBe("pass");
+  expect(step(at("verify"), sc, "I'm scared, it's 4829", "voice").state.outcome).toBe("stopped");
+});

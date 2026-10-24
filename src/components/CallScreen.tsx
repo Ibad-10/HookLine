@@ -24,6 +24,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   const [typed, setTyped] = useState("");
   const [thinking, setThinking] = useState(false);
   const [canTalk, setCanTalk] = useState(false);
+  const [micHint, setMicHint] = useState("");
   const rec = useRef<SR | null>(null);
   const scribe = useRef<RealtimeConnection | null>(null);
   const pressed = useRef(false);
@@ -83,6 +84,8 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
           return applyIntent(said, sc, move.intent ?? "stall");
         });
       }
+    } catch {
+      setState((s) => applyIntent(s, sc, "stall")); // server trouble: the caller just carries on
     } finally {
       setThinking(false);
     }
@@ -109,11 +112,25 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         setListening(false);
         reply(d.text, "voice");
       });
+      // Mic denied or connection lost: stop "Listening…" and point to the type box.
+      const fail = () => {
+        if (scribe.current !== conn) return;
+        scribe.current = null;
+        pressed.current = false;
+        setListening(false);
+        setMicHint("The microphone isn't available. Type your reply instead.");
+      };
+      conn.on(RealtimeEvents.ERROR, fail);
+      conn.on(RealtimeEvents.AUTH_ERROR, fail);
+      conn.on(RealtimeEvents.CLOSE, () => scribe.current === conn && fail());
       scribe.current = conn;
       if (!pressed.current) release(); // let go before the connection opened
     } catch {
       const r = speechRecognition();
-      if (!r) return setListening(false);
+      if (!r) {
+        setMicHint("Talking isn't available on this browser. Type your reply instead.");
+        return setListening(false);
+      }
       r.lang = "en-GB";
       r.interimResults = false;
       r.onresult = (e) => reply(e.results[0][0].transcript, "voice");
@@ -195,7 +212,8 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
               className="min-h-14 flex-1 rounded-2xl bg-white px-4 text-lg text-ink" />
             <button className="rounded-2xl bg-tide px-4 font-bold">Send</button>
           </form>
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3">
+            {micHint && <p role="status" className="basis-full text-sm text-mark">{micHint}</p>}
             {canTalk && (
               <button type="button" onPointerDown={hold} onPointerUp={release} onPointerCancel={release} onPointerLeave={() => listening && release()}
                 onContextMenu={(e) => e.preventDefault()}

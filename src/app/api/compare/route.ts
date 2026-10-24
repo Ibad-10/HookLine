@@ -5,6 +5,7 @@ import { SCENARIOS } from "@/lib/call/scenarios";
 import type { Arm } from "@/lib/llm";
 import { Brief } from "@/lib/schemas";
 import { coachMove } from "@/lib/tasks/coach";
+import { adminOk } from "@/lib/learner";
 import { writeLesson } from "@/lib/tasks/teacher";
 
 export const maxDuration = 300;
@@ -12,7 +13,8 @@ export const maxDuration = 300;
 const ARMS: Arm[] = ["plain", "stuffed", "small"];
 const OFF_SCRIPT = ["my grandson usually does this for me", "sorry the kettle is boiling", "I'm on the bus right now", "can you text me instead", "I don't really use online banking"];
 
-export async function POST() {
+export async function POST(req: Request) {
+  if (!adminOk(req)) return Response.json({ error: "admin key needed" }, { status: 403 });
   const briefs = seeds.slice(0, 5).map((b) => Brief.parse(b));
   const history = ["2026-10-18: missed a delivery_fee question", "2026-10-20: missed an urgency question", "2026-10-21: got a romance question right"];
   await Promise.all(

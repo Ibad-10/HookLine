@@ -23,3 +23,12 @@ test("scrub swaps real names for made-up ones by kind", async () => {
   expect(out).toContain("Northgate Bank");
   expect(out).toContain("SwiftParcel");
 });
+
+test("I4: brand names inside web addresses and in capitals are caught and rewritten", async () => {
+  const { scrubBrands } = await import("./brands");
+  for (const t of ["Visit paypal-secure.com", "royalmail.com/redeliver", "www.amazon.co.uk", "PAYPAL alert"]) {
+    expect(checkBrands(t).ok, t).toBe(false);
+    expect(checkBrands(scrubBrands(t)).ok, scrubBrands(t)).toBe(true);
+  }
+  expect(scrubBrands("Chase Bank")).toBe("Northgate Bank");
+});

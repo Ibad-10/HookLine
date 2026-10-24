@@ -78,3 +78,17 @@ test("questions without digits still pass on a code step", () => {
   expect(gate("why do you need my code?", "code").stop).toBe(false);
   expect(gate("no, I won't give it", "code").stop).toBe(false);
 });
+
+test("C2: comma-separated digits are joined and caught", () => {
+  expect(gate("four, eight, two, nine, one, three", null).stop).toBe(true);
+  expect(gate("four, eight, two, nine, one, three", null).masked).not.toMatch(/\d/);
+  expect(gate("yes my card is 4111, 1111, 1111, 1111", null).kinds).toContain("card");
+});
+
+test("I1: tens and teens are normalised", () => {
+  expect(normalizeSpoken("forty two seventy one")).toContain("4271");
+  expect(normalizeSpoken("thirteen")).toContain("13");
+  expect(normalizeSpoken("twenty")).toContain("20");
+  expect(gate("the code is forty two seventy one", null).stop).toBe(true);
+  expect(gate("no problem, it's forty eight twenty nine thirteen", "code").stop).toBe(true);
+});

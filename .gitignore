@@ -40,7 +40,6 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
-!.env.example
 *.db
 .superpowers/
 /data/sim-result.json
@@ -48,5 +47,5 @@ next-env.d.ts
 
 .vercel
 .env*
-!.env.example
 .playwright-mcp/
+!.env.example

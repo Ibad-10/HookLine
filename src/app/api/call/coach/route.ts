@@ -2,6 +2,7 @@
 import { z } from "zod";
 import { gate } from "@/lib/gatekeeper";
 import { SCENARIOS } from "@/lib/call/scenarios";
+import { requireLearner } from "@/lib/learner";
 import { coachMove, gateCheck } from "@/lib/tasks/coach";
 
 const Body = z.object({
@@ -12,6 +13,7 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
+  if (!(await requireLearner())) return Response.json({ error: "no session" }, { status: 401 });
   const body = Body.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: "bad request" }, { status: 400 });
   const { scenarioId, node, sessionId } = body.data;

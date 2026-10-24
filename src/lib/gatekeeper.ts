@@ -5,17 +5,30 @@ const WORDS: Record<string, string> = {
   zero: "0", one: "1", two: "2", three: "3", four: "4",
   five: "5", six: "6", seven: "7", eight: "8", nine: "9",
 };
+const TENS: Record<string, string> = { twenty: "2", thirty: "3", forty: "4", fifty: "5", sixty: "6", seventy: "7", eighty: "8", ninety: "9" };
+const TEENS: Record<string, string> = {
+  ten: "10", eleven: "11", twelve: "12", thirteen: "13", fourteen: "14",
+  fifteen: "15", sixteen: "16", seventeen: "17", eighteen: "18", nineteen: "19",
+};
+const TENS_RE = Object.keys(TENS).join("|");
+const PAIR = new RegExp(`\\b(${TENS_RE})[\\s-]+(one|two|three|four|five|six|seven|eight|nine)\\b`, "g");
+const LONE_TENS = new RegExp(`\\b(${TENS_RE})\\b`, "g");
+const TEEN = new RegExp(`\\b(${Object.keys(TEENS).join("|")})\\b`, "g");
 
 export function normalizeSpoken(text: string): string {
   const words = text
     .toLowerCase()
+    // codes are often read in pairs: "forty two" -> 42, "twenty" -> 20, "thirteen" -> 13
+    .replace(PAIR, (_, t: string, u: string) => TENS[t] + WORDS[u])
+    .replace(LONE_TENS, (t) => TENS[t] + "0")
+    .replace(TEEN, (t) => TEENS[t])
     .replace(/\b(zero|one|two|three|four|five|six|seven|eight|nine)\b/g, (w) => WORDS[w])
     // British reading: "double eight" -> 88, "triple seven" -> 777
     .replace(/\b(double|triple)\s+(\d)\b/g, (_, n, d) => d.repeat(n === "double" ? 2 : 3))
     // "oh" is a zero only next to another digit: "four oh two"
-    .replace(/(\d[\s.-]*)\b(oh|o)\b(?=[\s.-]*\d)/g, "$10");
-  // join digit groups split by spaces, dashes or dots: "4 8 2-9" -> "4829"
-  return words.replace(/(\d)[\s.-]+(?=\d)/g, "$1");
+    .replace(/(\d[\s.,-]*)\b(oh|o)\b(?=[\s.,-]*\d)/g, "$10");
+  // join digit groups split by spaces, commas, dashes or dots: "4, 8 2-9" -> "4829"
+  return words.replace(/(\d)[\s.,-]+(?=\d)/g, "$1");
 }
 
 export function luhn(digits: string): boolean {
@@ -32,7 +45,7 @@ const SECRET_WORD = /\b(password|passcode|pin|memorable word|secret word)\b\s*(?
 // Bare assent or stalling ("ok", "hold on") is not handing over the secret.
 const ASSENT = /^\s*((yes|yeah|ok|okay|sure|right|alright|fine|go on|hold on|wait|one (sec|second|moment)|a moment|um+|hmm+|er+)[\s.,!]*)+$/i;
 const SAFE_REPLY =
-  /\b(no|nope|won't|will not|not giving|call (you|my bank|them) back|hang up|who|why|what|which|is this real|scam)\b|\?/i;
+  /\b(no|nope|won't|will not|not giving|call (you|my bank|them) back|hang up|who|why|what|which|is this real|scam|scared|frightened|afraid|upset|panick?ing|crying|bye|goodbye|end (the|this) call)\b|\?/i;
 
 export function gate(text: string, ask: Ask): { stop: boolean; kinds: string[]; masked: string } {
   const norm = normalizeSpoken(text);

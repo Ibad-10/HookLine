@@ -17,21 +17,35 @@ const PATTERN = new RegExp(
 );
 
 export function checkBrands(text: string): { ok: boolean; found: string[] } {
-  const found = [...new Set((text.match(PATTERN) ?? []).map((m) => m.toLowerCase()))];
+  const hits = [...(text.match(PATTERN) ?? []), ...(text.match(CAPS) ?? []), ...[...text.matchAll(DOMAIN)].map((m) => m[1])];
+  const found = [...new Set(hits.map((m) => m.toLowerCase()))];
   return { ok: found.length === 0, found };
 }
 
 // Rewrite: swap each real name for a made-up one of the same kind, so a lesson
 // about "people pretending to be the FTC" still works without naming the FTC.
 const KIND: [RegExp, string][] = [
-  [/^(Barclays|HSBC|Lloyds|NatWest|Santander|Halifax|Nationwide|Monzo|Starling|Revolut|TSB|Metro Bank|Virgin Money|First Direct|Co-operative Bank|Chase|Bank of America|Wells Fargo|Citibank|Capital One)$/, "Northgate Bank"],
-  [/^(American Express|Amex|Visa|Mastercard|PayPal|Venmo|Zelle|Cash App|Coinbase|Binance)$/, "PayWell"],
-  [/^(Royal Mail|Parcelforce|Evri|Hermes|DPD|DHL|UPS|FedEx|USPS|Yodel)$/, "SwiftParcel"],
-  [/^(Amazon|eBay|Vinted|Gumtree|Depop|Etsy)$/, "ShopLane"],
-  [/^(BT|Vodafone|EE|O2|Sky|Virgin Media|Netflix)$/, "BrightLine Mobile"],
-  [/^(Facebook|Meta|Instagram|WhatsApp|Google|Apple|Microsoft)$/, "a big tech company"],
+  [/^(barclays|hsbc|lloyds|natwest|santander|halifax|nationwide|monzo|starling|revolut|tsb|metro ?bank|virgin ?money|first ?direct|co-operative ?bank|chase|bank ?of ?america|wells ?fargo|citibank|capital ?one)$/i, "Northgate Bank"],
+  [/^(american ?express|amex|visa|mastercard|paypal|venmo|zelle|cash ?app|coinbase|binance)$/i, "PayWell"],
+  [/^(royal ?mail|parcelforce|evri|hermes|dpd|dhl|ups|fedex|usps|yodel)$/i, "SwiftParcel"],
+  [/^(amazon|ebay|vinted|gumtree|depop|etsy)$/i, "ShopLane"],
+  [/^(bt|vodafone|ee|o2|sky|virgin ?media|netflix)$/i, "BrightLine Mobile"],
+  [/^(facebook|meta|instagram|whatsapp|google|apple|microsoft)$/i, "a big tech company"],
 ];
+const kindOf = (name: string) => KIND.find(([re]) => re.test(name))?.[1] ?? "a government agency";
+
+// Brand names also hide in web addresses ("royalmail.com/redeliver", "paypal-secure.com")
+// and in capitals ("PAYPAL"). Slugs under 3 letters (ee, o2, bt) are skipped in addresses.
+const slug = (b: string) => b.toLowerCase().replace(/[^a-z0-9]/g, "");
+const SLUGS = [...new Set(REAL_BRANDS.map(slug).filter((s) => s.length >= 3))];
+const escape = (b: string) => b.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+const DOMAIN = new RegExp(`\\b[\\w.-]*(${SLUGS.join("|")})[\\w-]*\\.[a-z]{2,}[\\w./-]*`, "gi");
+const CAPS = new RegExp(`\\b(${REAL_BRANDS.filter((b) => b !== b.toUpperCase()).map((b) => escape(b.toUpperCase())).join("|")})\\b`, "g");
 
 export function scrubBrands(text: string): string {
-  return text.replace(PATTERN, (m) => KIND.find(([re]) => re.test(m))?.[1] ?? "a government agency");
+  return text
+    .replace(DOMAIN, (_, s: string) => `${kindOf(s).toLowerCase().replace(/^an? /, "").replace(/[^a-z]+/g, "-")}.example`)
+    .replace(PATTERN, kindOf)
+    .replace(CAPS, kindOf)
+    .replace(/Northgate Bank Bank/g, "Northgate Bank");
 }
