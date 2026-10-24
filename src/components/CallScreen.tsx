@@ -78,7 +78,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     const recorded = node && !sc.generated;
     const clip = recorded ? new Audio(`/audio/${sc.id}/${node}.mp3`) : new Audio();
     if (!recorded) {
-      fetch("/api/tts", { method: "POST", body: JSON.stringify({ text }) })
+      fetch("/api/tts", { method: "POST", body: JSON.stringify({ text, voice: sc.voice }) })
         .then((r) => (r.ok ? r.blob() : Promise.reject()))
         .then((b) => { if (audio.current !== clip) return; clip.src = URL.createObjectURL(b); clip.play().catch(() => clip.onerror?.(new Event("error"))); })
         .catch(() => clip.onerror?.(new Event("error")));

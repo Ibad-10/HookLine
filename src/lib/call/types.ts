@@ -19,6 +19,7 @@ export type Scenario = {
   start: string;
   keyterms: string[];
   nodes: Record<string, Node>;
+  voice?: string; // ElevenLabs voice id for the caller
   generated?: boolean; // written for one learner; voiced on the fly, web calls only
 };
 

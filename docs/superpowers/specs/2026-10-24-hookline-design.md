@@ -209,3 +209,8 @@ checks for every number and address, a legal check) stays as section 10 describe
   (no real brands, no web addresses or phone numbers, no dead ends). Written calls are voiced on the
   fly in the same voice and run on the web only, never on the real phone line. Calls are suggested
   from weak spots on Home and after each call. Five hand-written calls now exist.
+- **Update (24 Oct, Ibad): real calls from history.** "Call me now" now rings with a call written
+  from the learner's weak spots (same fixed shape and checks as the web), falling back to the best
+  recorded call. Each caller has a human ElevenLabs voice (male or female); Hookline's own notices
+  use one narrator voice. At the "read me the code" step a real Twilio Verify code arrives by text
+  to the learner's own confirmed number, so they practise refusing a genuine-looking code.

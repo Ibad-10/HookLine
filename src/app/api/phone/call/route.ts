@@ -1,6 +1,11 @@
-// "Call me now": rings the signed-in learner's own opted-in number with a practice call.
+// "Call me now": rings the signed-in learner's own confirmed number with a practice call
+// written from their weak spots.
 // A Twilio trial account can only call numbers verified on it.
-import { requireLearner } from "@/lib/learner";
+import { SCENARIOS } from "@/lib/call/scenarios";
+import { suggestCalls } from "@/lib/call/suggest";
+import { allSkills, requireLearner } from "@/lib/learner";
+import { writeCall } from "@/lib/tasks/caller";
+import { briefForWeakSpot, weakestTricks } from "@/lib/weakest";
 import { callToken } from "@/lib/phone";
 import { contactPrefs, PUBLIC_URL, recentlySent, recordSend } from "@/lib/practice";
 
@@ -14,7 +19,10 @@ export async function POST() {
   if (!prefs.phone.verified) return Response.json({ error: "Confirm your number with the text code first." }, { status: 400 });
   if (await recentlySent(id, "phone")) return Response.json({ error: "One practice call every 5 minutes, please." }, { status: 429 });
 
-  const scenario = "safe-account";
+  // A call written from the learner's weak spots; if that fails, the best-matching recorded call.
+  const skills = await allSkills(id);
+  const written = await writeCall(await briefForWeakSpot(skills), weakestTricks(skills), id);
+  const scenario = written?.id ?? suggestCalls(Object.values(SCENARIOS), skills)[0].sc.id;
   await recordSend(id, "phone", scenario);
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {
     method: "POST",

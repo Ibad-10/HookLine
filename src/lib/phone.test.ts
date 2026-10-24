@@ -17,7 +17,7 @@ test("Twilio signatures: valid passes, tampered fails", () => {
 
 test("first turn says it is practice, then plays the opening clip and listens", () => {
   const x = firstTurn(base, sc, "l1");
-  expect(x).toContain("Hookline practice call");
+  expect(x).toContain("/audio/hookline/notice.mp3");
   expect(x).toContain("/audio/safe-account/open.mp3");
   expect(x).toContain('<Gather input="speech"');
 });
@@ -33,7 +33,10 @@ test("asking who it is moves on; hanging up passes; off-script asks the coach", 
   expect(nextTurn(base, sc, "open", "l1", "who is this?").node).toBe("identity");
   expect(nextTurn(base, sc, "open", "l1", "I'm going to hang up").end).toBe("pass");
   expect(nextTurn(base, sc, "open", "l1", "the weather is nice").needCoach).toBe(true);
-  expect(nextTurn(base, sc, "open", "l1", "the weather is nice", "stall").node).toBe("verify");
+  expect(nextTurn(base, sc, "open", "l1", "the weather is nice", { intent: "stall" }).node).toBe("verify");
+  const small = nextTurn(base, sc, "open", "l1", "hello", { intent: "stall", say: "Hi there." });
+  expect(small.node).toBe("open");
+  expect(small.twiml).toContain("say=Hi%20there.%20Did%20you%20make%20that%20payment%3F");
 });
 
 test("call URLs carry a token that only matches its own scenario and learner", async () => {
@@ -44,4 +47,12 @@ test("call URLs carry a token that only matches its own scenario and learner", a
   expect(validToken("safe-account", "l2", t)).toBe(false);
   expect(validToken("safe-account", "l1", null)).toBe(false);
   expect(firstTurn(base, sc, "l1")).toContain(`t=${t}`);
+});
+
+test("silence asks once if you're there, then ends the call kindly", () => {
+  const first = nextTurn(base, sc, "open", "l1", "", undefined, 0);
+  expect(first.end).toBeNull();
+  expect(first.twiml).toContain('actionOnEmptyResult="true"');
+  expect(first.twiml).toContain("q=1");
+  expect(nextTurn(base, sc, "open", "l1", "", undefined, 1).twiml).toContain("/audio/hookline/quiet.mp3");
 });
