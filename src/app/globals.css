@@ -244,7 +244,58 @@ html.dark {
   filter: blur(18px);
 }
 
+
+/* ---- Hookline UI (from the Claude Design canvas) ---- */
+.btn-grad {
+  background: linear-gradient(180deg, #1a8ff0, #0068ad);
+  color: #fff;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.35), 0 0 0 1px rgba(122, 202, 255, 0.35);
+}
+.lift { transition: transform 200ms var(--ease-brand), box-shadow 200ms var(--ease-brand); }
+.lift:hover { transform: translateY(-2px); box-shadow: 0 10px 30px -8px rgba(0, 153, 255, 0.7); }
+.lift:active { transform: scale(0.98); }
+@keyframes shine { from { transform: translateX(-120%); } to { transform: translateX(220%); } }
+.shine { position: relative; overflow: hidden; }
+.shine::after {
+  content: ""; position: absolute; inset: 0; width: 40%; pointer-events: none;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.45), transparent);
+  animation: shine 2.8s var(--ease-brand) infinite;
+}
+@keyframes ready {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(0, 153, 255, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+  50% { box-shadow: 0 0 0 10px rgba(0, 153, 255, 0), inset 0 1px 0 rgba(255, 255, 255, 0.35); }
+}
+.ready { animation: ready 2.4s var(--ease-brand) infinite; }
+
+/* Raised, pressable path stops (3D bottom edge). */
+.stop { transition: transform 120ms var(--ease-brand), box-shadow 120ms var(--ease-brand); box-shadow: 0 6px 0 var(--edge, #c9cfd6); }
+.stop:hover { transform: translateY(-2px); }
+.stop:active { transform: translateY(5px); box-shadow: 0 1px 0 var(--edge, #c9cfd6); }
+
+/* Streak. */
+@keyframes flicker { 0%,100% { transform: scale(1) rotate(0); } 25% { transform: scale(1.08,.94) rotate(-3deg); } 50% { transform: scale(.95,1.08) rotate(2deg); } 75% { transform: scale(1.04,.97) rotate(-1deg); } }
+@keyframes countpop { 0% { transform: translateY(10px) scale(.6); opacity: 0; } 60% { transform: translateY(-3px) scale(1.25); opacity: 1; } 100% { transform: none; } }
+@keyframes spark { 0% { transform: translate(0,0) scale(0); opacity: 0; } 30% { opacity: 1; transform: translate(-4px,-6px) scale(1); } 100% { transform: translate(-8px,-16px) scale(0); opacity: 0; } }
+@keyframes dayin { from { transform: scale(0) rotate(-30deg); } to { transform: none; } }
+@keyframes todaypulse { 0%,100% { box-shadow: 0 0 0 2px #ff9f1c; } 50% { box-shadow: 0 0 0 5px rgba(255,159,28,.35); } }
+.flame { transform-origin: 50% 90%; animation: flicker 1.4s ease-in-out infinite; }
+.count-pop { display: inline-block; animation: countpop .7s var(--ease-brand) .3s both; }
+.spark { animation: spark 1.8s ease-out infinite; }
+.day-in { animation: dayin .45s var(--ease-brand) both; }
+.today { animation: todaypulse 1.8s ease-in-out infinite; }
+
+/* Incoming call. */
+@keyframes callring { from { transform: scale(1); opacity: .8; } to { transform: scale(1.7); opacity: 0; } }
+@keyframes wiggle { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-8deg); } 40% { transform: rotate(8deg); } 60% { transform: rotate(-4deg); } }
+.call-ring { animation: callring 1.6s var(--ease-brand) infinite; }
+.wiggle { animation: wiggle 1.6s var(--ease-brand) infinite; }
+@keyframes cue { 0%,100% { transform: translateY(0); opacity: .5; } 50% { transform: translateY(8px); opacity: 1; } }
+.cue { animation: cue 1.8s var(--ease-brand) infinite; }
+@keyframes badgepop { 0% { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; } }
+.badge-pop { animation: badgepop .5s var(--ease-brand) both; }
+
 @media (prefers-reduced-motion: reduce) {
+  .shine::after { display: none; }
   *,
   *::before,
   *::after {

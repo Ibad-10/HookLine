@@ -1,7 +1,7 @@
 import { Flame, Phone } from "lucide-react";
 import Link from "next/link";
 import AppNav from "@/components/AppNav";
-import HeroQuote from "@/components/HeroQuote";
+import Landing from "@/components/Landing";
 import PathMap, { type Stop } from "@/components/PathMap";
 import { db, migrate } from "@/lib/db";
 import { allSkills, getLearner, learnerId, signedIn } from "@/lib/learner";
@@ -102,33 +102,5 @@ export default async function Home() {
 }
 
 function Welcome() {
-  return (
-    <div className="relative min-h-dvh overflow-hidden bg-black text-white">
-      <div aria-hidden className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[70%] items-end justify-center gap-10">
-        {[0, 1, 2, 3, 4].map((k) => (
-          <span key={k} className="glow-bar w-20" style={{ height: `${[55, 80, 100, 80, 55][k]}%`, animationDelay: `${k * 0.9}s` }} />
-        ))}
-      </div>
-      <main className="relative mx-auto flex min-h-dvh max-w-xl flex-col justify-between px-5 py-6">
-        <nav className="glass flex items-center justify-between rounded-full py-1.5 pl-5 pr-1.5" style={{ background: "rgba(0,0,0,0.6)" }}>
-          <span className="text-lg font-semibold tracking-tight">Hookline</span>
-          <Link href="/sign-in" className="rounded-full px-4 py-2.5 text-sm font-medium hover:bg-white/10">Sign in</Link>
-        </nav>
-        <div className="py-10">
-          <span className="inline-block rounded-full border border-white/20 px-3 py-1 text-sm text-white/80">Scam practice for everyone</span>
-          <h1 className="mt-6 text-[3.2rem] font-medium leading-[0.98] tracking-[-0.05em]">
-            Spot the <span className="font-serif font-light italic tracking-[-0.02em]">hook</span> before it catches you.
-          </h1>
-          <div className="mt-8"><HeroQuote /></div>
-          <p className="mt-6 text-lg text-white/70">
-            Three-minute lessons from scams reported this week, and practice phone calls you&rsquo;re allowed to hang up on.
-          </p>
-        </div>
-        <div className="grid gap-3">
-          <Link href="/start" className="btn-chunky grid place-items-center bg-white text-lg text-black">Try a 1-minute check</Link>
-          <Link href="/sign-up" className="btn-chunky grid place-items-center border border-white/25 text-lg text-white">Create a free account</Link>
-        </div>
-      </main>
-    </div>
-  );
+  return <Landing />;
 }
