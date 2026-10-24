@@ -160,3 +160,24 @@ models and let Mubit take over; Phase 2 real-channel listed.
 - Patterns (not visuals) come from Duolingo (lesson flow, feedback sheet, path) and
   Google's phishing quiz (answer buttons above a realistic message, "Show me" flags).
   The visual identity is Hookline's own.
+
+## 15. Accounts, admin console and design language (decided by Ibad, 24 Oct)
+
+This replaces "guest start with a nickname" in section 13 and the look in section 14.
+
+- **Accounts:** Clerk. Sign in with an email code, Google, or email and password; Clerk remembers
+  the device. Anyone can take the 5-question starting check without an account; at the end they are
+  asked to sign up to save their progress, and the guest progress moves onto the new account.
+  Lessons, calls, progress and settings need an account.
+- **Admin console** at `/admin`, for addresses listed in `ADMIN_EMAILS`. Tabs: the Mubit comparison
+  with its run button; learners in aggregate (sign-ups, sessions, weak-spot spread, no personal
+  data); content (this week's briefs, a refresh-news button, recent lessons); adapters (a form to
+  record the Mubit console's adapter results). `/mubit` stays public and read-only for judges.
+- **Design language:** taken from `D:\Projects\design-notes\visuvate-DESIGN.md` (patterns only, our
+  own content): light theme by default with a dark toggle; the landing hero and the practice call
+  are always dark. Geist for UI and headings (tight tracking), Fraunces light italic for one word
+  per heading, body at 18px. Electric blue `#0099ff` for primary actions, focus and glow; amber
+  `#ffb840` is the red-flag highlighter. Pill buttons, a floating glass nav, hairline borders and a
+  grey surface ladder instead of shadows, blue glow bars behind the dark hero, one motion curve
+  `cubic-bezier(0.22, 0.61, 0.36, 1)`. Components from shadcn/ui; Aceternity-style effects only on
+  the hero and call screen. Reduced-motion is honoured everywhere.
