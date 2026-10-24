@@ -20,53 +20,53 @@ Code freeze: Sun 25 Oct 2026, 10:00 (clocks go back at 02:00 Sunday).
 
 | Status | Area | Item | Notes |
 |---|---|---|---|
-| ⬜ | Start | Guest start with a nickname, no password | Cookie session. No email verification. |
-| ⬜ | Start | Starting quiz, 5 questions across scam types | Fills the first weak-spot profile. |
-| ⬜ | Start | Three sign-up questions (age band, services used, language) | Cohort starting point; nothing else collected. |
-| ⬜ | Learner | Read this week's reports from 3 to 5 public sources | One ingest run plus a "refresh" button; schedule later. |
-| ⬜ | Learner | Fixed-schema scam brief per report | Category, technique, what it asks for, warning signs, safe action, source link, date. Page text never in an instruction position; off-schema output rejected. |
-| ⬜ | Teacher | Lesson (3 to 5 short cards) and quiz from a brief | One fixed system prompt: one Mubit task. Answer key fixed in the output, checked in code. |
-| ⬜ | Teacher | Fictional brands only in generated content | Code blocklist of real brand names plus a rewrite; fail closed. |
-| ⬜ | Quiz | Multiple choice | |
-| ⬜ | Quiz | Real or scam? | One message, two big buttons. |
-| ⬜ | Quiz | Tap the red flags | Fake text message or email mock; user taps suspicious parts (sender, link, urgency line). |
-| ⬜ | Quiz | Feedback sheet after every answer | Right/wrong, why, the trick's name (urgency, authority...), the safe action. Kind wording. |
-| ⬜ | Practice | Voice practice call in the browser | Branching pre-script, pre-generated ElevenLabs audio, speech-to-text, fast matcher picks the branch. |
-| ⬜ | Practice | Off-script replies through Mubit | Second fixed Mubit task. Short delay acceptable. |
-| ⬜ | Practice | Hang-up and "is this real?" always win | Hanging up or asking ends the call and counts as a pass. The app answers truthfully. |
-| ⬜ | Practice | Live captions and a big "End call" button | |
-| ⬜ | Practice | Checkpoints defined in code per scenario | "Gave a code", "agreed to move money", "shared card digits", "refused", "called back on official number". |
-| ⬜ | Practice | At least 2 scenarios | Bank "safe account" call; parcel delivery fee call. Fictional brands. |
-| ⬜ | Gatekeeper | Code rules on every user turn | Card numbers (Luhn), sort codes, account numbers, one-time codes, spoken digits, password phrases. |
-| ⬜ | Gatekeeper | Context rule | When the caller has just asked for a secret, any reply that is not a refusal or a question stops the call. |
-| ⬜ | Gatekeeper | Stop, mask, log only "stopped at step N" | Masking happens before any network call or log. |
-| ⬜ | Debrief | After every call | Timeline of the tricks used, where the user did well, the moment to hang up, what to do in real life. |
-| ⬜ | Profile | Weak-spot record by scam type and by trick | Updated from quiz answers and checkpoints only. |
-| ⬜ | Profile | Next-lesson picker, about 1 weak to 2 known | |
-| ⬜ | Profile | "Why this lesson" panel | Plain reason: "You missed the delivery-fee text on Tuesday." |
-| ⬜ | Profile | Spaced repeats at about 2 days, 1 week, 3 weeks, then monthly | New example of the same trick each time, not the same question. Simulated clock for the demo. |
-| ⬜ | Screens | Home (today's 3-minute session), Lesson, Quiz, Call, Debrief, My progress, Settings | Phone and desktop. |
-| ⬜ | Access | Large text, slow audio, simple choices | Big tap targets, captions on by default. |
-| ⬜ | Mubit | Every LLM call through the Mubit gateway | Provider keys in the Mubit console. |
-| ⬜ | Mubit | Teacher prompt frozen early, traffic generated early | Training needs about 25 kept examples; 3 starts a day. |
-| ⬜ | Mubit | "With vs without Mubit" dashboard, three arms | (1) plain frontier LLM, no personalisation; (2) frontier LLM personalised the normal way, by stuffing the profile and past mistakes into a longer prompt; (3) Mubit adapter. Same inputs to all three. |
-| ⬜ | Mubit | Dashboard metrics, measured | Cost per lesson and per 1,000; latency p50/p95 (matters most for off-script call turns); prompt tokens per call; schema-valid output rate; answer-key check pass rate; fictional-brand check pass rate; agreement with the frontier answer. |
-| ⬜ | Mubit | Speed comparison, measured | Time to first token, tokens per second, total time per lesson and per off-script call turn, for all three arms. |
-| ⬜ | Mubit | Carbon comparison, estimated and labelled as such | Energy per call from token counts and model size, using a published per-token energy figure, times a stated grid carbon intensity. Method and assumptions shown on screen as a range, never as a measurement. |
-| ⬜ | Mubit | Dashboard metrics, projected and labelled as such | Monthly cost at 10k, 100k, 1M users; tokens growth as the profile grows in arm 2; whose servers the learner profile goes to (provider vs own model). |
-| ⬜ | Mubit | Live switch or honest fallback | Live switch if adapters are callable from code; Mubit's own eval results if not, said on screen. |
-| ⬜ | Measure | 200 simulated users with hidden weak spots | Chart: how many quizzes until the profile finds each hidden weak spot. |
-| ⬜ | Safety | "Practice" label on every practice screen | |
-| ⬜ | Safety | Scraped text is data, never instructions | |
+| ✅ | Start | Guest start with a nickname, no password | Cookie session. No email verification. |
+| ✅ | Start | Starting quiz, 5 questions across scam types | Fills the first weak-spot profile. |
+| 🔨 | Start | Three sign-up questions (age band, services used, language) | Cohort starting point; nothing else collected. |
+| ✅ | Learner | Read this week's reports from 3 to 5 public sources | One ingest run plus a "refresh" button; schedule later. |
+| ✅ | Learner | Fixed-schema scam brief per report | Category, technique, what it asks for, warning signs, safe action, source link, date. Page text never in an instruction position; off-schema output rejected. |
+| ✅ | Teacher | Lesson (3 to 5 short cards) and quiz from a brief | One fixed system prompt: one Mubit task. Answer key fixed in the output, checked in code. |
+| ✅ | Teacher | Fictional brands only in generated content | Code blocklist of real brand names plus a rewrite; fail closed. |
+| ✅ | Quiz | Multiple choice | |
+| ✅ | Quiz | Real or scam? | One message, two big buttons. |
+| ✅ | Quiz | Tap the red flags | Fake text message or email mock; user taps suspicious parts (sender, link, urgency line). |
+| ✅ | Quiz | Feedback sheet after every answer | Right/wrong, why, the trick's name (urgency, authority...), the safe action. Kind wording. |
+| ✅ | Practice | Voice practice call in the browser | Branching pre-script, pre-generated ElevenLabs audio, speech-to-text, fast matcher picks the branch. |
+| ✅ | Practice | Off-script replies through Mubit | Second fixed Mubit task. Short delay acceptable. |
+| ✅ | Practice | Hang-up and "is this real?" always win | Hanging up or asking ends the call and counts as a pass. The app answers truthfully. |
+| ✅ | Practice | Live captions and a big "End call" button | |
+| ✅ | Practice | Checkpoints defined in code per scenario | "Gave a code", "agreed to move money", "shared card digits", "refused", "called back on official number". |
+| ✅ | Practice | At least 2 scenarios | Bank "safe account" call; parcel delivery fee call. Fictional brands. |
+| ✅ | Gatekeeper | Code rules on every user turn | Card numbers (Luhn), sort codes, account numbers, one-time codes, spoken digits, password phrases. |
+| ✅ | Gatekeeper | Context rule | When the caller has just asked for a secret, any reply that is not a refusal or a question stops the call. |
+| ✅ | Gatekeeper | Stop, mask, log only "stopped at step N" | Masking happens before any network call or log. |
+| ✅ | Debrief | After every call | Timeline of the tricks used, where the user did well, the moment to hang up, what to do in real life. |
+| ✅ | Profile | Weak-spot record by scam type and by trick | Updated from quiz answers and checkpoints only. |
+| ✅ | Profile | Next-lesson picker, about 1 weak to 2 known | |
+| ✅ | Profile | "Why this lesson" panel | Plain reason: "You missed the delivery-fee text on Tuesday." |
+| 🔨 | Profile | Spaced repeats at about 2 days, 1 week, 3 weeks, then monthly | New example of the same trick each time, not the same question. Simulated clock for the demo. |
+| ✅ | Screens | Home (today's 3-minute session), Lesson, Quiz, Call, Debrief, My progress, Settings | Phone and desktop. |
+| ✅ | Access | Large text, slow audio, simple choices | Big tap targets, captions on by default. |
+| ✅ | Mubit | Every LLM call through the Mubit gateway | Provider keys in the Mubit console. |
+| ✅ | Mubit | Teacher prompt frozen early, traffic generated early | Training needs about 25 kept examples; 3 starts a day. |
+| ✅ | Mubit | "With vs without Mubit" dashboard, three arms | (1) plain frontier LLM, no personalisation; (2) frontier LLM personalised the normal way, by stuffing the profile and past mistakes into a longer prompt; (3) Mubit adapter. Same inputs to all three. |
+| ✅ | Mubit | Dashboard metrics, measured | Cost per lesson and per 1,000; latency p50/p95 (matters most for off-script call turns); prompt tokens per call; schema-valid output rate; answer-key check pass rate; fictional-brand check pass rate; agreement with the frontier answer. |
+| ✅ | Mubit | Speed comparison, measured | Time to first token, tokens per second, total time per lesson and per off-script call turn, for all three arms. |
+| ✅ | Mubit | Carbon comparison, estimated and labelled as such | Energy per call from token counts and model size, using a published per-token energy figure, times a stated grid carbon intensity. Method and assumptions shown on screen as a range, never as a measurement. |
+| ✅ | Mubit | Dashboard metrics, projected and labelled as such | Monthly cost at 10k, 100k, 1M users; tokens growth as the profile grows in arm 2; whose servers the learner profile goes to (provider vs own model). |
+| ✅ | Mubit | Live switch or honest fallback | Live switch if adapters are callable from code; Mubit's own eval results if not, said on screen. |
+| ✅ | Measure | 200 simulated users with hidden weak spots | Chart: how many quizzes until the profile finds each hidden weak spot. |
+| ✅ | Safety | "Practice" label on every practice screen | |
+| ✅ | Safety | Scraped text is data, never instructions | |
 
 ## H1 Should
 
 | Status | Area | Item | Notes |
 |---|---|---|---|
-| ⬜ | Habit | Daily goal and streak, with a free streak freeze | Gentle: a missed day never shows as failure. |
+| ✅ | Habit | Daily goal and streak, with a free streak freeze | Gentle: a missed day never shows as failure. |
 | ⬜ | Habit | XP and levels ("Spotter", "Sharp", "Guardian") | |
 | ⬜ | Habit | A badge for each trick learned | Prebunking idea: naming the trick is the lesson. |
-| ⬜ | Habit | Lesson path map | Units by scam type; locked/unlocked nodes; review nodes. |
+| ✅ | Habit | Lesson path map | Units by scam type; locked/unlocked nodes; review nodes. |
 | ⬜ | Habit | Mistakes review | Replays what you missed with fresh examples. |
 | ⬜ | News | Scam news page | This week's briefs with source links; "new this week" tag. |
 | ⬜ | Check | "Is this real?" checker | Paste a suspicious message; get the red flags and the safe action. Third Mubit task. Masks data first; never opens links. |
@@ -78,7 +78,7 @@ Code freeze: Sun 25 Oct 2026, 10:00 (clocks go back at 02:00 Sunday).
 | ⬜ | Practice | 3 more call scenarios | Tax refund, tech support, "Hi Mum" new number, investment. |
 | ⬜ | Practice | Hint button during the call | "What should I ask?" |
 | ⬜ | Practice | Difficulty levels | Easy (obvious caller) to realistic. Capped at realistic. |
-| ⬜ | Learning loop | Off-script replies suggested as new script branches | Shows the system getting better from use. |
+| ✅ | Learning loop | Off-script replies suggested as new script branches | Shows the system getting better from use. |
 | ⬜ | Measure | Held-out set of real scam examples | Never used to pick lessons; score reported separately. |
 | ⬜ | Mubit | Learner extraction as its own Mubit task | |
 | ⬜ | Help | "I think I've been scammed" page | UK steps: call your bank on the number on your card, 159, report fraud, forward scam texts to 7726. |
