@@ -2,6 +2,7 @@
 // Practice call. The engine and Gatekeeper run here in the browser: only masked
 // text ever leaves the device. Caller audio: pre-made clip if present, else the
 // browser's own voice. Replies: hold to talk (browser speech-to-text) or type.
+import { CommitStrategy, RealtimeEvents, Scribe, type RealtimeConnection } from "@elevenlabs/client";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import { applyIntent, startCall, step } from "@/lib/call/engine";
@@ -23,11 +24,13 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   const [thinking, setThinking] = useState(false);
   const [canTalk, setCanTalk] = useState(false);
   const rec = useRef<SR | null>(null);
+  const scribe = useRef<RealtimeConnection | null>(null);
+  const pressed = useRef(false);
   const audio = useRef<HTMLAudioElement | null>(null);
   const spoken = useRef(0);
   const end = useRef<HTMLDivElement>(null);
 
-  useEffect(() => setCanTalk(!!speechRecognition()), []);
+  useEffect(() => setCanTalk(!!navigator.mediaDevices?.getUserMedia || !!speechRecognition()), []);
 
   // Speak each new caller line once.
   useEffect(() => {
@@ -84,16 +87,47 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     }
   }
 
-  function hold() {
-    const r = speechRecognition();
-    if (!r) return;
-    r.lang = "en-GB";
-    r.interimResults = false;
-    r.onresult = (e) => reply(e.results[0][0].transcript, "voice");
-    r.onend = () => setListening(false);
-    rec.current = r;
+  // Hold to talk: ElevenLabs Scribe first (works on every browser), browser speech-to-text as fallback.
+  async function hold() {
+    pressed.current = true;
     setListening(true);
-    r.start();
+    try {
+      const res = await fetch("/api/scribe-token", { method: "POST" });
+      if (!res.ok) throw new Error("no scribe");
+      const { token } = await res.json();
+      const conn = Scribe.connect({
+        token,
+        modelId: "scribe_v2_realtime",
+        commitStrategy: CommitStrategy.MANUAL,
+        languageCode: "en",
+        keyterms: sc.keyterms,
+        microphone: { echoCancellation: true, noiseSuppression: true },
+      });
+      conn.on(RealtimeEvents.COMMITTED_TRANSCRIPT, (d: { text: string }) => {
+        conn.close();
+        setListening(false);
+        reply(d.text, "voice");
+      });
+      scribe.current = conn;
+      if (!pressed.current) release(); // let go before the connection opened
+    } catch {
+      const r = speechRecognition();
+      if (!r) return setListening(false);
+      r.lang = "en-GB";
+      r.interimResults = false;
+      r.onresult = (e) => reply(e.results[0][0].transcript, "voice");
+      r.onend = () => setListening(false);
+      rec.current = r;
+      r.start();
+    }
+  }
+
+  function release() {
+    pressed.current = false;
+    if (scribe.current) {
+      scribe.current.commit();
+      scribe.current = null;
+    } else rec.current?.stop();
   }
 
   function hangUp() {
@@ -161,7 +195,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
           </form>
           <div className="flex gap-3">
             {canTalk && (
-              <button type="button" onPointerDown={hold} onPointerUp={() => rec.current?.stop()} onPointerLeave={() => listening && rec.current?.stop()}
+              <button type="button" onPointerDown={hold} onPointerUp={release} onPointerLeave={() => listening && release()}
                 className={`btn-chunky flex-1 text-white ${listening ? "bg-safe" : "bg-tide"}`}>
                 {listening ? "Listening… let go to send" : "Hold to talk"}
               </button>
