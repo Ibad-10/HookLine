@@ -2,7 +2,7 @@
 // X-Twilio-Signature; only masked text ever reaches the coach.
 import { startCall } from "@/lib/call/engine";
 import { SCENARIOS } from "@/lib/call/scenarios";
-import { firstTurn, nextTurn, validTwilio } from "@/lib/phone";
+import { firstTurn, nextTurn, validToken, validTwilio } from "@/lib/phone";
 import { PUBLIC_URL } from "@/lib/practice";
 import { saveOutcome } from "@/lib/profile";
 import { coachMove } from "@/lib/tasks/coach";
@@ -13,8 +13,11 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const params = Object.fromEntries(new URLSearchParams(await req.text())) as Record<string, string>;
   const signed = `${PUBLIC_URL()}${url.pathname}${url.search}`;
-  if (!validTwilio(process.env.TWILIO_AUTH_TOKEN ?? "", signed, params, req.headers.get("x-twilio-signature"))) {
-    console.error("phone twiml: bad signature", { signed, hasSig: Boolean(req.headers.get("x-twilio-signature")), keys: Object.keys(params).length });
+  const sp = url.searchParams;
+  const ok = validTwilio(process.env.TWILIO_AUTH_TOKEN ?? "", signed, params, req.headers.get("x-twilio-signature"))
+    || validToken(sp.get("s") ?? "", sp.get("l") ?? "", sp.get("t"));
+  if (!ok) {
+    console.error("phone twiml: refused", { hasSig: Boolean(req.headers.get("x-twilio-signature")), hasToken: Boolean(sp.get("t")) });
     return new Response("forbidden", { status: 403 });
   }
 

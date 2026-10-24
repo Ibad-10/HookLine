@@ -35,3 +35,13 @@ test("asking who it is moves on; hanging up passes; off-script asks the coach", 
   expect(nextTurn(base, sc, "open", "l1", "the weather is nice").needCoach).toBe(true);
   expect(nextTurn(base, sc, "open", "l1", "the weather is nice", "stall").node).toBe("verify");
 });
+
+test("call URLs carry a token that only matches its own scenario and learner", async () => {
+  process.env.TWILIO_AUTH_TOKEN = "secret";
+  const { callToken, validToken } = await import("./phone");
+  const t = callToken("safe-account", "l1");
+  expect(validToken("safe-account", "l1", t)).toBe(true);
+  expect(validToken("safe-account", "l2", t)).toBe(false);
+  expect(validToken("safe-account", "l1", null)).toBe(false);
+  expect(firstTurn(base, sc, "l1")).toContain(`t=${t}`);
+});

@@ -19,6 +19,19 @@ export function validTwilio(authToken: string, url: string, params: Record<strin
   return want.length === got.length && timingSafeEqual(want, got);
 }
 
+// Twilio's trial numbers forward webhooks without a signature, so each call URL also carries
+// our own token, an HMAC of scenario and learner keyed by the Twilio auth token.
+export function callToken(scenario: string, learner: string, secret = process.env.TWILIO_AUTH_TOKEN ?? ""): string {
+  return createHmac("sha256", secret).update(`${scenario}:${learner}`).digest("base64url").slice(0, 32);
+}
+
+export function validToken(scenario: string, learner: string, token: string | null): boolean {
+  if (!token || !process.env.TWILIO_AUTH_TOKEN) return false;
+  const want = Buffer.from(callToken(scenario, learner));
+  const got = Buffer.from(token);
+  return want.length === got.length && timingSafeEqual(want, got);
+}
+
 const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 
 export const NOTICE = "This is a Hookline practice call. Nothing you say is kept. You can hang up at any time.";
@@ -26,7 +39,7 @@ export const NOTICE = "This is a Hookline practice call. Nothing you say is kept
 export type Turn = { twiml: string; end: null | "pass" | "stopped" | "scammed"; node: string; masked: string; needCoach?: boolean };
 
 function gather(base: string, sc: Scenario, node: string, learner: string, before = ""): string {
-  const action = esc(`${base}/api/phone/twiml?s=${sc.id}&node=${node}&l=${learner}`);
+  const action = esc(`${base}/api/phone/twiml?s=${sc.id}&node=${node}&l=${learner}&t=${callToken(sc.id, learner)}`);
   return `<?xml version="1.0" encoding="UTF-8"?><Response>${before}<Gather input="speech" action="${action}" method="POST" speechTimeout="auto" language="en-GB"><Play>${esc(`${base}/audio/${sc.id}/${node}.mp3`)}</Play></Gather><Say voice="Polly.Amy">I didn't catch that. Goodbye.</Say><Hangup/></Response>`;
 }
 

@@ -12,6 +12,12 @@ export default function ContactSettings() {
   const [code, setCode] = useState("");
   const [codeSent, setCodeSent] = useState(false);
   const [wait, setWait] = useState(0); // seconds before another code can be sent
+  const [callWait, setCallWait] = useState(0); // seconds before another practice call
+  useEffect(() => {
+    if (callWait <= 0) return;
+    const t = setTimeout(() => setCallWait(callWait - 1), 1000);
+    return () => clearTimeout(t);
+  }, [callWait]);
   useEffect(() => {
     if (wait <= 0) return;
     const t = setTimeout(() => setWait(wait - 1), 1000);
@@ -32,6 +38,7 @@ export default function ContactSettings() {
     setBusy(kind);
     const r = await fetch(kind === "phone" ? "/api/phone/call" : "/api/practice/email", { method: "POST" }).catch(() => null);
     const j = r ? await r.json().catch(() => ({})) : {};
+    if (kind === "phone" && (r?.ok || r?.status === 429)) setCallWait(300);
     setMsg(r?.ok ? (kind === "phone" ? "Calling your phone now. Answer it and practise." : `Practice email sent to ${j.to}. Check your inbox.`) : (j.error ?? "That didn't work. Try again."));
     setBusy("");
   }
@@ -113,8 +120,8 @@ export default function ContactSettings() {
         {p.phone.on && !p.phone.verified && msg && <p role="status" className="mt-2 text-sm font-medium">{msg}</p>}
         {p.phone.on && p.phone.number && p.phone.verified && <p className="mt-3 font-medium text-ink-soft">✓ Number confirmed</p>}
         {p.phone.on && p.phone.number && p.phone.verified && (
-          <button type="button" onClick={() => trigger("phone")} disabled={busy === "phone"} className="btn-chunky btn-grad lift mt-3 w-full">
-            {busy === "phone" ? "Calling…" : "Call me now"}
+          <button type="button" onClick={() => trigger("phone")} disabled={busy === "phone" || callWait > 0} className="btn-chunky btn-grad lift mt-3 w-full disabled:opacity-50">
+            {busy === "phone" ? "Calling…" : callWait > 0 ? `Next practice call in ${Math.floor(callWait / 60)}:${String(callWait % 60).padStart(2, "0")}` : "Call me now"}
           </button>
         )}
       </div>
