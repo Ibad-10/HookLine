@@ -1,6 +1,8 @@
 // Learner session and lesson selection, shared by routes and server pages.
 import { randomUUID } from "node:crypto";
+import { auth, currentUser } from "@clerk/nextjs/server";
 import { cookies } from "next/headers";
+import { resolveLearner } from "./account";
 import { db, migrate } from "./db";
 import { loadSkills, pickNext, whyText, type Pick, type Skill } from "./profile";
 import { Brief, Lesson } from "./schemas";
@@ -11,8 +13,27 @@ import { writeLesson } from "./tasks/teacher";
 
 export const COOKIE = "hl_id";
 
+// Signed-in Clerk user -> their learner (claiming any guest progress); otherwise the guest cookie.
 export async function learnerId(): Promise<string | null> {
-  return (await cookies()).get(COOKIE)?.value ?? null;
+  const { userId } = await auth();
+  const guest = (await cookies()).get(COOKIE)?.value ?? null;
+  return resolveLearner(userId, guest, async () => {
+    const u = await currentUser();
+    return u?.firstName ?? u?.username ?? u?.primaryEmailAddress?.emailAddress.split("@")[0] ?? "Friend";
+  });
+}
+
+export async function signedIn(): Promise<boolean> {
+  return Boolean((await auth()).userId);
+}
+
+// Admins are listed by email in ADMIN_EMAILS (comma-separated).
+export async function isAdmin(): Promise<boolean> {
+  const { userId } = await auth();
+  if (!userId) return false;
+  const u = await currentUser();
+  const allowed = (process.env.ADMIN_EMAILS ?? "").toLowerCase().split(",").map((e) => e.trim()).filter(Boolean);
+  return Boolean(u?.emailAddresses.some((e) => allowed.includes(e.emailAddress.toLowerCase())));
 }
 
 export async function getLearner(id: string) {
@@ -110,7 +131,8 @@ export async function lessonById(lessonId: string): Promise<{ lesson: Lesson; ca
 }
 
 // A cookie alone isn't enough: the learner must exist, so made-up ids can't run up LLM calls.
-export async function requireLearner(): Promise<string | null> {
+export async function requireLearner(opts: { signedIn?: boolean } = {}): Promise<string | null> {
+  if (opts.signedIn && !(await signedIn())) return null;
   const id = await learnerId();
   return id && (await getLearner(id)) ? id : null;
 }

@@ -116,7 +116,7 @@ export default function Quiz({
     return (
       <main className="mx-auto max-w-md px-5 py-10 text-center">
         <div className="mx-auto mb-4 w-fit"><Buoy mood="cheer" size={120} /></div>
-        <h1 className="text-3xl font-extrabold">{after.href === "/lesson" ? "Check done" : "Lesson done"}</h1>
+        <h1 className="text-3xl font-extrabold">{after.href === "/sign-up" ? "Check done" : "Lesson done"}</h1>
         <motion.p initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="mt-4 text-5xl font-extrabold tabular-nums text-tide">
           <CountUp to={score} />
           <span className="text-2xl text-ink-soft"> of {items.length} spotted</span>

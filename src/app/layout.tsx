@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible_Next } from "next/font/google";
+import { ClerkProvider } from "@clerk/nextjs";
 import { cookies } from "next/headers";
 import Motion from "@/components/Motion";
 import "./globals.css";
@@ -18,7 +19,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const prefs = (await cookies()).get("hl_prefs")?.value ?? "";
   return (
     <html lang="en" className={cn("antialiased", atkinson.variable, prefs.includes("large") ? "large-text" : "")}>
-      <body className="min-h-dvh"><Motion>{children}</Motion></body>
+      <body className="min-h-dvh"><ClerkProvider><Motion>{children}</Motion></ClerkProvider></body>
     </html>
   );
 }

@@ -7,7 +7,7 @@ import { saveOutcome } from "@/lib/profile";
 const Body = z.object({ scenarioId: z.string(), outcome: z.enum(["pass", "stopped", "scammed"]), nodes: z.array(z.string()).max(40) });
 
 export async function POST(req: Request) {
-  const id = await requireLearner();
+  const id = await requireLearner({ signedIn: true });
   const b = Body.safeParse(await req.json().catch(() => null));
   const sc = b.success ? SCENARIOS[b.data.scenarioId] : undefined;
   if (!id || !b.success || !sc) return Response.json({ error: "bad request" }, { status: 400 });

@@ -13,7 +13,7 @@ const Body = z.object({
 });
 
 export async function POST(req: Request) {
-  if (!(await requireLearner())) return Response.json({ error: "no session" }, { status: 401 });
+  if (!(await requireLearner({ signedIn: true }))) return Response.json({ error: "no session" }, { status: 401 });
   const body = Body.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: "bad request" }, { status: 400 });
   const { scenarioId, node, sessionId } = body.data;

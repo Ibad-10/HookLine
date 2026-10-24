@@ -22,6 +22,11 @@ const SCHEMA = [
 let migrated: Promise<void> | null = null;
 
 export function migrate(): Promise<void> {
-  migrated ??= db().batch(SCHEMA, "write").then(() => undefined);
+  migrated ??= db()
+    .batch(SCHEMA, "write")
+    // Added after launch: link a learner to a Clerk account. Fails harmlessly if it already exists.
+    .then(() => db().execute("ALTER TABLE learners ADD COLUMN clerk_user_id TEXT").catch(() => undefined))
+    .then(() => db().execute("CREATE UNIQUE INDEX IF NOT EXISTS learners_clerk ON learners (clerk_user_id)"))
+    .then(() => undefined);
   return migrated;
 }
