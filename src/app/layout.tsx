@@ -20,7 +20,15 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const prefs = (await cookies()).get("hl_prefs")?.value ?? "";
   return (
     <html lang="en" className={cn("antialiased", geist.variable, fraunces.variable, prefs.includes("large") && "large-text", prefs.includes("dark") && "dark")}>
-      <body className="min-h-dvh"><ClerkProvider appearance={{ variables: { colorPrimary: "#0068ad", borderRadius: "0.75rem", fontFamily: "var(--font-geist)", fontSize: "1rem" } }}><Motion>{children}</Motion></ClerkProvider></body>
+      <body className="min-h-dvh"><ClerkProvider appearance={{
+          variables: { colorPrimary: "#0068ad", borderRadius: "0.9rem", fontFamily: "var(--font-geist)", fontSize: "1rem" },
+          elements: {
+            formButtonPrimary: "btn-grad lift !rounded-full !h-14 !text-base !font-semibold",
+            socialButtonsBlockButton: "!rounded-full !h-14",
+            formFieldInput: "!h-13 !rounded-2xl !bg-secondary",
+            card: "!shadow-none !border !border-line",
+          },
+        }}><Motion>{children}</Motion></ClerkProvider></body>
     </html>
   );
 }

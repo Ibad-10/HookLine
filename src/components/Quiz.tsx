@@ -2,7 +2,7 @@
 // Lesson player: teach cards, then questions. Pick, Check, a feedback sheet slides
 // up, Continue. Number keys pick, Enter checks or continues.
 import confetti from "canvas-confetti";
-import { X } from "lucide-react";
+import { ArrowRight, Check, ChevronLeft, X } from "lucide-react";
 import { AnimatePresence, animate, motion, useReducedMotion } from "motion/react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -134,8 +134,9 @@ export default function Quiz({
   return (
     <main className={`mx-auto flex min-h-dvh max-w-md flex-col px-5 pt-4 ${result ? "pb-[30rem]" : "pb-40"}`}>
       <header className="flex items-center gap-4">
-        <Link href="/" aria-label="Close lesson" className="grid size-11 place-items-center rounded-full text-2xl text-ink-soft hover:bg-white">
-          <X aria-hidden className="size-7" />
+        <Link href="/" aria-label="Back to home" className="flex h-11 shrink-0 items-center gap-1 rounded-full bg-secondary pl-2.5 pr-3.5 text-[0.95rem] font-semibold ring-1 ring-line">
+          <ChevronLeft aria-hidden className="size-5" strokeWidth={2.4} />
+          Home
         </Link>
         <div className="h-4 flex-1 overflow-hidden rounded-full bg-line" role="progressbar" aria-label="Lesson progress" aria-valuemin={0} aria-valuemax={total} aria-valuenow={i}>
           <motion.div className="relative h-full overflow-hidden rounded-full bg-tide" animate={{ width: `${Math.max(4, (i / total) * 100)}%` }} transition={{ type: "spring", stiffness: 120, damping: 20 }}>
@@ -218,10 +219,17 @@ export default function Quiz({
         <div className="mx-auto max-w-md px-5 py-4">
           {result && q && (
             <div className="mb-4">
-              <p className={`text-xl font-semibold tracking-tight ${result.ok ? "text-safe" : "text-alarm"}`}>
-                {result.ok ? "Well spotted" : "Not quite, here's the trick"}
+              <div className="flex items-center gap-3">
+                <span aria-hidden className={`badge-pop grid size-11 shrink-0 place-items-center rounded-full text-white ${result.ok ? "bg-safe shadow-[0_0_0_6px_rgba(15,122,70,0.15)]" : "bg-alarm shadow-[0_0_0_6px_rgba(201,52,42,0.15)]"}`}>
+                  {result.ok ? <Check className="size-6" strokeWidth={3} /> : <X className="size-6" strokeWidth={3} />}
+                </span>
+                <p className={`text-[1.9rem] font-semibold leading-none tracking-[-0.04em] ${result.ok ? "text-safe" : "text-alarm"}`}>
+                  {result.ok ? <>Well <span className="font-serif font-light italic">spotted</span></> : <>Not <span className="font-serif font-light italic">quite</span></>}
+                </p>
+              </div>
+              <p className={`mt-2.5 inline-block rounded-full bg-background px-3 py-1 text-sm font-semibold ring-1 ${result.ok ? "text-safe ring-safe/25" : "text-alarm ring-alarm/25"}`}>
+                Trick: {label(q.technique)}
               </p>
-              <p className="mt-1 font-bold">Trick: {label(q.technique)}</p>
               {q.flags?.length ? (
                 <ul className="mt-2 space-y-1">
                   {q.flags.map((f) => (
@@ -240,10 +248,11 @@ export default function Quiz({
             type="button"
             disabled={!card && !result && (!ready || busy)}
             onClick={card || result ? next : check}
-            className="btn-chunky w-full bg-tide text-white text-lg"
-            style={result && !result.ok ? ({ background: "var(--alarm)", "--btn-edge": "#8e2219" } as React.CSSProperties) : undefined}
+            className={`btn-chunky lift flex w-full items-center justify-center gap-2 text-lg ${!card && !result && (!ready || busy) ? "" : `btn-grad shine ${result ? "ready" : ""}`}`}
+            style={result && !result.ok ? ({ background: "linear-gradient(180deg, #e0574c, #c9342a)" } as React.CSSProperties) : undefined}
           >
             {card ? "Next" : result ? "Continue" : busy ? "Checking…" : "Check"}
+            {(card || result) && <ArrowRight className="size-5" aria-hidden />}
           </button>
         </div>
       </motion.footer>

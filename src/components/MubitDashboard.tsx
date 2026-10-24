@@ -7,9 +7,10 @@ import { modelFor, type Arm, type TaskName } from "@/lib/llm";
 import { simulate } from "@/lib/sim";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import RunCompare from "./RunCompare";
+import ViewSwitch from "./ViewSwitch";
 
 // Each model keeps one colour everywhere: frontier warm, small model cool.
-const HUE: Record<Arm, string> = { plain: "#b5652a", stuffed: "#b5652a", small: "#4f5bd5" };
+const HUE: Record<Arm, string> = { plain: "#b5652a", stuffed: "#e0a274", small: "#4f5bd5" };
 
 const ARMS: { arm: Arm; name: string; note: string }[] = [
   { arm: "plain", name: "Big model, no memory", note: "A frontier model writes every lesson. It knows nothing about the learner." },
@@ -156,10 +157,57 @@ function Table({ title, s, coach }: { title: string; s: Record<string, ArmSummar
     ["Calls that errored (rate limit, outage)", (a) => pctf(a.errorRate)],
     ["Carbon per call, estimated", (a) => `${g(a.carbon.central)} g (${g(a.carbon.low)} to ${g(a.carbon.high)})`],
   ];
+  const ok = (a?: ArmSummary) => (a && a.n > 0 ? a : undefined);
+  const metric = (name: string, unit: string, val: (a: ArmSummary) => number | null, fmt: (v: number) => string) => {
+    const vals = ARMS.map(({ arm }) => { const a = ok(s[arm]); return a ? val(a) : null; });
+    const max = Math.max(...vals.map((v) => v ?? 0), 0.0001);
+    return { name, unit, bars: ARMS.map(({ arm, name: armName }, i) => ({ arm, armName, v: vals[i], label: vals[i] === null ? "n/a" : fmt(vals[i]!), pct: vals[i] === null ? 0 : (vals[i]! / max) * 100 })) };
+  };
+  const groups = [
+    { side: "Inputs: what each call sends", metrics: [
+      metric("Prompt size", "tokens per call", (a) => a.inTokAvg, (v) => String(Math.round(v))),
+    ] },
+    { side: "Outputs: what each call gives back", metrics: [
+      metric("Cost", "per 1,000 calls", (a) => a.costPer1k, money),
+      metric("Time to finish", "median", (a) => a.p50, secs),
+      metric("Passed every check", "share of calls", (a) => a.okRate * 100, (v) => `${Math.round(v)}%`),
+      metric("Carbon, estimated", "g CO₂e per call", (a) => a.carbon.central, g),
+    ] },
+  ];
+  const charts = (
+    <div className="grid gap-4 md:grid-cols-2">
+      {groups.map((grp) => (
+        <section key={grp.side} className="rounded-2xl border border-line bg-card p-5">
+          <h3 className="text-sm font-medium text-ink-soft">{grp.side}</h3>
+          {grp.metrics.map((m) => (
+            <figure key={m.name} className="mt-5">
+              <figcaption className="text-lg font-medium">{m.name} <span className="font-normal text-ink-soft">({m.unit})</span></figcaption>
+              {m.bars.map((b) => (
+                <div key={b.arm} className="mt-2 grid grid-cols-[1fr_5.5rem] items-center gap-3">
+                  <div className="h-6 overflow-hidden rounded-md bg-secondary">
+                    <div className="h-full origin-left rounded-md transition-[width] duration-700" title={`${b.armName}: ${b.label}`}
+                      style={{ width: `${Math.max(b.v === null ? 0 : 3, b.pct)}%`, background: HUE[b.arm] }} />
+                  </div>
+                  <span className="text-right tabular-nums">{b.label}</span>
+                </div>
+              ))}
+            </figure>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
   return (
     <section>
       <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-      <div className="mt-4 overflow-x-auto rounded-2xl bg-card">
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        {ARMS.map((a) => (
+          <span key={a.arm} className="flex items-center gap-2"><span aria-hidden className="size-3 rounded-sm" style={{ background: HUE[a.arm] }} />{a.name}</span>
+        ))}
+      </div>
+      <div className="mt-4">
+      <ViewSwitch charts={charts} table={
+      <div className="overflow-x-auto rounded-2xl bg-card">
         <table className="w-full min-w-[640px] text-left">
           <thead>
             <tr className="border-b border-line align-bottom">
@@ -188,6 +236,7 @@ function Table({ title, s, coach }: { title: string; s: Record<string, ArmSummar
             ))}
           </tbody>
         </table>
+      </div>} />
       </div>
       <p className="mt-2 text-sm text-ink-soft">Hover a value to see its Mubit request IDs, so any number can be traced in the console.</p>
     </section>

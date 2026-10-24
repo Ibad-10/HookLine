@@ -3,7 +3,7 @@
 // text ever leaves the device. Caller audio: pre-made clip if present, else the
 // browser's own voice. Replies: hold to talk (browser speech-to-text) or type.
 import { CommitStrategy, RealtimeEvents, Scribe, type RealtimeConnection } from "@elevenlabs/client";
-import { Mic } from "lucide-react";
+import { ChevronLeft, Mic } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -196,7 +196,14 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
 
   return (
     <main className="flex h-dvh flex-col bg-navy text-white">
-      <header className="flex items-center gap-3 px-5 pb-3 pt-5">
+      <nav aria-label="Call" className="mx-4 mt-3 flex items-center justify-between rounded-full bg-white/[0.06] p-1.5 ring-1 ring-white/12">
+        <Link href="/" onClick={() => { window.speechSynthesis?.cancel(); audio.current?.pause(); }} aria-label="Back to home" className="flex h-10 items-center gap-1 rounded-full pl-2 pr-3.5 font-semibold">
+          <ChevronLeft className="size-5" strokeWidth={2.4} aria-hidden />
+          Home
+        </Link>
+        <span className="pr-3 font-semibold tracking-tight">Hookline</span>
+      </nav>
+      <header className="flex items-center gap-3 px-5 pb-3 pt-4">
         <span className="grid size-12 place-items-center rounded-full bg-navy-2 text-xl font-semibold tracking-tight">{sc.caller[0]}</span>
         <div className="flex-1">
           <p className="font-semibold tracking-tight">{sc.caller}</p>
