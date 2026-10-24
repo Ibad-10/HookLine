@@ -40,6 +40,9 @@ export default function ContactSettings() {
     fetch("/api/contact").then((r) => (r.ok ? r.json() : null)).then((v: Stored | null) => {
       if (v) { setP(v); setNumber(v.phone.number); }
     });
+    fetch("/api/phone/verify").then((r) => r.json()).then((v: { pending: boolean; wait: number }) => {
+      if (v.pending) { setCodeSent(true); setWait(v.wait); }
+    }).catch(() => undefined);
   }, []);
 
   async function save(next: Stored, phoneNumber = number) {
@@ -107,6 +110,7 @@ export default function ContactSettings() {
             </form>
           </div>
         )}
+        {p.phone.on && !p.phone.verified && msg && <p role="status" className="mt-2 text-sm font-medium">{msg}</p>}
         {p.phone.on && p.phone.number && p.phone.verified && <p className="mt-3 font-medium text-ink-soft">✓ Number confirmed</p>}
         {p.phone.on && p.phone.number && p.phone.verified && (
           <button type="button" onClick={() => trigger("phone")} disabled={busy === "phone"} className="btn-chunky btn-grad lift mt-3 w-full">

@@ -7,6 +7,16 @@ import { contactPrefs } from "@/lib/practice";
 
 const hash = (s: string) => createHash("sha256").update(s).digest("hex");
 
+// Whether a code is waiting, and how long before another can be sent, so the page can lock
+// the number and the button even after a reload.
+export async function GET() {
+  const id = await requireLearner({ signedIn: true });
+  if (!id) return Response.json({ pending: false, wait: 0 });
+  const row = (await db().execute({ sql: "SELECT number, expires_at FROM phone_codes WHERE learner_id = ?", args: [id] })).rows[0];
+  const left = row ? Number(row.expires_at) - Date.now() : 0;
+  return Response.json({ pending: left > 0, number: row?.number ?? null, wait: Math.max(0, Math.ceil((left - 9 * 60_000) / 1000)) });
+}
+
 export async function POST(req: Request) {
   const id = await requireLearner({ signedIn: true });
   if (!id) return Response.json({ error: "Sign in first." }, { status: 401 });
