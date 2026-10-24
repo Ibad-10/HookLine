@@ -83,7 +83,7 @@ export async function ingest(perFeed = 4, feeds = FEEDS): Promise<number> {
     } catch {
       continue;
     }
-    for (const it of items.filter((i) => /scam|fraud|phish/i.test(i.title + i.description)).slice(0, perFeed)) {
+    for (const it of items.filter((i) => /scam|fraud|phish|impersonat|fake (text|call|email|site)|con artist|smish|vish/i.test(i.title + i.description)).slice(0, perFeed)) {
       let text = `${it.title}. ${it.description}`;
       try {
         const page = await fetch(it.link, { headers: { "user-agent": "Hookline/0.1 (scam education)" } });
