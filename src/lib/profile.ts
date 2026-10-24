@@ -32,7 +32,7 @@ export function pickNext(skills: Skill[], now: number, n = 3): Pick[] {
   return picks;
 }
 
-export function whyText(pick: Pick, lastMiss?: { key: string; at: number }): string {
+export function whyText(pick: Pick, lastMiss?: { key: string; at: number }, isNew = false): string {
   const topic = (LABELS as Record<string, string>)[pick.key]?.toLowerCase() ?? pick.key;
   if (pick.reason === "weak") {
     if (lastMiss?.key === pick.key) {
@@ -41,6 +41,7 @@ export function whyText(pick: Pick, lastMiss?: { key: string; at: number }): str
     }
     return `${capital(topic)} is one to practise, so it's in today's session.`;
   }
+  if (isNew) return `Something new: ${topic}. A quick look at how this one works.`;
   if (pick.reason === "due") return `A quick refresher on ${topic}, so it stays fresh.`;
   return `Something new on ${topic}, which you already know well.`;
 }

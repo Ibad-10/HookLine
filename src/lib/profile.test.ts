@@ -53,3 +53,8 @@ test("saveOutcome writes skills and events", async () => {
   expect(s.find((x) => x.key === "delivery_fee")).toMatchObject({ seen: 2, correct: 1, box: 1 });
   expect(s.find((x) => x.key === "urgency")).toMatchObject({ box: 1, seen: 1 });
 });
+
+test("never-seen topics are introduced as new, not a refresher", () => {
+  const t = whyText({ key: "bank_impersonation", reason: "due" }, undefined, true);
+  expect(t).not.toMatch(/refresher/i);
+});

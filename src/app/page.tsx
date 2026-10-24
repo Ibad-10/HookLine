@@ -15,7 +15,7 @@ export default async function Home() {
   const pick = pickNext(skills, Date.now(), 3)[0];
   await migrate();
   const miss = (await db().execute({ sql: "SELECT key, at FROM events WHERE learner_id = ? AND ok = 0 ORDER BY at DESC LIMIT 1", args: [id] })).rows[0];
-  const why = whyText(pick, miss ? { key: String(miss.key), at: Number(miss.at) } : undefined);
+  const why = whyText(pick, miss ? { key: String(miss.key), at: Number(miss.at) } : undefined, (skills.find((s) => s.key === pick.key)?.seen ?? 0) === 0);
   const days = new Set(
     (await db().execute({ sql: "SELECT at FROM events WHERE learner_id = ?", args: [id] })).rows.map((r) => new Date(Number(r.at)).toDateString()),
   ).size;

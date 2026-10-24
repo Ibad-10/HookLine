@@ -10,3 +10,8 @@ test("fictional brands and plain words pass", () => {
   expect(checkBrands("Call from Northgate Bank").ok).toBe(true);
   expect(checkBrands("an apple a day, chase the sky").ok).toBe(true);
 });
+
+test("government bodies and agencies count as real names too", () => {
+  expect(checkBrands("When 'The FTC' calls").ok).toBe(false);
+  expect(checkBrands("Action Fraud and the FBI").ok).toBe(false);
+});

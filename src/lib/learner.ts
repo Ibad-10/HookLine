@@ -85,7 +85,7 @@ export async function nextLesson(id: string, now = Date.now()): Promise<NextLess
       args: [lessonId, briefId, id, JSON.stringify(lesson), now],
     });
   }
-  return { lessonId, category: pick.key, why: whyText(pick, lastMiss), brief, lesson };
+  return { lessonId, category: pick.key, why: whyText(pick, lastMiss, (skills.find((s) => s.key === pick.key)?.seen ?? 0) === 0), brief, lesson };
 }
 
 // "seed:<category>" addresses the built-in lessons used by the starting quiz.

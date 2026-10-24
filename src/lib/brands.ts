@@ -6,6 +6,7 @@ export const REAL_BRANDS = [
   "Citibank", "Capital One", "American Express", "Amex", "Visa", "Mastercard", "PayPal", "Venmo", "Zelle", "Cash App",
   "Royal Mail", "Parcelforce", "Evri", "Hermes", "DPD", "DHL", "UPS", "FedEx", "USPS", "Yodel",
   "HMRC", "IRS", "DVLA", "NHS", "Ofgem", "TV Licensing", "Social Security", "Medicare",
+  "FTC", "FBI", "IC3", "Action Fraud", "Met Police", "Scotland Yard", "FCA", "Ofcom", "NCSC", "Citizens Advice", "Age UK", "AARP",
   "Amazon", "eBay", "Facebook", "Meta", "Instagram", "WhatsApp", "Google", "Apple", "Microsoft", "Netflix",
   "Coinbase", "Binance", "Vinted", "Gumtree", "Depop", "Etsy", "BT", "Vodafone", "EE", "O2", "Sky", "Virgin Media",
 ];
