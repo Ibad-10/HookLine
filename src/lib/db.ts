@@ -28,6 +28,7 @@ export function migrate(): Promise<void> {
     // Added after launch: link a learner to a Clerk account. Fails harmlessly if it already exists.
     .then(() => db().execute("ALTER TABLE learners ADD COLUMN clerk_user_id TEXT").catch(() => undefined))
     .then(() => db().execute("CREATE UNIQUE INDEX IF NOT EXISTS learners_clerk ON learners (clerk_user_id)"))
+    .then(() => db().execute("ALTER TABLE learners ADD COLUMN contact_prefs TEXT").catch(() => undefined))
     .then(() => undefined);
   return migrated;
 }

@@ -1,6 +1,7 @@
 "use client";
 import AppNav from "@/components/AppNav";
 import Link from "next/link";
+import ContactSettings from "@/components/ContactSettings";
 import { Switch } from "@/components/ui/switch";
 import { useEffect, useState } from "react";
 
@@ -38,6 +39,7 @@ export default function Settings() {
           <p className="text-ink-soft">English. More languages are coming.</p>
         </div>
       </div>
+      <ContactSettings />
       <p className="mt-8 text-sm text-ink-soft">
         Practice calls use a speech-to-text service, which hears your voice to turn it into words. Never say real card numbers, codes or passwords. Hookline masks
         them and never stores them.
