@@ -69,7 +69,7 @@ export default function ContactSettings() {
           <span className="block font-semibold">Practice emails</span>
           <span className="block text-ink-soft">Pretend scam emails to your account address, from Hookline’s published domain.{since(p.email.at)}</span>
         </span>
-        <Switch checked={p.email.on} onCheckedChange={(v) => save({ ...p, email: { on: Boolean(v) } })} />
+        <Switch checked={p.email.on} onCheckedChange={(v) => save({ ...p, email: { ...p.email, on: Boolean(v) } })} />
       </label>
 
       <p className="text-sm text-ink-soft">
