@@ -1,0 +1,716 @@
+{
+  "delivery_fee": {
+    "title": "A small parcel fee with a big rush",
+    "cards": [
+      {
+        "heading": "Pause before paying",
+        "body": "An unexpected text asking for a small redelivery fee may be a scam, especially if it gives you only minutes to act."
+      },
+      {
+        "heading": "Check the link",
+        "body": "A strange-looking link can lead to a fake payment page designed to collect your card details."
+      },
+      {
+        "heading": "Check another way",
+        "body": "Don’t tap the text link. Open the delivery company’s app or website yourself to check whether a fee is really due."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this text should make you pause?",
+        "message": {
+          "from": "SwiftParcel",
+          "text": "Your parcel is waiting. Pay a $1.20 redelivery fee within 30 minutes: swiftparcel-track.example"
+        },
+        "flags": [
+          {
+            "span": "within 30 minutes",
+            "why": "The short deadline pressures you to act without checking."
+          },
+          {
+            "span": "swiftparcel-track.example",
+            "why": "An unexpected, unfamiliar link may lead to a fake payment page."
+          }
+        ],
+        "technique": "urgency",
+        "explain": "Scammers may use a small fee and a short deadline to rush you into sharing card details.",
+        "safe_action": "Don’t tap the link. Check the delivery in the company’s app or website, opened separately."
+      },
+      {
+        "kind": "mc",
+        "prompt": "You get an unexpected text asking for a small redelivery fee. What’s the safest next step?",
+        "options": [
+          "Tap the link and pay before the deadline",
+          "Open the delivery company’s app or website yourself to check",
+          "Reply with your card details"
+        ],
+        "answer_index": 1,
+        "technique": "urgency",
+        "explain": "A deadline in an unexpected text is a reason to pause, not rush.",
+        "safe_action": "Open the company’s app or website yourself and check whether a fee is due."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this text real or a scam?",
+        "message": {
+          "from": "SwiftParcel",
+          "text": "Pay a small redelivery fee now using this link, or your parcel will be returned today."
+        },
+        "answer_index": 0,
+        "technique": "urgency",
+        "explain": "The threat of losing the parcel and the push to pay now are warning signs.",
+        "safe_action": "Don’t use the link. Check your parcel through the delivery company’s app or website."
+      }
+    ]
+  },
+  "bank_impersonation": {
+    "title": "A “safe account” call may be a scam",
+    "cards": [
+      {
+        "heading": "A familiar-sounding caller",
+        "body": "A caller may claim to be from your bank’s fraud team. A confident voice or knowledge of your details does not prove they are genuine."
+      },
+      {
+        "heading": "Watch for pressure",
+        "body": "Scammers may say your money is under attack and you must act now. Rushing you makes it harder to stop and check."
+      },
+      {
+        "heading": "Keep your money and codes safe",
+        "body": "Don’t move money to a “safe account” or tell a caller a one-time code. Hang up, wait five minutes, and call the number on the back of your card."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "A caller says they’re from your bank and tells you to move your savings to a safe account. What should you do?",
+        "options": [
+          "Move the money before it is stolen",
+          "Hang up, wait five minutes, and call the number on your card",
+          "Ask the caller to prove who they are by sending a text"
+        ],
+        "answer_index": 1,
+        "technique": "authority",
+        "explain": "A caller claiming to be from your bank does not prove they are genuine. The safe-account story is a warning sign.",
+        "safe_action": "Hang up, wait five minutes, and call the number on the back of your card."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "Northgate Bank Fraud Team",
+          "text": "We are from Northgate Bank's fraud team. Your account is under attack. Move your money to this safe account right now and read us the code we just sent."
+        },
+        "flags": [
+          {
+            "span": "We are from Northgate Bank's fraud team.",
+            "why": "A caller’s claim to work for a bank is not proof of their identity."
+          },
+          {
+            "span": "Your account is under attack.",
+            "why": "This alarming claim can be used to frighten you into acting without checking."
+          },
+          {
+            "span": "Move your money to this safe account right now",
+            "why": "Pressure to move money urgently is a serious warning sign."
+          },
+          {
+            "span": "read us the code we just sent",
+            "why": "A genuine bank should not ask you to share a one-time code with a caller."
+          }
+        ],
+        "technique": "authority",
+        "explain": "The caller uses a bank identity and a frightening story to push you into moving money and sharing a code.",
+        "safe_action": "Do not share the code or move money. Hang up, wait five minutes, and call the number on your card."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this call real or a scam?",
+        "message": {
+          "from": "SwiftParcel Support",
+          "text": "This is Northgate Bank. We spotted a suspicious payment. Please hang up and call the number printed on the back of your bank card. We will never ask you to move money or tell us a code."
+        },
+        "answer_index": 1,
+        "technique": "authority",
+        "explain": "The message does not ask you to share a code or move money. It directs you to contact the bank using a trusted number.",
+        "safe_action": "Call the number on the back of your card yourself, rather than replying to the caller."
+      }
+    ]
+  },
+  "investment_crypto": {
+    "title": "Guaranteed crypto returns? Pause first",
+    "cards": [
+      {
+        "heading": "Big promises are a warning",
+        "body": "Crypto prices can rise or fall. No investment can honestly guarantee big returns. A promise of easy, certain profits is a reason to pause."
+      },
+      {
+        "heading": "Check the recommendation",
+        "body": "A celebrity’s name or a friend’s recommendation doesn’t prove an investment is safe. People may be misled, or someone may be pretending to be them."
+      },
+      {
+        "heading": "Check before paying",
+        "body": "Look up the firm yourself on the official financial regulator’s register before paying. If you can’t withdraw money, don’t send more to unlock it."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "BrightPeak Digital",
+          "text": "Earn guaranteed 20% returns every month with our crypto platform. A famous investor recommends us. Pay today to secure your place."
+        },
+        "flags": [
+          {
+            "span": "guaranteed 20% returns every month",
+            "why": "Investments can’t promise high returns with certainty."
+          },
+          {
+            "span": "A famous investor recommends us",
+            "why": "A name or endorsement may be false and doesn’t prove the offer is safe."
+          },
+          {
+            "span": "Pay today to secure your place",
+            "why": "Pressure to pay quickly can stop you from checking the firm."
+          }
+        ],
+        "technique": "too_good",
+        "explain": "Guaranteed high returns and pressure to pay are strong warning signs. Check the firm independently before considering any investment.",
+        "safe_action": "Don’t pay through the message. Find the firm on the official financial regulator’s register yourself."
+      },
+      {
+        "kind": "mc",
+        "prompt": "A crypto platform says you must pay another fee before you can withdraw your money. What’s the safest next step?",
+        "options": [
+          "Pay the fee so you can get your money back",
+          "Stop sending money and check the firm independently",
+          "Ask the person who recommended it to pay for you"
+        ],
+        "answer_index": 1,
+        "technique": "payment_method",
+        "explain": "Being asked for more money to release a withdrawal can be part of a scam. Paying more may lead to further demands.",
+        "safe_action": "Stop payments and contact your bank or payment provider using a number you find independently."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this offer real or a scam?",
+        "message": {
+          "from": "Northstar Coin Growth",
+          "text": "Your investment is guaranteed to double in 30 days. Send money now and we’ll handle everything."
+        },
+        "answer_index": 0,
+        "technique": "too_good",
+        "explain": "A guaranteed doubling of money is unrealistic, and the message pressures you to send money without checking the offer.",
+        "safe_action": "Don’t send money. Check the firm on the official financial regulator’s register using contact details you find yourself."
+      }
+    ]
+  },
+  "romance": {
+    "title": "When an online partner asks for money",
+    "cards": [
+      {
+        "heading": "Strong feelings can come quickly",
+        "body": "Someone may say they love you before you have met. Warm words can feel real, but they don’t prove who is behind the messages."
+      },
+      {
+        "heading": "Notice the pattern",
+        "body": "Be cautious if they always avoid video calls, describe an emergency, or ask you to pay for travel or medical bills."
+      },
+      {
+        "heading": "Keep money matters open",
+        "body": "A request to keep the relationship or money private is a warning sign. Talk it through with someone you trust before doing anything."
+      },
+      {
+        "heading": "Pause before sending",
+        "body": "Don’t send money to someone you haven’t met in person. Stop replying if you feel pressured, and ask a trusted person for support."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "Someone you met online says they need money for travel and asks you not to tell anyone. What is the safest next step?",
+        "options": [
+          "Send a small amount to see if they repay it",
+          "Keep it private and ask them for more details",
+          "Pause, don’t send money, and talk to someone you trust"
+        ],
+        "answer_index": 2,
+        "technique": "secrecy",
+        "explain": "A request for money combined with secrecy is a serious warning sign, especially when you haven’t met in person.",
+        "safe_action": "Don’t send money. Talk to a trusted friend or family member before replying."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you cautious?",
+        "message": {
+          "from": "Evan",
+          "text": "I love you so much, even though we haven't met yet. I need money for a medical bill. Please keep this between us and don't video call—my camera is broken."
+        },
+        "flags": [
+          {
+            "span": "I love you so much, even though we haven't met yet.",
+            "why": "Very strong feelings before meeting can be a warning sign."
+          },
+          {
+            "span": "I need money for a medical bill.",
+            "why": "A request for money for an emergency is a common warning sign."
+          },
+          {
+            "span": "Please keep this between us",
+            "why": "Asking you to keep the request secret can stop you getting helpful advice."
+          },
+          {
+            "span": "don't video call—my camera is broken.",
+            "why": "Repeatedly avoiding a video call can make it harder to know who you’re talking to."
+          }
+        ],
+        "technique": "secrecy",
+        "explain": "The message combines secrecy, an emergency money request, intense feelings, and avoiding a video call.",
+        "safe_action": "Don’t send money. Save the messages and discuss them with someone you trust."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this message safe to trust?",
+        "message": {
+          "from": "Mara",
+          "text": "I enjoy chatting with you. I’m not comfortable asking you for money, and I’d be happy to video call when you’re ready."
+        },
+        "answer_index": 1,
+        "technique": "secrecy",
+        "explain": "This message does not ask for money or secrecy, and it respects your choice about a video call. Still, take time to get to know someone online.",
+        "safe_action": "Keep personal and financial details private, and talk to someone you trust if anything feels uncomfortable."
+      }
+    ]
+  },
+  "tech_support": {
+    "title": "A virus warning that wants control",
+    "cards": [
+      {
+        "heading": "A scary warning can be a trick",
+        "body": "An unexpected pop-up or caller may claim your computer has a virus to frighten you into acting quickly."
+      },
+      {
+        "heading": "Don’t hand over control",
+        "body": "Never install an app or give a stranger remote access to “fix” your computer. They could see your files or use your accounts."
+      },
+      {
+        "heading": "Pause and close it",
+        "body": "Close the page or hang up. If you’re worried, contact a trusted computer helper using details you find yourself."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "A pop-up says your computer is infected and tells you to call a number. What’s the safest next step?",
+        "options": [
+          "Call the number to check",
+          "Close the page without calling",
+          "Install the app it recommends"
+        ],
+        "answer_index": 1,
+        "technique": "fear",
+        "explain": "An unexpected virus warning can use fear to push you into contacting a scammer.",
+        "safe_action": "Close the page. If it won’t close, ask a trusted person for help."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "BrightDesk Support",
+          "text": "URGENT: Your computer has 7 viruses. Call 555-0148 now. Install FixNest and pay $249 so we can stop hackers."
+        },
+        "flags": [
+          {
+            "span": "URGENT:",
+            "why": "It tries to make you act before you can think."
+          },
+          {
+            "span": "Your computer has 7 viruses.",
+            "why": "A frightening claim from an unexpected message may be made up."
+          },
+          {
+            "span": "Call 555-0148 now.",
+            "why": "It directs you to contact a number supplied in the warning."
+          },
+          {
+            "span": "Install FixNest and pay $249",
+            "why": "It asks you to install an app and pay a stranger."
+          }
+        ],
+        "technique": "fear",
+        "explain": "The message uses a scary virus claim and pressure to get access and money.",
+        "safe_action": "Don’t call, install the app, or pay. Close the message and ask a trusted computer helper if you’re concerned."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this likely real or a scam?",
+        "message": {
+          "from": "Computer Warning",
+          "text": "Your files are at risk. Let us control your computer now to remove a virus."
+        },
+        "answer_index": 0,
+        "technique": "fear",
+        "explain": "The unexpected warning uses fear and asks for remote control of your computer.",
+        "safe_action": "Don’t allow access. Close the page or hang up, then contact a trusted helper using details you find yourself."
+      }
+    ]
+  },
+  "account_takeover_code": {
+    "title": "Keep one-time codes to yourself",
+    "cards": [
+      {
+        "heading": "A code is a key",
+        "body": "A one-time code can let someone into your account. Keep it private, even if the person asking sounds helpful."
+      },
+      {
+        "heading": "Watch for a change of channel",
+        "body": "A message or caller may say a code was sent by mistake, then ask you to read it out. That request is a warning sign."
+      },
+      {
+        "heading": "Check for yourself",
+        "body": "Don’t reply or share the code. Open the service’s app yourself or use contact details you already trust to check your account."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "You receive a one-time code you didn’t request. Someone then calls and asks you to read it out. What should you do?",
+        "options": [
+          "Read it out if they say it was sent by mistake",
+          "Keep it private and check your account using the service’s app or trusted contact details",
+          "Send it by text instead"
+        ],
+        "answer_index": 1,
+        "technique": "channel_switch",
+        "explain": "The caller is moving from an unexpected code to a request for the code. Sharing it could give them access to your account.",
+        "safe_action": "End the call, keep the code private, and open the service’s app yourself to check your account."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "Northgate Wallet Support",
+          "text": "Your sign-in code was sent by mistake. Please read the code to our agent on this call so we can cancel it."
+        },
+        "flags": [
+          {
+            "span": "was sent by mistake",
+            "why": "This may be a story to make an unexpected code seem harmless."
+          },
+          {
+            "span": "read the code to our agent on this call",
+            "why": "A one-time code should not be shared with someone who contacts you."
+          }
+        ],
+        "technique": "channel_switch",
+        "explain": "The message turns an unexpected code into a reason to speak with an agent and hand it over. A familiar-looking name doesn’t prove the request is genuine.",
+        "safe_action": "Don’t share the code. End the call and check your account through the service’s app or trusted contact details."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this message safe to follow?",
+        "message": {
+          "from": "SwiftParcel",
+          "text": "Your delivery needs an address check. Reply with the sign-in code you just received so we can confirm your account."
+        },
+        "answer_index": 0,
+        "technique": "channel_switch",
+        "explain": "A delivery message is asking for a sign-in code, which could give someone access to your account. Don’t share one-time codes.",
+        "safe_action": "Don’t reply. Check delivery details using the parcel service’s app or website that you open yourself."
+      }
+    ]
+  },
+  "job_task": {
+    "title": "A job that asks you to pay",
+    "cards": [
+      {
+        "heading": "A surprise offer",
+        "body": "Be cautious if a job offer arrives when you never applied. A friendly message or simple task doesn’t prove the job is genuine."
+      },
+      {
+        "heading": "Likes for money?",
+        "body": "Scammers may promise easy pay for liking or rating posts. The offer can sound tempting, but the earnings may be fake."
+      },
+      {
+        "heading": "Pay to unlock earnings",
+        "body": "A request to pay a deposit or fee before you can get paid is a major warning sign. Don’t send money to work."
+      },
+      {
+        "heading": "Pause and protect yourself",
+        "body": "Stop replying and block the contact. If you’re unsure, check the company using contact details you find independently."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "A stranger offers you money for rating posts. What should make you most cautious?",
+        "options": [
+          "They ask you to pay a deposit to receive your earnings",
+          "They explain what the task involves",
+          "They give you time to think"
+        ],
+        "answer_index": 0,
+        "technique": "payment_method",
+        "explain": "A demand for money before you can get paid is a strong warning sign, even if the task sounds simple.",
+        "safe_action": "Don’t pay. Stop replying and block the contact."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message are warning signs?",
+        "message": {
+          "from": "Mira at BrightPath Tasks",
+          "text": "Earn $180 today by liking posts. Pay a $25 deposit to unlock your earnings. Reply in 10 minutes to claim your spot."
+        },
+        "flags": [
+          {
+            "span": "Earn $180 today by liking posts.",
+            "why": "Easy money for simple online tasks can be bait."
+          },
+          {
+            "span": "Pay a $25 deposit to unlock your earnings.",
+            "why": "A job should not require you to pay to receive your wages."
+          },
+          {
+            "span": "Reply in 10 minutes",
+            "why": "A short deadline pressures you to act without checking."
+          }
+        ],
+        "technique": "too_good",
+        "explain": "The message promises easy earnings, asks for money, and rushes you. Together, these are strong scam signs.",
+        "safe_action": "Don’t send money or reply. Block the contact."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this offer real or a scam?",
+        "message": {
+          "from": "BrightPath Tasks",
+          "text": "We’ll pay you to rate posts. To withdraw your first earnings, send a deposit. You can earn more after that."
+        },
+        "answer_index": 0,
+        "technique": "too_good",
+        "explain": "The promise of pay is used to lure you in, but the deposit request is the key warning sign.",
+        "safe_action": "Don’t send a deposit. Stop replying and block the contact."
+      }
+    ]
+  },
+  "marketplace_purchase": {
+    "title": "Keep marketplace payments on the site",
+    "cards": [
+      {
+        "heading": "Use the site’s checkout",
+        "body": "Pay through the marketplace’s own checkout. It may offer protection if an order goes wrong."
+      },
+      {
+        "heading": "A bargain can be bait",
+        "body": "A price far below similar listings is a reason to pause and check carefully."
+      },
+      {
+        "heading": "Keep the chat there, too",
+        "body": "A seller who moves you off the marketplace may be trying to avoid its safety checks."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "A seller asks you to pay by bank transfer instead of using the marketplace checkout. What should you do?",
+        "options": [
+          "Pay if the seller seems friendly",
+          "Use the marketplace’s checkout or leave the deal",
+          "Send a small amount first"
+        ],
+        "answer_index": 1,
+        "technique": "payment_method",
+        "explain": "A bank transfer may be hard to get back, and paying outside the site can remove marketplace protection.",
+        "safe_action": "Use the marketplace’s own checkout, or stop the purchase."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this seller’s message are warning signs?",
+        "message": {
+          "from": "Mira, seller on PineCart",
+          "text": "This is half the usual price. Send a bank transfer today and message me off PineCart to arrange it."
+        },
+        "flags": [
+          {
+            "span": "half the usual price",
+            "why": "A price far below similar listings can be bait."
+          },
+          {
+            "span": "Send a bank transfer today",
+            "why": "A bank transfer may be difficult to recover, and ‘today’ adds pressure."
+          },
+          {
+            "span": "message me off PineCart",
+            "why": "Moving the conversation away from the marketplace can bypass its safety tools."
+          }
+        ],
+        "technique": "payment_method",
+        "explain": "The message combines an unusually low price, pressure, an unsafe payment method, and a request to leave the marketplace.",
+        "safe_action": "Do not pay or move the chat. Use the site’s checkout and reporting tools."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this seller’s request safe or a scam warning?",
+        "message": {
+          "from": "A seller on PineCart",
+          "text": "The checkout is broken. Transfer the money to me directly and I’ll send the item."
+        },
+        "answer_index": 0,
+        "technique": "payment_method",
+        "explain": "The seller wants you to pay outside the marketplace, where you may lose its protection.",
+        "safe_action": "Only pay through the marketplace’s own checkout. If it is not working, wait or choose another listing."
+      }
+    ]
+  },
+  "family_emergency": {
+    "title": "“Hi Mum, I’ve lost my phone”",
+    "cards": [
+      {
+        "heading": "A familiar name, a new number",
+        "body": "A message may sound like it comes from a family member, but arrive from a number you don’t know. Don’t rely on the name or story alone."
+      },
+      {
+        "heading": "Pressure and secrecy",
+        "body": "A request for money today, especially with “don’t tell anyone” or “I can’t talk,” can stop you checking. Take a moment before doing anything."
+      },
+      {
+        "heading": "Check another way",
+        "body": "Call your family member on the number you already have. You can also ask a question only they would know."
+      },
+      {
+        "heading": "Keep control of your money",
+        "body": "Don’t send money to a new or unfamiliar account just because a message says it’s urgent. Speak with someone you trust first."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "mc",
+        "prompt": "A new number says your family member needs money today and asks you not to tell anyone. What is the safest first step?",
+        "options": [
+          "Send a small amount to help quickly",
+          "Call them on the number you already have",
+          "Reply asking for their new account details"
+        ],
+        "answer_index": 1,
+        "technique": "secrecy",
+        "explain": "A request to keep things secret can stop you getting help or checking the story. Verify with your family member another way.",
+        "safe_action": "Call your family member on their old number before sending any money."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "What would you make of this message?",
+        "message": {
+          "from": "New number",
+          "text": "Hi Mum, it's me. I lost my phone. I can't talk on the phone. Please don't tell anyone yet. I need money today—send it to this new account."
+        },
+        "answer_index": 0,
+        "technique": "secrecy",
+        "explain": "The sender uses a new number, avoids a phone call, asks for secrecy, and wants money sent urgently to an unfamiliar account.",
+        "safe_action": "Don’t send money. Call your family member using the number you already have."
+      },
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "New number",
+          "text": "Hi Mum, I lost my phone. I can't talk on the phone. Please don't tell anyone yet. I need money today—send it to this new account."
+        },
+        "flags": [
+          {
+            "span": "I can't talk on the phone.",
+            "why": "It gets in the way of checking who is really messaging you."
+          },
+          {
+            "span": "Please don't tell anyone yet.",
+            "why": "Secrecy can stop you asking someone you trust for help."
+          },
+          {
+            "span": "I need money today",
+            "why": "The rush may pressure you into acting before you check."
+          },
+          {
+            "span": "send it to this new account",
+            "why": "The account is unfamiliar, so verify the request before paying."
+          }
+        ],
+        "technique": "secrecy",
+        "explain": "These details together are warning signs. A real family emergency can still be checked through a trusted number.",
+        "safe_action": "Call your family member on their old number, or ask a question only they would know."
+      }
+    ]
+  },
+  "tax_refund": {
+    "title": "A surprise tax refund message",
+    "cards": [
+      {
+        "heading": "A refund you weren’t expecting?",
+        "body": "A message promising money back can feel like a pleasant surprise. Pause before you act, especially if you weren’t expecting a refund."
+      },
+      {
+        "heading": "Don’t follow the link",
+        "body": "A link in an unexpected refund message could lead to a fake page. Don’t tap it or enter personal or payment details."
+      },
+      {
+        "heading": "Keep your bank details private",
+        "body": "You shouldn’t need to share your bank login or card details to claim a refund through a message link."
+      },
+      {
+        "heading": "Check for yourself",
+        "body": "Close the message and visit your tax service using an address you already know or find independently. If unsure, ask someone you trust to help check."
+      }
+    ],
+    "quiz": [
+      {
+        "kind": "red_flags",
+        "prompt": "Which parts of this message should make you pause?",
+        "message": {
+          "from": "Northvale Tax Office",
+          "text": "You have a tax refund waiting. Claim your $420 today at claim-refund.example and enter your bank login to receive it."
+        },
+        "flags": [
+          {
+            "span": "You have a tax refund waiting.",
+            "why": "An unexpected refund can be tempting. Check independently before taking action."
+          },
+          {
+            "span": "Claim your $420 today at claim-refund.example",
+            "why": "It urges you to use a message link to claim money."
+          },
+          {
+            "span": "enter your bank login",
+            "why": "Never share your bank login to receive a refund."
+          }
+        ],
+        "technique": "too_good",
+        "explain": "The promise of unexpected money is being used to draw you into a link that asks for sensitive details.",
+        "safe_action": "Don’t use the link. Visit your tax service using an address you know, or find its contact details independently."
+      },
+      {
+        "kind": "mc",
+        "prompt": "You get a text about a refund you weren’t expecting. What’s the safest next step?",
+        "options": [
+          "Tap the link, but only enter your details if the page looks official",
+          "Reply asking whether the refund is real",
+          "Ignore the link and check through your tax service independently"
+        ],
+        "answer_index": 2,
+        "technique": "too_good",
+        "explain": "A convincing-looking page or reply may still be part of a scam. Checking separately avoids relying on the message.",
+        "safe_action": "Open your tax service using an address you already know or find independently."
+      },
+      {
+        "kind": "real_or_scam",
+        "prompt": "Is this message real or a scam?",
+        "message": {
+          "from": "Northvale Tax Office",
+          "text": "A refund is ready for you. Use this link to claim it and enter your card details."
+        },
+        "answer_index": 0,
+        "technique": "too_good",
+        "explain": "It promises money and asks you to use a link and provide card details. Treat unexpected refund messages cautiously.",
+        "safe_action": "Don’t tap the link or share card details. Check with your tax service using independently found contact details."
+      }
+    ]
+  }
+}
