@@ -17,6 +17,7 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS skills (learner_id TEXT, key TEXT, correct INT, seen INT, box INT, due_at INT, PRIMARY KEY (learner_id, key))`,
   `CREATE TABLE IF NOT EXISTS events (id INTEGER PRIMARY KEY, learner_id TEXT, kind TEXT, key TEXT, ok INT, detail TEXT, at INT)`,
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
+  `CREATE TABLE IF NOT EXISTS phone_codes (learner_id TEXT PRIMARY KEY, number TEXT, hash TEXT, expires_at INT, tries INT)`,
   `CREATE TABLE IF NOT EXISTS practice_sends (id TEXT PRIMARY KEY, learner_id TEXT, channel TEXT, scenario TEXT, sent_at INT, opened_at INT, outcome TEXT)`,
   `CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY, task TEXT, arm TEXT, model TEXT, request_id TEXT, in_tok INT, out_tok INT, ms INT, ttft_ms INT, ok INT, checks TEXT, at INT)`,
 ];

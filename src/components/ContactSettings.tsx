@@ -9,6 +9,18 @@ export default function ContactSettings() {
   const [number, setNumber] = useState("");
   const [msg, setMsg] = useState("");
   const [busy, setBusy] = useState("");
+  const [code, setCode] = useState("");
+  const [codeSent, setCodeSent] = useState(false);
+
+  async function verify(withCode?: string) {
+    setBusy("verify");
+    const r = await fetch("/api/phone/verify", { method: "POST", body: JSON.stringify(withCode ? { code: withCode } : {}) }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    if (r?.ok && withCode) { setP(j); setCode(""); setCodeSent(false); setMsg("Number confirmed."); }
+    else if (r?.ok) { setCodeSent(true); setMsg("Code sent. Check your texts."); }
+    else setMsg(j.error ?? "That didn't work. Try again.");
+    setBusy("");
+  }
 
   async function trigger(kind: "phone" | "email") {
     setBusy(kind);
@@ -71,7 +83,24 @@ export default function ContactSettings() {
             <button className="rounded-full bg-foreground px-5 font-semibold text-background">Save</button>
           </form>
         )}
-        {p.phone.on && p.phone.number && (
+        {p.phone.on && p.phone.number && !p.phone.verified && (
+          <div className="mt-3 space-y-2">
+            <p className="text-ink-soft">Confirm this number is yours. We’ll text you a 6-digit code.</p>
+            {codeSent ? (
+              <form className="flex gap-2" onSubmit={(e) => { e.preventDefault(); verify(code); }}>
+                <label className="sr-only" htmlFor="code">Code from the text</label>
+                <input id="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} value={code} onChange={(e) => setCode(e.target.value.replace(/\D/g, ""))}
+                  placeholder="123456" className="h-12 min-w-0 flex-1 rounded-xl bg-secondary px-3 text-lg tracking-widest" />
+                <button disabled={busy === "verify" || code.length !== 6} className="rounded-full bg-foreground px-5 font-semibold text-background disabled:opacity-50">Confirm</button>
+              </form>
+            ) : (
+              <button type="button" onClick={() => verify()} disabled={busy === "verify"} className="btn-chunky lift w-full bg-foreground text-background">
+                {busy === "verify" ? "Sending…" : "Text me a code"}
+              </button>
+            )}
+          </div>
+        )}
+        {p.phone.on && p.phone.number && p.phone.verified && (
           <button type="button" onClick={() => trigger("phone")} disabled={busy === "phone"} className="btn-chunky btn-grad lift mt-3 w-full">
             {busy === "phone" ? "Calling…" : "Call me now"}
           </button>

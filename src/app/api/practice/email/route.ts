@@ -11,7 +11,7 @@ export async function POST() {
   if (!key) return Response.json({ error: "Email practice isn't set up yet." }, { status: 503 });
   const prefs = await contactPrefs(id);
   if (!prefs.email.on) return Response.json({ error: "Turn on practice emails first." }, { status: 400 });
-  if (await recentlySent(id, "email")) return Response.json({ error: "One practice email every 2 minutes, please." }, { status: 429 });
+  if (await recentlySent(id, "email")) return Response.json({ error: "One practice email every 5 minutes, please." }, { status: 429 });
   const to = (await currentUser())?.primaryEmailAddress?.emailAddress;
   if (!to) return Response.json({ error: "Your account has no email address." }, { status: 400 });
 

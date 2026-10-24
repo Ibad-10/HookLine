@@ -15,7 +15,7 @@ export type ContactInput = z.infer<typeof ContactPrefs>;
 export type Stored = {
   reminders: boolean;
   reminderTime: string;
-  phone: { on: boolean; number: string; at: number | null };
+  phone: { on: boolean; number: string; at: number | null; verified?: boolean };
   email: { on: boolean; at: number | null };
 };
 
@@ -23,13 +23,16 @@ export const defaultPrefs = (): Stored => ({
   reminders: false, reminderTime: "18:00", phone: { on: false, number: "", at: null }, email: { on: false, at: null },
 });
 
+// A number stays verified only while it is unchanged; any new number needs a fresh code.
+function phoneOn(old: Stored, number: string, now: number): Stored["phone"] {
+  return { on: true, number, at: old.phone.on ? old.phone.at : now, verified: Boolean(old.phone.verified) && old.phone.number === number };
+}
+
 export function applyPrefs(old: Stored, input: ContactInput, now: number): Stored {
   return {
     reminders: input.reminders,
     reminderTime: input.reminderTime,
-    phone: input.phone.on
-      ? { on: true, number: input.phone.number.replace(/[^\d+]/g, ""), at: old.phone.on ? old.phone.at : now }
-      : { on: false, number: "", at: null },
+    phone: input.phone.on ? phoneOn(old, input.phone.number.replace(/[^\d+]/g, ""), now) : { on: false, number: "", at: null, verified: false },
     email: input.email.on ? { on: true, at: old.email.on ? old.email.at : now } : { on: false, at: null },
   };
 }

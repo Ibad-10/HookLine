@@ -12,11 +12,13 @@ export async function contactPrefs(learnerId: string): Promise<Stored> {
   return v ? { ...defaultPrefs(), ...JSON.parse(String(v)) } : defaultPrefs();
 }
 
-// One real call or email per channel every 2 minutes per learner.
+// One real call or email per channel every 5 minutes per learner.
+export const GAP_MS = 5 * 60_000;
+
 export async function recentlySent(learnerId: string, channel: string, now = Date.now()): Promise<boolean> {
   const r = await db().execute({
     sql: "SELECT 1 FROM practice_sends WHERE learner_id = ? AND channel = ? AND sent_at > ? LIMIT 1",
-    args: [learnerId, channel, now - 120_000],
+    args: [learnerId, channel, now - GAP_MS],
   });
   return Boolean(r.rows[0]);
 }

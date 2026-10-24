@@ -10,7 +10,8 @@ export async function POST() {
   if (!sid || !token || !from) return Response.json({ error: "Phone practice isn't set up yet." }, { status: 503 });
   const prefs = await contactPrefs(id);
   if (!prefs.phone.on || !prefs.phone.number) return Response.json({ error: "Turn on practice calls and save your number first." }, { status: 400 });
-  if (await recentlySent(id, "phone")) return Response.json({ error: "One practice call every 2 minutes, please." }, { status: 429 });
+  if (!prefs.phone.verified) return Response.json({ error: "Confirm your number with the text code first." }, { status: 400 });
+  if (await recentlySent(id, "phone")) return Response.json({ error: "One practice call every 5 minutes, please." }, { status: 429 });
 
   const scenario = "safe-account";
   await recordSend(id, "phone", scenario);

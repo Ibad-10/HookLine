@@ -13,8 +13,10 @@ export async function POST(req: Request) {
   const url = new URL(req.url);
   const params = Object.fromEntries(new URLSearchParams(await req.text())) as Record<string, string>;
   const signed = `${PUBLIC_URL()}${url.pathname}${url.search}`;
-  if (!validTwilio(process.env.TWILIO_AUTH_TOKEN ?? "", signed, params, req.headers.get("x-twilio-signature")))
+  if (!validTwilio(process.env.TWILIO_AUTH_TOKEN ?? "", signed, params, req.headers.get("x-twilio-signature"))) {
+    console.error("phone twiml: bad signature", { signed, hasSig: Boolean(req.headers.get("x-twilio-signature")), keys: Object.keys(params).length });
     return new Response("forbidden", { status: 403 });
+  }
 
   const sc = SCENARIOS[url.searchParams.get("s") ?? ""];
   const learner = url.searchParams.get("l") ?? "";
