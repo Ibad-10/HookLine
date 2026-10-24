@@ -37,6 +37,7 @@ export async function extractBrief(page: Page, sessionId: string, complete?: Com
     schema: Extracted,
     sessionId,
     complete,
+    temperature: 0,
   });
   if (!r.ok || "skip" in r.data) return null;
   const brief = Brief.safeParse({ ...r.data, source_url: page.url, source_name: page.source, published_at: page.published });

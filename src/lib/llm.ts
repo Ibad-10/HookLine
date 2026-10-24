@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { db, migrate } from "./db";
 
 export type Arm = "plain" | "stuffed" | "small";
-export type TaskName = "teacher" | "coach" | "learner" | "gatecheck" | "mailer" | "caller" | "talker";
+export type TaskName = "teacher" | "coach" | "learner" | "gatecheck" | "mailer" | "caller" | "talker" | "intent";
 
 export type CallMeta = {
   model: string;
@@ -26,21 +26,22 @@ export type Complete = (p: {
   system: string;
   user: string;
   sessionId: string;
+  temperature?: number;
 }) => Promise<{ stream: AsyncIterable<Chunk>; requestId: string | null }>;
 
 export function modelFor(task: TaskName, arm: Arm): string {
   if (arm === "small") return process.env.SMALL_MODEL || "openai/gpt-oss-20b";
-  if (task === "coach" || task === "talker") return process.env.COACH_MODEL || "claude-haiku-4-5";
+  if (task === "coach" || task === "talker" || task === "intent") return process.env.COACH_MODEL || "claude-haiku-4-5";
   return process.env.TEACHER_MODEL || "claude-haiku-4-5";
 }
 
 // Claude models go through Mubit's Anthropic route; streamed so we can time the first token.
-const anthropicComplete: Complete = async ({ model, system, user }) => {
+const anthropicComplete: Complete = async ({ model, system, user, temperature }) => {
   const base = process.env.MUBIT_ANTHROPIC_BASE_URL || "https://api.mubit.ai/anthropic";
   const res = await fetch(`${base}/v1/messages`, {
     method: "POST",
     headers: { "x-api-key": process.env.MUBIT_API_KEY ?? "", "anthropic-version": "2023-06-01", "content-type": "application/json" },
-    body: JSON.stringify({ model, max_tokens: 4096, system, stream: true, messages: [{ role: "user", content: user }] }),
+    body: JSON.stringify({ model, max_tokens: 4096, system, stream: true, ...(temperature !== undefined && { temperature }), messages: [{ role: "user", content: user }] }),
   });
   if (!res.ok || !res.body) throw new Error(`anthropic ${res.status}: ${(await res.text()).slice(0, 200)}`);
   const body = res.body;
@@ -70,7 +71,7 @@ const clients: Partial<Record<"frontier" | "small", OpenAI>> = {};
 // No metadata.session_id: OpenAI rejects it without store:true and Groq rejects it outright.
 // Mubit then derives the session from the conversation start, one per single-turn call.
 const mubitComplete: Complete = async (p) => {
-  const { arm, model, system, user } = p;
+  const { arm, model, system, user, temperature } = p;
   if (model.startsWith("claude")) return anthropicComplete(p);
   const kind = arm === "small" ? "small" : "frontier";
   clients[kind] ??= new OpenAI({
@@ -88,6 +89,7 @@ const mubitComplete: Complete = async (p) => {
         { role: "user", content: user },
       ],
       response_format: { type: "json_object" },
+      ...(temperature !== undefined && { temperature }),
       stream: true,
       stream_options: { include_usage: true },
     })
@@ -128,6 +130,7 @@ export async function callLLM<T>(o: {
   sessionId: string;
   checks?: (t: T) => Record<string, boolean>;
   complete?: Complete;
+  temperature?: number; // 0 for fixed-answer tasks, so the big model is consistent and an adapter can match it
 }): Promise<{ ok: true; data: T; meta: CallMeta } | { ok: false; error: string; meta: CallMeta }> {
   const model = modelFor(o.task, o.arm);
   const meta: CallMeta = { model, requestId: null, inTok: 0, outTok: 0, ms: 0, ttftMs: 0 };
@@ -141,7 +144,7 @@ export async function callLLM<T>(o: {
       const start = performance.now(); // time only the attempt that answers, not retry waits
       try {
         const { stream, requestId } = await (o.complete ?? mubitComplete)({
-          arm: o.arm, model, system: o.system, user: o.user, sessionId: o.sessionId,
+          arm: o.arm, model, system: o.system, user: o.user, sessionId: o.sessionId, temperature: o.temperature,
         });
         meta.requestId = requestId;
         for await (const c of stream) {

@@ -3,7 +3,7 @@ import { z } from "zod";
 import { gate } from "@/lib/gatekeeper";
 import { getScenario } from "@/lib/call/getScenario";
 import { requireLearner } from "@/lib/learner";
-import { gateCheck, talkMove } from "@/lib/tasks/coach";
+import { gateCheck, liveTurn } from "@/lib/tasks/coach";
 
 const Body = z.object({
   scenarioId: z.string(),
@@ -31,6 +31,6 @@ export async function POST(req: Request) {
   // Earlier learner turns were masked in the browser; mask again here in case a client skipped it.
   const transcript = body.data.recent.map((t) => ({ who: t.who, text: t.who === "you" ? gate(t.text, null).masked : t.text }));
   const state = { scenarioId, node, step: 0, transcript, outcome: null, checkpoints: [] };
-  const move = await talkMove(state, sc, masked, sessionId);
+  const move = await liveTurn(state, sc, masked, sessionId);
   return Response.json(move ?? { intent: "stall" });
 }

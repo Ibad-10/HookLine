@@ -11,7 +11,7 @@ import { auth, firstTurn, nextTurn, validToken, validTwilio, type Turn as PhoneT
 import { speech as speech_ } from "@/lib/voiceCache";
 import { contactPrefs, PUBLIC_URL } from "@/lib/practice";
 import { saveOutcome } from "@/lib/profile";
-import { talkMove } from "@/lib/tasks/coach";
+import { liveTurn } from "@/lib/tasks/coach";
 
 export const maxDuration = 60;
 
@@ -113,7 +113,7 @@ export async function POST(req: Request) {
   after(async () => {
     const history = await loadHistory(sid);
     const state = { ...startCall(sc), node, transcript: [...history, { who: "you" as const, text: fast.masked }] };
-    const move = await talkMove(state, sc, fast.masked, `phone-${sid}`);
+    const move = await liveTurn(state, sc, fast.masked, `phone-${sid}`);
     const turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet, answers);
     if (move?.say && turn.twiml.includes("say=")) await speech_(sc.voice || "JBFqnCBsd6RMkjVDRZzb", move.say);
     await db().execute({ sql: "UPDATE phone_pending SET twiml = ? WHERE id = ?", args: [turn.twiml, id] });
