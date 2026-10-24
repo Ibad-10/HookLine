@@ -102,6 +102,23 @@ function parseJson(text: string): unknown {
   return JSON.parse(body.slice(body.indexOf("{"), body.lastIndexOf("}") + 1));
 }
 
+// Starter credit allows 4 calls in flight per project; stay under it and retry 429s.
+// ponytail: per-process limit only; a second server process would need a shared limiter.
+const MAX_IN_FLIGHT = 3;
+let inFlight = 0;
+const waiting: (() => void)[] = [];
+async function slot<R>(fn: () => Promise<R>): Promise<R> {
+  if (inFlight >= MAX_IN_FLIGHT) await new Promise<void>((r) => waiting.push(r));
+  inFlight++;
+  try {
+    return await fn();
+  } finally {
+    inFlight--;
+    waiting.shift()?.();
+  }
+}
+const is429 = (e: unknown) => /\b429\b|starter_credit_busy|rate.?limit/i.test(String((e as Error)?.message ?? e)) || (e as { status?: number })?.status === 429;
+
 export async function callLLM<T>(o: {
   task: TaskName;
   arm: Arm;
@@ -114,37 +131,58 @@ export async function callLLM<T>(o: {
 }): Promise<{ ok: true; data: T; meta: CallMeta } | { ok: false; error: string; meta: CallMeta }> {
   const model = modelFor(o.task, o.arm);
   const meta: CallMeta = { model, requestId: null, inTok: 0, outTok: 0, ms: 0, ttftMs: 0 };
-  const start = performance.now();
   let text = "";
   let error: string | null = null;
   let data: T | undefined;
   let checks: Record<string, boolean> = { schema: false };
 
-  try {
-    const { stream, requestId } = await (o.complete ?? mubitComplete)({
-      arm: o.arm, model, system: o.system, user: o.user, sessionId: o.sessionId,
-    });
-    meta.requestId = requestId;
-    for await (const c of stream) {
-      const piece = c.choices[0]?.delta?.content;
-      if (piece) {
-        if (!meta.ttftMs) meta.ttftMs = Math.round(performance.now() - start);
-        text += piece;
-      }
-      if (c.usage) {
-        meta.inTok = c.usage.prompt_tokens ?? 0;
-        meta.outTok = c.usage.completion_tokens ?? 0;
+  await slot(async () => {
+    for (let attempt = 0; ; attempt++) {
+      const start = performance.now(); // time only the attempt that answers, not retry waits
+      try {
+        const { stream, requestId } = await (o.complete ?? mubitComplete)({
+          arm: o.arm, model, system: o.system, user: o.user, sessionId: o.sessionId,
+        });
+        meta.requestId = requestId;
+        for await (const c of stream) {
+          const piece = c.choices[0]?.delta?.content;
+          if (piece) {
+            if (!meta.ttftMs) meta.ttftMs = Math.round(performance.now() - start);
+            text += piece;
+          }
+          if (c.usage) {
+            meta.inTok = c.usage.prompt_tokens ?? 0;
+            meta.outTok = c.usage.completion_tokens ?? 0;
+          }
+        }
+        meta.ms = Math.round(performance.now() - start);
+        return;
+      } catch (e) {
+        if (is429(e) && attempt < 4) {
+          await new Promise((r) => setTimeout(r, 800 * 2 ** attempt + Math.random() * 400));
+          continue;
+        }
+        error = e instanceof Error ? e.message : String(e);
+        checks = { error: true };
+        meta.ms = Math.round(performance.now() - start);
+        return;
       }
     }
-    const parsed = o.schema.safeParse(parseJson(text));
-    if (parsed.success) {
+  });
+
+  if (!error) {
+    let raw: unknown;
+    try {
+      raw = parseJson(text);
+    } catch {
+      error = "not JSON";
+    }
+    const parsed = error ? null : o.schema.safeParse(raw);
+    if (parsed?.success) {
       data = parsed.data;
       checks = { schema: true, ...(o.checks?.(data) ?? {}) };
-    } else error = "schema: " + parsed.error.message.slice(0, 300);
-  } catch (e) {
-    error = e instanceof Error ? e.message : String(e);
+    } else if (parsed) error = "schema: " + parsed.error.message.slice(0, 300);
   }
-  meta.ms = Math.round(performance.now() - start);
   const ok = error === null && Object.values(checks).every(Boolean);
 
   await migrate();

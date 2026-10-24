@@ -1,6 +1,6 @@
 import { checkBrands } from "../brands";
 import { callLLM, type Arm, type Complete } from "../llm";
-import { Lesson, type Brief } from "../schemas";
+import { LessonRepaired, type Brief, type Lesson } from "../schemas";
 import { TECHNIQUES } from "../taxonomy";
 
 // Frozen: this exact text is one Mubit task. Do not edit after training starts.
@@ -53,7 +53,7 @@ export async function writeLesson(
     arm,
     system: TEACHER_SYSTEM,
     user: teacherUser(brief, learner, arm, history),
-    schema: Lesson,
+    schema: LessonRepaired,
     sessionId,
     checks: (l) => ({ brands: checkBrands(JSON.stringify(l)).ok, answer_key: answerKeyOk(l) }),
     complete,

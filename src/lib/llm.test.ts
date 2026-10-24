@@ -56,3 +56,21 @@ test("carbon estimate matches the worked example", () => {
   expect(f.low).toBeLessThan(f.central);
   expect(f.high).toBeGreaterThan(f.central);
 });
+
+test("429 is retried, then succeeds", async () => {
+  let n = 0;
+  const flaky: Complete = async (p) => {
+    if (n++ === 0) throw Object.assign(new Error("anthropic 429: starter_credit_busy"), { status: 429 });
+    return fake('{"a":3}')(p);
+  };
+  const r = await callLLM({ ...base, schema: z.object({ a: z.number() }), complete: flaky });
+  expect(r.ok).toBe(true);
+  expect(n).toBe(2);
+});
+
+test("provider errors are logged as errors, not as bad output", async () => {
+  const boom: Complete = async () => { throw new Error("down"); };
+  await callLLM({ ...base, task: "gatecheck", schema: z.object({}), complete: boom });
+  const rows = await db().execute("SELECT checks FROM calls WHERE task = 'gatecheck' ORDER BY id DESC LIMIT 1");
+  expect(JSON.parse(String(rows.rows[0].checks))).toEqual({ error: true });
+});

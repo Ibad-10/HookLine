@@ -48,3 +48,21 @@ export const Lesson = z.object({
   quiz: z.array(Question).min(3).max(5),
 });
 export type Lesson = z.infer<typeof Lesson>;
+
+// Models sometimes quote a flag with different case or edge punctuation. Snap each
+// span to the exact text in the message; drop spans that aren't there at all.
+export function repairLesson(raw: unknown): unknown {
+  const l = raw as { quiz?: { message?: { text?: string }; flags?: { span: string; why: string }[] }[] };
+  for (const q of l?.quiz ?? []) {
+    const text = q.message?.text;
+    if (!text || !Array.isArray(q.flags)) continue;
+    q.flags = q.flags.flatMap((f) => {
+      const want = String(f.span ?? "").trim().replace(/^[\s"'“‘(]+|[\s"'”’).,:;!?]+$/g, "");
+      const i = want ? text.toLowerCase().indexOf(want.toLowerCase()) : -1;
+      return i < 0 ? [] : [{ ...f, span: text.slice(i, i + want.length) }];
+    });
+  }
+  return raw;
+}
+
+export const LessonRepaired = z.preprocess(repairLesson, Lesson);

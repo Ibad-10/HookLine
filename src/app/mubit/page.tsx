@@ -128,6 +128,7 @@ function Table({ title, s }: { title: string; s: Record<string, ArmSummary> }) {
     ["Valid output", (a) => pctf(a.schemaRate)],
     ["No real brand names", (a) => pctf(a.brandRate)],
     ["Passed every check", (a) => pctf(a.okRate)],
+    ["Calls that errored (rate limit, outage)", (a) => pctf(a.errorRate)],
     ["Carbon per call, estimated", (a) => `${g(a.carbon.central)} g (${g(a.carbon.low)} to ${g(a.carbon.high)})`],
   ];
   return (

@@ -25,3 +25,11 @@ test("mc answer out of range fails", () => {
   const bad = { ...lesson, quiz: [q, q, { ...lesson.quiz[2], answer_index: 5 }] };
   expect(Lesson.safeParse(bad).success).toBe(false);
 });
+
+test("flag spans that differ only in case or edge punctuation are repaired", async () => {
+  const { repairLesson } = await import("./schemas");
+  const loose = { ...lesson, quiz: [{ ...q, flags: [{ span: "Within 1 hour.", why: "rush" }, { span: "made up", why: "x" }] }, q, q] };
+  const fixed = repairLesson(loose) as { quiz: { flags?: unknown }[] };
+  expect(fixed.quiz[0].flags).toEqual([{ span: "within 1 hour", why: "rush" }]);
+  expect(Lesson.safeParse(fixed).success).toBe(true);
+});

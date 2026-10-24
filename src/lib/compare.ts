@@ -17,7 +17,7 @@ export type CallRow = {
 
 export type ArmSummary = {
   n: number; model: string; costPer1k: number | null; p50: number; p95: number; ttftP50: number; tokPerSec: number;
-  inTokAvg: number; outTokAvg: number; schemaRate: number; brandRate: number; keyRate: number; okRate: number;
+  inTokAvg: number; outTokAvg: number; schemaRate: number; brandRate: number; keyRate: number; okRate: number; errorRate: number;
   carbon: Range; requestIds: string[];
 };
 
@@ -35,7 +35,9 @@ const avg = (xs: number[]) => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.le
 export function summarize(rows: CallRow[], task: TaskName): Record<string, ArmSummary> {
   const out: Record<string, ArmSummary> = {};
   for (const arm of ["plain", "stuffed", "small"] as Arm[]) {
-    const rs = rows.filter((r) => r.task === task && r.arm === arm);
+    const all = rows.filter((r) => r.task === task && r.arm === arm);
+    // Provider errors (rate limits, outages) are not the model's output quality: count them apart.
+    const rs = all.filter((r) => !JSON.parse(r.checks || "{}").error);
     if (!rs.length) continue;
     const checks = rs.map((r) => JSON.parse(r.checks || "{}") as Record<string, boolean>);
     const rate = (k: string) => checks.filter((c) => c.schema && c[k] !== false).length / rs.length;
@@ -49,13 +51,15 @@ export function summarize(rows: CallRow[], task: TaskName): Record<string, ArmSu
       p50: pct(rs.map((r) => r.ms), 0.5),
       p95: pct(rs.map((r) => r.ms), 0.95),
       ttftP50: pct(rs.map((r) => r.ttft_ms), 0.5),
-      tokPerSec: avg(rs.filter((r) => r.ms > r.ttft_ms).map((r) => r.out_tok / ((r.ms - r.ttft_ms) / 1000))),
+      // Models that send the whole answer at once have no stream to time, so use total time.
+      tokPerSec: avg(rs.filter((r) => r.ms > 0).map((r) => r.out_tok / (Math.max(r.ms - r.ttft_ms, r.ms * 0.2) / 1000))),
       inTokAvg,
       outTokAvg,
       schemaRate: rate("schema"),
       brandRate: rate("brands"),
       keyRate: rate("answer_key"),
       okRate: rs.filter((r) => r.ok).length / rs.length,
+      errorRate: (all.length - rs.length) / all.length,
       carbon: estimateCarbon({ inTok: inTokAvg, outTok: outTokAvg, size: arm === "small" ? "small" : "frontier" }),
       requestIds: rs.map((r) => r.request_id).filter((x): x is string => !!x).slice(-5),
     };
