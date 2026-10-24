@@ -49,3 +49,10 @@ test("spoken digits are normalised", () => {
 test("ordinary talk passes", () => {
   expect(gate("hello, who is this please", null).stop).toBe(false);
 });
+
+test("context rule: bare assent or stalling is not giving the secret", () => {
+  expect(gate("ok", "code").stop).toBe(false);
+  expect(gate("yes sure", "card").stop).toBe(false);
+  expect(gate("hold on a moment", "code").stop).toBe(false);
+  expect(gate("ok it's 4 8 2 9 1 3", "code").stop).toBe(true);
+});

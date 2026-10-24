@@ -25,6 +25,8 @@ export function luhn(digits: string): boolean {
 }
 
 const SECRET_WORD = /\b(password|passcode|pin|memorable word|secret word)\b\s*(?:is|was|:)?\s*/i;
+// Bare assent or stalling ("ok", "hold on") is not handing over the secret.
+const ASSENT = /^\s*((yes|yeah|ok|okay|sure|right|alright|fine|go on|hold on|wait|one (sec|second|moment)|a moment|um+|hmm+|er+)[\s.,!]*)+$/i;
 const SAFE_REPLY =
   /\b(no|nope|won't|will not|not giving|call (you|my bank|them) back|hang up|who|why|what|which|is this real|scam)\b|\?/i;
 
@@ -42,7 +44,7 @@ export function gate(text: string, ask: Ask): { stop: boolean; kinds: string[]; 
   if (!kinds.size && runs.some((r) => r.length >= 6 && r.length <= 8)) kinds.add("code");
   if (SECRET_WORD.test(norm)) kinds.add("password");
 
-  const context = ask !== null && !SAFE_REPLY.test(text);
+  const context = ask !== null && !SAFE_REPLY.test(text) && !ASSENT.test(text);
   if (context) kinds.add(`answered_${ask}`);
 
   const masked = norm
