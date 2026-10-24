@@ -59,6 +59,9 @@ export const FEEDS = [
   { name: "Get Safe Online", url: "https://www.getsafeonline.org/news/feed/" },
   { name: "FBI IC3", url: "https://www.ic3.gov/PSA/RSS" },
   { name: "FTC Consumer Alerts", url: "https://www.consumer.ftc.gov/blog/gd-rss.xml" },
+  { name: "NCSC", url: "https://www.ncsc.gov.uk/api/1/services/v1/news-rss-feed.xml" },
+  { name: "Krebs on Security", url: "https://krebsonsecurity.com/feed/" },
+  { name: "BleepingComputer", url: "https://www.bleepingcomputer.com/feed/" },
 ];
 
 const strip = (html: string) =>
