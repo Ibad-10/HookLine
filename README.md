@@ -1,36 +1,48 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HookLine
 
-## Getting Started
+HookLine helps people of any age get better at spotting scams. It reads this week's
+public scam reports, turns them into three-minute lessons and quizzes, and lets you
+practise on a voice call in the browser that you're allowed to hang up on. It keeps a
+weak-spot profile for each person and brings back the scams they find hard.
 
-First, run the development server:
+Built at the Night Shift hackathon (Mubit), London, October 2026.
+
+## What's in it
+
+- **Learner** reads public scam feeds (Which?, Get Safe Online, FBI IC3, FTC) and writes a
+  short, fixed-format brief for each report. Page text is treated as data, never as instructions.
+- **Teacher** writes a lesson and quiz from a brief, aimed at the learner's weak spots.
+  Lessons use made-up company names only, and a check rejects any real brand.
+- **Practice call**: a branching script with ElevenLabs voice. You can talk or type.
+  Hanging up, asking questions or asking "is this real?" always counts as a pass.
+- **Gatekeeper** checks every reply in the browser, before anything leaves the device. If
+  you start giving a card number, code, bank details or a password, it stops the call and
+  keeps nothing.
+- **Profile**: tracks which scam types and tricks you find hard, and brings them back after
+  about 2 days, 1 week, 3 weeks, then monthly.
+- **With vs without Mubit** (`/mubit`): the same inputs run three ways (big model, big model
+  with the profile pasted in, and a small model of adapter size). It compares cost, speed,
+  output checks and estimated carbon, all measured from real calls.
+
+Every LLM call goes through the [Mubit](https://mubit.ai) gateway, which groups recurring
+calls into tasks and trains small adapter models on them. Answers are graded in code against
+the answer key. A model never grades its own output.
+
+## Run it
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env        # add your Mubit and ElevenLabs keys
+npm run dev                 # http://localhost:3000
+npm test                    # unit tests, no keys needed
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Optional scripts (they need the keys in `.env`):
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npx tsx --env-file=.env scripts/ingest.mts          # read this week's scam reports
+npx tsx --env-file=.env scripts/simulate.mts        # simulated learners for the dashboard
+npx tsx --env-file=.env scripts/gen-audio.mts       # caller audio clips
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Design, research and the build plan are in `docs/`.
