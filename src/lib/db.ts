@@ -19,6 +19,9 @@ const SCHEMA = [
   `CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT)`,
   `CREATE TABLE IF NOT EXISTS phone_codes (learner_id TEXT PRIMARY KEY, number TEXT, hash TEXT, expires_at INT, tries INT)`,
   `CREATE TABLE IF NOT EXISTS gen_scenarios (id TEXT PRIMARY KEY, learner_id TEXT, scenario_json TEXT, created_at INT)`,
+  `CREATE TABLE IF NOT EXISTS tts_cache (key TEXT PRIMARY KEY, mp3 TEXT, at INT)`,
+  `CREATE TABLE IF NOT EXISTS phone_calls (sid TEXT PRIMARY KEY, history TEXT, at INT)`,
+  `CREATE TABLE IF NOT EXISTS phone_pending (id TEXT PRIMARY KEY, twiml TEXT, at INT)`,
   `CREATE TABLE IF NOT EXISTS practice_sends (id TEXT PRIMARY KEY, learner_id TEXT, channel TEXT, scenario TEXT, sent_at INT, opened_at INT, outcome TEXT)`,
   `CREATE TABLE IF NOT EXISTS calls (id INTEGER PRIMARY KEY, task TEXT, arm TEXT, model TEXT, request_id TEXT, in_tok INT, out_tok INT, ms INT, ttft_ms INT, ok INT, checks TEXT, at INT)`,
 ];

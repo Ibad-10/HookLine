@@ -3,10 +3,17 @@
 import { startCall } from "@/lib/call/engine";
 import { getScenario } from "@/lib/call/getScenario";
 import type { Scenario } from "@/lib/call/types";
-import { firstTurn, nextTurn, validToken, validTwilio } from "@/lib/phone";
+import { after } from "next/server";
+import { randomUUID } from "node:crypto";
+import type { Turn } from "@/lib/call/types";
+import { db, migrate } from "@/lib/db";
+import { auth, firstTurn, nextTurn, validToken, validTwilio, type Turn as PhoneTurn } from "@/lib/phone";
+import { speech as speech_ } from "@/lib/voiceCache";
 import { contactPrefs, PUBLIC_URL } from "@/lib/practice";
 import { saveOutcome } from "@/lib/profile";
 import { talkMove } from "@/lib/tasks/coach";
+
+export const maxDuration = 60;
 
 const xml = (body: string) => new Response(body, { headers: { "content-type": "text/xml" } });
 
@@ -76,20 +83,62 @@ export async function POST(req: Request) {
     return xml(firstTurn(base, sc, learner)); // fallback: the scripted call
   }
 
+  // Second half of a slow turn: wait (briefly) for the reply being written in the background.
+  const wait = sp.get("wait");
+  if (wait) {
+    for (let i = 0; i < 45; i++) {
+      const row = (await db().execute({ sql: "SELECT twiml FROM phone_pending WHERE id = ?", args: [wait] })).rows[0];
+      if (row?.twiml) return xml(String(row.twiml));
+      await new Promise((r) => setTimeout(r, 200));
+    }
+    console.error("phone turn: reply not ready", wait);
+    return xml(nextTurn(base, sc, sp.get("node") ?? sc.start, learner, "", undefined, 0).twiml);
+  }
+
   const node = sp.get("node") ?? sc.start;
   const quiet = Number(sp.get("q") ?? 0);
   const speech = params.SpeechResult ?? "";
   const answers = Number(sp.get("a") ?? 0);
-  let turn = nextTurn(base, sc, node, learner, speech, undefined, quiet, answers);
-  if (turn.needCoach) {
-    const move = await talkMove({ ...startCall(sc), node }, sc, turn.masked, `phone-${params.CallSid ?? learner}`);
-    turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet, answers);
+  const sid = params.CallSid ?? learner;
+  const fast = nextTurn(base, sc, node, learner, speech, undefined, quiet, answers);
+  if (!fast.needCoach) {
+    await finishTurn(sc, node, learner, sid, fast, "");
+    return xml(fast.twiml);
   }
+
+  // Slow turn: the caller says a quick "mm, right" while the live reply is written and voiced.
+  await migrate();
+  const id = randomUUID();
+  await db().execute({ sql: "INSERT INTO phone_pending (id, twiml, at) VALUES (?, NULL, ?)", args: [id, Date.now()] });
+  after(async () => {
+    const history = await loadHistory(sid);
+    const state = { ...startCall(sc), node, transcript: [...history, { who: "you" as const, text: fast.masked }] };
+    const move = await talkMove(state, sc, fast.masked, `phone-${sid}`);
+    const turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet, answers);
+    if (move?.say && turn.twiml.includes("say=")) await speech_(sc.voice || "JBFqnCBsd6RMkjVDRZzb", move.say);
+    await db().execute({ sql: "UPDATE phone_pending SET twiml = ? WHERE id = ?", args: [turn.twiml, id] });
+    await finishTurn(sc, node, learner, sid, turn, move?.say ?? "");
+    console.log("phone turn", { s: sc.id, from: node, to: turn.node, heard: turn.masked.length, conf: params.Confidence, end: turn.end, ms: Date.now() - t0 });
+  });
+  const filler = `${base}/audio/filler/${sc.voice || "JBFqnCBsd6RMkjVDRZzb"}/${Math.floor(Math.random() * 3)}.mp3`;
+  const again = `${base}/api/phone/twiml?${auth(sc, learner)}&node=${node}&wait=${id}`.replace(/&/g, "&amp;");
+  return xml(`<?xml version="1.0" encoding="UTF-8"?><Response><Play>${filler}</Play><Redirect method="POST">${again}</Redirect></Response>`);
+}
+
+// What was said so far on this call (masked), so the caller remembers.
+async function loadHistory(sid: string): Promise<Turn[]> {
+  await migrate();
+  const row = (await db().execute({ sql: "SELECT history FROM phone_calls WHERE sid = ?", args: [sid] })).rows[0];
+  return row ? (JSON.parse(String(row.history)) as Turn[]) : [];
+}
+
+async function finishTurn(sc: Scenario, node: string, learner: string, sid: string, turn: PhoneTurn, said: string) {
+  const history = await loadHistory(sid);
+  const next = [...history, { who: "you" as const, text: turn.masked }, { who: "caller" as const, text: said || sc.nodes[turn.node]?.line || "" }].slice(-12);
+  await db().execute({ sql: "INSERT OR REPLACE INTO phone_calls (sid, history, at) VALUES (?, ?, ?)", args: [sid, JSON.stringify(next), Date.now()] });
   if (!turn.end && turn.node !== node && sc.nodes[turn.node]?.ask === "code") await sendRealCode(learner);
   if (turn.end) {
     const tricks = [...new Set(Object.values(sc.nodes).map((n) => n.technique))].slice(0, 2);
     await saveOutcome(learner, [sc.category, ...tricks], turn.end === "pass", "phone").catch(() => undefined);
   }
-  console.log("phone turn", { s: sc.id, from: node, to: turn.node, heard: turn.masked.length, conf: params.Confidence, end: turn.end, ms: Date.now() - t0 });
-  return xml(turn.twiml);
 }

@@ -3,7 +3,7 @@
 // Run: npx tsx --env-file=.env scripts/gen-audio.mts
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { SCENARIOS } from "../src/lib/call/scenarios.ts";
-import { NARRATION, NARRATOR } from "../src/lib/voices.ts";
+import { ALL_VOICES, NARRATION, NARRATOR } from "../src/lib/voices.ts";
 
 const key = process.env.ELEVENLABS_API_KEY;
 if (!key) throw new Error("Set ELEVENLABS_API_KEY in .env");
@@ -25,4 +25,11 @@ for (const [k, text] of Object.entries(NARRATION)) await say(`public/audio/hookl
 for (const sc of Object.values(SCENARIOS)) {
   mkdirSync(`public/audio/${sc.id}`, { recursive: true });
   for (const [node, n] of Object.entries(sc.nodes)) await say(`public/audio/${sc.id}/${node}.mp3`, n.line, sc.voice ?? "JBFqnCBsd6RMkjVDRZzb");
+}
+
+// Short thinking sounds the caller makes while a live reply is written (real calls).
+const FILLERS = ["Mm, right.", "Okay, I see.", "Right, okay."];
+for (const v of ALL_VOICES) {
+  mkdirSync(`public/audio/filler/${v}`, { recursive: true });
+  for (const [i, f] of FILLERS.entries()) await say(`public/audio/filler/${v}/${i}.mp3`, f, v);
 }

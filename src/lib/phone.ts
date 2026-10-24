@@ -41,7 +41,7 @@ type Narration = keyof typeof NARRATION;
 const xml = (body: string) => `<?xml version="1.0" encoding="UTF-8"?><Response>${body}</Response>`;
 const play = (url: string) => `<Play>${esc(url)}</Play>`;
 const narrate = (base: string, k: Narration) => play(`${base}/audio/hookline/${k}.mp3`);
-const auth = (sc: Scenario, learner: string) => `s=${sc.id}&l=${learner}&t=${callToken(sc.id, learner)}`;
+export const auth = (sc: Scenario, learner: string) => `s=${sc.id}&l=${learner}&t=${callToken(sc.id, learner)}`;
 
 // Recorded clip for hand-written calls; made on the fly (same voice) for written-for-you calls.
 export function lineUrl(base: string, sc: Scenario, node: string, learner: string): string {
@@ -88,5 +88,8 @@ export function nextTurn(base: string, sc: Scenario, node: string, learner: stri
   const s = applyIntent({ ...startCall(sc), node }, sc, intent);
   if (s.outcome === "pass") return { twiml: finish(base, "pass", lineUrl(base, sc, s.node, learner)), end: "pass", node: s.node, masked: g.masked };
   if (s.outcome === "scammed") return { twiml: finish(base, "scammed", lineUrl(base, sc, s.node, learner)), end: "scammed", node: s.node, masked: g.masked };
-  return { twiml: gather(base, sc, s.node, learner, "", [lineUrl(base, sc, s.node, learner)]), end: null, node: s.node, masked: g.masked };
+  // The live caller's own words carry the call on (they react to what was said); the recorded
+  // line is the fallback.
+  const next = coach?.say && (intent === "comply" || intent === "refuse") ? sayUrl(base, sc, learner, coach.say) : lineUrl(base, sc, s.node, learner);
+  return { twiml: gather(base, sc, s.node, learner, "", [next]), end: null, node: s.node, masked: g.masked };
 }

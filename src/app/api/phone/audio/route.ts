@@ -3,6 +3,7 @@
 import { checkBrands } from "@/lib/brands";
 import { getScenario } from "@/lib/call/getScenario";
 import { validToken } from "@/lib/phone";
+import { speech } from "@/lib/voiceCache";
 
 export async function GET(req: Request) {
   const sp = new URL(req.url).searchParams;
@@ -11,12 +12,7 @@ export async function GET(req: Request) {
   const sc = await getScenario(s);
   const text = sp.get("say") ?? (sc && sc.nodes[sp.get("node") ?? ""]?.line);
   if (!sc || !text || text.length > 300 || !checkBrands(text).ok) return new Response(null, { status: 400 });
-  const voice = sc.voice || "JBFqnCBsd6RMkjVDRZzb";
-  const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_22050_32`, {
-    method: "POST",
-    headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({ text, model_id: "eleven_flash_v2_5" }),
-  });
-  if (!res.ok) return new Response(null, { status: 502 });
-  return new Response(res.body, { headers: { "content-type": "audio/mpeg", "cache-control": "public, max-age=86400" } });
+  const mp3 = await speech(sc.voice || "JBFqnCBsd6RMkjVDRZzb", text);
+  if (!mp3) return new Response(null, { status: 502 });
+  return new Response(mp3 as BodyInit, { headers: { "content-type": "audio/mpeg", "cache-control": "public, max-age=86400" } });
 }
