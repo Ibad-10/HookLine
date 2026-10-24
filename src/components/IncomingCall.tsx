@@ -2,6 +2,7 @@
 import { ChevronRight, Phone, PhoneOff } from "lucide-react";
 import Link from "next/link";
 import type { Scenario } from "@/lib/call/types";
+import MakeCall from "./MakeCall";
 
 export default function IncomingCall({ main, why, others = [] }: { main: Scenario; why?: string; others?: Scenario[] }) {
   return (
@@ -38,6 +39,7 @@ export default function IncomingCall({ main, why, others = [] }: { main: Scenari
           Answer
         </Link>
       </div>
+      <div className="mt-5"><MakeCall dark /></div>
       {others.length > 0 && (
         <div className="mt-5 space-y-2">
           <p className="text-sm text-white/50">More practice calls</p>

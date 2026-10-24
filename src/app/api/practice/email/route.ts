@@ -1,12 +1,11 @@
 // Sends one practice email to the signed-in learner's own account address (opted in).
-// Written fresh each time by the Mailer from a public scam brief (made-up brand, checked);
+// Written fresh each time by the Mailer from a public scam brief about one of the learner's weak spots (made-up brand, checked);
 // one link back to Hookline's review page, no forms.
 import { currentUser } from "@clerk/nextjs/server";
-import { requireLearner } from "@/lib/learner";
-import seedBriefs from "@/data/seed-briefs.json";
+import { allSkills, requireLearner } from "@/lib/learner";
+import { briefForWeakSpot } from "@/lib/weakest";
 import { db } from "@/lib/db";
 import { contactPrefs, PUBLIC_URL, recentlySent, recordSend } from "@/lib/practice";
-import type { Brief } from "@/lib/schemas";
 import { renderEmail } from "@/lib/emailLayouts";
 import { writeEmail, type Email } from "@/lib/tasks/mailer";
 
@@ -38,9 +37,7 @@ export async function POST() {
 
   const used = (await db().execute({ sql: "SELECT detail FROM practice_sends WHERE learner_id = ? AND channel = 'email' AND detail IS NOT NULL ORDER BY sent_at DESC LIMIT 20", args: [id] }))
     .rows.map((r) => (JSON.parse(String(r.detail)) as { subject: string }).subject);
-  const row = (await db().execute("SELECT brief_json FROM briefs ORDER BY RANDOM() LIMIT 1")).rows[0];
-  const seeds = Object.values(seedBriefs) as Brief[];
-  const brief: Brief = row ? JSON.parse(String(row.brief_json)) : seeds[Math.floor(Math.random() * seeds.length)];
+  const brief = await briefForWeakSpot(await allSkills(id)); // aimed at the learner's weakest scam types
   const mail = (await writeEmail(brief, used, `mailer-${id}`)) ?? FALLBACK;
 
   const sendId = await recordSend(id, "email", brief.category);

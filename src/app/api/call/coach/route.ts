@@ -1,7 +1,7 @@
 // Off-script turn: masked text only. Gatecheck first on secret-asking steps, then the Coach.
 import { z } from "zod";
 import { gate } from "@/lib/gatekeeper";
-import { SCENARIOS } from "@/lib/call/scenarios";
+import { getScenario } from "@/lib/call/getScenario";
 import { requireLearner } from "@/lib/learner";
 import { coachMove, gateCheck } from "@/lib/tasks/coach";
 
@@ -17,7 +17,7 @@ export async function POST(req: Request) {
   const body = Body.safeParse(await req.json().catch(() => null));
   if (!body.success) return Response.json({ error: "bad request" }, { status: 400 });
   const { scenarioId, node, sessionId } = body.data;
-  const sc = SCENARIOS[scenarioId];
+  const sc = await getScenario(scenarioId);
   if (!sc?.nodes[node]) return Response.json({ error: "unknown scenario" }, { status: 400 });
 
   // Defence in depth: re-mask on the server in case a client skipped it.

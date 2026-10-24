@@ -202,3 +202,10 @@ checks for every number and address, a legal check) stays as section 10 describe
   builds the HTML, adds the one review link, and refuses any draft that names a real brand or carries a
   web address, phone number or email address. The review page shows that email's own red flags.
   Phone numbers are confirmed by a texted 6-digit code before "Call me now" appears.
+- **Update (24 Oct, Ibad): practice from history.** Practice emails and the new "Make me a new call"
+  button both start from a public brief about one of the learner's three weakest scam types. A Caller
+  task (through Mubit) writes only the names and lines of a call; the app fixes its steps, branches,
+  what each step asks for, and the "is this real?" answer, then checks it like the hand-written calls
+  (no real brands, no web addresses or phone numbers, no dead ends). Written calls are voiced on the
+  fly in the same voice and run on the web only, never on the real phone line. Calls are suggested
+  from weak spots on Home and after each call. Five hand-written calls now exist.

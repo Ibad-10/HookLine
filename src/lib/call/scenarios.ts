@@ -12,3 +12,4 @@ export const SCENARIOS: Record<string, Scenario> = {
   "family-emergency": family as Scenario,
   "crypto-offer": crypto as Scenario,
 };
+

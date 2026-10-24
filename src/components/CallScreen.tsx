@@ -65,7 +65,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
 
   useEffect(() => {
     if (state.outcome) {
-      sessionStorage.setItem("hl_last_call", JSON.stringify({ state, scenarioId: sc.id }));
+      sessionStorage.setItem("hl_last_call", JSON.stringify({ state, scenarioId: sc.id, sc: sc.generated ? sc : undefined }));
       const t = setTimeout(() => (window.location.href = `/debrief?s=${sc.id}`), state.outcome === "stopped" ? 400 : 3500);
       return () => clearTimeout(t);
     }
@@ -75,8 +75,9 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     window.speechSynthesis?.cancel();
     audio.current?.pause();
     // Recorded clip for script lines; the same voice made on the fly for the Coach's short replies.
-    const clip = node ? new Audio(`/audio/${sc.id}/${node}.mp3`) : new Audio();
-    if (!node) {
+    const recorded = node && !sc.generated;
+    const clip = recorded ? new Audio(`/audio/${sc.id}/${node}.mp3`) : new Audio();
+    if (!recorded) {
       fetch("/api/tts", { method: "POST", body: JSON.stringify({ text }) })
         .then((r) => (r.ok ? r.blob() : Promise.reject()))
         .then((b) => { if (audio.current !== clip) return; clip.src = URL.createObjectURL(b); clip.play().catch(() => clip.onerror?.(new Event("error"))); })
@@ -90,7 +91,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
       window.speechSynthesis?.speak(u);
     };
     audio.current = clip;
-    if (node) clip.play().catch(() => clip.onerror?.(new Event("error")));
+    if (recorded) clip.play().catch(() => clip.onerror?.(new Event("error")));
   }
 
   async function reply(text: string, input: "voice" | "typed") {

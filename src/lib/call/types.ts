@@ -19,6 +19,7 @@ export type Scenario = {
   start: string;
   keyterms: string[];
   nodes: Record<string, Node>;
+  generated?: boolean; // written for one learner; voiced on the fly, web calls only
 };
 
 export type Turn = { who: "caller" | "you"; text: string; node?: string };

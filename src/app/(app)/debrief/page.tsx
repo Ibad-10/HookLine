@@ -2,8 +2,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SCENARIOS } from "@/lib/call/scenarios";
-import type { CallState } from "@/lib/call/types";
+import type { CallState, Scenario } from "@/lib/call/types";
 import { LABELS } from "@/lib/taxonomy";
+import MakeCall from "@/components/MakeCall";
 
 const HEAD = {
   pass: { title: "You kept your money safe", body: "Hanging up, asking questions or checking if it's real is exactly what works on a real call." },
@@ -12,12 +13,12 @@ const HEAD = {
 };
 
 export default function Debrief() {
-  const [data, setData] = useState<{ state: CallState; scenarioId: string } | null>(null);
+  const [data, setData] = useState<{ state: CallState; scenarioId: string; sc?: Scenario } | null>(null);
   const [next, setNext] = useState<{ id: string; title: string; why: string }[]>([]);
   useEffect(() => {
     const raw = sessionStorage.getItem("hl_last_call");
     if (!raw) return;
-    const d = JSON.parse(raw) as { state: CallState; scenarioId: string };
+    const d = JSON.parse(raw) as { state: CallState; scenarioId: string; sc?: Scenario };
     setData(d);
     const nodes = d.state.transcript.filter((t) => t.who === "caller" && t.node).map((t) => t.node!);
     // Suggest the next calls once this result is on the profile.
@@ -37,7 +38,7 @@ export default function Debrief() {
       </main>
     );
 
-  const sc = SCENARIOS[data.scenarioId];
+  const sc = data.sc ?? SCENARIOS[data.scenarioId];
   const head = HEAD[data.state.outcome ?? "pass"];
   const steps = data.state.transcript.filter((t) => t.who === "caller" && t.node && !["truth", "end_safe", "end_scammed"].includes(t.node!));
   const firstAsk = steps.find((t) => sc.nodes[t.node!].ask);
@@ -88,6 +89,7 @@ export default function Debrief() {
       )}
       <div className="mt-6 grid gap-3">
         <Link href={`/call/${sc.id}`} className="btn-chunky grid place-items-center bg-tide text-white">Try this call again</Link>
+        <MakeCall />
         <Link href="/home" className="py-3 text-center font-bold text-tide">Back to home</Link>
       </div>
     </main>
