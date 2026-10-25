@@ -4,7 +4,7 @@ import type { z } from "zod";
 import { db, migrate } from "./db";
 
 export type Arm = "plain" | "stuffed" | "small";
-export type TaskName = "teacher" | "coach" | "learner" | "gatecheck" | "mailer" | "caller" | "talker" | "intent";
+export type TaskName = "teacher" | "coach" | "learner" | "gatecheck" | "mailer" | "caller" | "talker" | "intent" | "sly";
 
 export type CallMeta = {
   model: string;
@@ -31,7 +31,7 @@ export type Complete = (p: {
 
 export function modelFor(task: TaskName, arm: Arm): string {
   if (arm === "small") return process.env.SMALL_MODEL || "openai/gpt-oss-20b";
-  if (task === "coach" || task === "talker" || task === "intent") return process.env.COACH_MODEL || "claude-haiku-4-5";
+  if (task === "coach" || task === "talker" || task === "intent" || task === "sly") return process.env.COACH_MODEL || "claude-haiku-4-5";
   return process.env.TEACHER_MODEL || "claude-haiku-4-5";
 }
 

@@ -1,13 +1,12 @@
 "use client";
-// Sly, Hookline's mascot, floating on every screen. Her eyes follow you, she dodges when you
-// get close, taps make her hop and roll, her face reacts to lessons and calls, and she speaks
-// short pre-voiced lines. Minimising whirls her like a tornado into a box that flips into a
-// small face button; on phones she starts as that button. Settings can switch her off.
-import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Minus, Volume2 } from "lucide-react";
+// Sly, Hookline's mascot: a small avatar you can drag anywhere. Her eyes follow you, she naps
+// with floating Z's when idle, and her face reacts to lessons and calls. Tap her to open
+// "Ask Sly" for real questions (answered through Mubit); it whirls away like a tornado.
+import { AnimatePresence, motion, useDragControls, useReducedMotion } from "motion/react";
+import { Send, X } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
-import { hiddenOn, lineFor, SLY_LINES, type Mood, type SlyLine } from "@/lib/sly";
+import { hiddenOn, moodFor, type Mood, type SlyLine } from "@/lib/sly";
 
 const read = (k: string) => { try { return localStorage.getItem(k); } catch { return null; } };
 const write = (k: string, v: string) => { try { localStorage.setItem(k, v); } catch {} };
@@ -63,169 +62,198 @@ export default function Sly() {
   const path = usePathname();
   const still = useReducedMotion();
   const [on, setOn] = useState(true);
-  const [open, setOpen] = useState(false);
   const [ready, setReady] = useState(false);
+  const [open, setOpen] = useState(false);
   const [mood, setMood] = useState<Mood>("neutral");
-  const [line, setLine] = useState<SlyLine>("home");
   const [look, setLook] = useState({ x: 0, y: 0 });
-  const [dodge, setDodge] = useState({ x: 0, y: 0 });
-  const [hop, setHop] = useState(0);
-  const [bubble, setBubble] = useState(true);
   const [asleep, setAsleep] = useState(false);
+  const [pos, setPos] = useState({ x: 0, y: 0 });
+  const [side, setSide] = useState({ up: true, left: true });
+  const [question, setQuestion] = useState("");
+  const [thinking, setThinking] = useState(false);
+  type Answer = { verdict: "likely_scam" | "unsure" | "looks_ok" | "question"; answer: string; flags: string[]; do: string };
+  const [reply, setReply] = useState<Answer | null>(null);
+  const [askError, setAskError] = useState("");
+  const avatar = useRef<HTMLDivElement>(null);
+  const dragged = useRef(false);
+  const controls = useDragControls();
+  const press = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const [held, setHeld] = useState(false);
+
+  // Long-press picks her up (she lifts, grows and wiggles); then she can be dragged anywhere.
+  function pressStart(e: React.PointerEvent) {
+    clearTimeout(press.current);
+    const ev = e.nativeEvent;
+    press.current = setTimeout(() => {
+      dragged.current = true;
+      setHeld(true);
+      setOpen(false);
+      setMood("surprised");
+      controls.start(ev, { snapToCursor: false });
+    }, 350);
+  }
+  const pressEnd = () => clearTimeout(press.current);
   const idle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
   const wake = () => {
     setAsleep(false);
     clearTimeout(idle.current);
     idle.current = setTimeout(() => setAsleep(true), 12000);
   };
-  useEffect(() => {
-    if (window.matchMedia("(hover: none)").matches) setAsleep(true);
-    else wake();
-    return () => clearTimeout(idle.current);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-  useEffect(() => {
-    if (!bubble || typeof window === "undefined" || window.innerWidth >= 768) return;
-    const t = setTimeout(() => setBubble(false), 6000);
-    return () => clearTimeout(t);
-  }, [bubble, line, open]);
-  const box = useRef<HTMLDivElement>(null);
-  const avatar = useRef<HTMLButtonElement>(null);
-  const audio = useRef<HTMLAudioElement | null>(null);
 
-  // On or off (Settings), and open or closed (phones start closed to save space).
+  // On or off (Settings), and where she was last dropped.
   useEffect(() => {
     const sync = () => setOn(read("hl_sly") !== "off");
     sync();
-    const saved = read("hl_sly_open");
-    setOpen(saved ? saved === "1" : window.innerWidth >= 768);
+    try { const p = JSON.parse(read("hl_sly_pos") ?? "null"); if (p) setPos(p); } catch {}
+    if (window.matchMedia("(hover: none)").matches) setAsleep(true);
+    else wake();
     setReady(true);
     window.addEventListener("sly-pref", sync);
-    return () => window.removeEventListener("sly-pref", sync);
-  }, []);
+    return () => { window.removeEventListener("sly-pref", sync); clearTimeout(idle.current); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  useEffect(() => { setLine(lineFor(path)); setMood("neutral"); setBubble(true); }, [path]);
+  useEffect(() => { setOpen(false); setReply(null); }, [path]);
 
-  // Reactions from lessons and calls.
+  // Her face reacts to lessons and calls, silently.
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
     const react = (e: Event) => {
       const d = (e as CustomEvent<{ line: SlyLine; mood?: Mood }>).detail;
-      setLine(d.line);
-      setBubble(true);
-      setMood(d.mood ?? (d.line === "right" ? "happy" : d.line === "wrong" ? "dizzy" : d.line === "stopped" ? "serious" : "neutral"));
-      if (d.line === "right") setHop((h) => h + 1);
+      setAsleep(false);
+      setMood(d.mood ?? moodFor(d.line));
       clearTimeout(t);
-      t = setTimeout(() => setMood("neutral"), 3500);
+      t = setTimeout(() => setMood("neutral"), 3000);
     };
     window.addEventListener("sly", react);
     return () => { window.removeEventListener("sly", react); clearTimeout(t); };
   }, []);
 
-  // Eyes follow the pointer; she slides away when it comes close (not on touch).
+  // Eyes follow the pointer.
   useEffect(() => {
     const move = (e: PointerEvent) => {
       if (e.pointerType === "mouse") wake();
-      const r = (box.current ?? avatar.current)?.getBoundingClientRect();
+      const r = avatar.current?.getBoundingClientRect();
       if (!r) return;
-      const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
-      const dx = e.clientX - cx, dy = e.clientY - cy, dist = Math.hypot(dx, dy) || 1;
+      const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
       setLook({ x: Math.max(-1, Math.min(1, dx / 160)), y: Math.max(-1, Math.min(1, dy / 160)) });
-      // She sits in the bottom-right corner, so she escapes up and to the left, never off-screen.
-      if (e.pointerType === "mouse" && dist < 90 && !still) setDodge({ x: -Math.max(24, Math.abs(dx / dist) * 56), y: -Math.max(18, Math.abs(dy / dist) * 44) });
-      else if (dist > 170) setDodge({ x: 0, y: 0 });
     };
     window.addEventListener("pointermove", move);
     return () => window.removeEventListener("pointermove", move);
-  }, [still]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  function say(k: SlyLine) {
-    audio.current?.pause();
-    const a = new Audio(`/audio/sly/${k}.mp3`);
-    audio.current = a;
+  function openPanel() {
+    if (dragged.current) return; // that was a drag, not a tap
+    const r = avatar.current?.getBoundingClientRect();
+    if (r) setSide({ up: r.top > window.innerHeight / 2, left: r.left > window.innerWidth / 2 });
+    setOpen(true);
+    setAsleep(false);
     setMood("happy");
-    a.onended = () => setMood("neutral");
-    a.play().catch(() => setMood("neutral"));
   }
 
-  function tap() {
-    setBubble(true);
-    setHop((h) => h + 1);
-    setMood("wink");
-    setLine("tap");
-    setTimeout(() => setMood("neutral"), 1600);
+  async function ask(e: React.FormEvent) {
+    e.preventDefault();
+    if (!question.trim() || thinking) return;
+    setThinking(true);
+    setAskError("");
+    setMood("serious");
+    const r = await fetch("/api/sly", { method: "POST", body: JSON.stringify({ text: question }) }).catch(() => null);
+    const j = r ? await r.json().catch(() => ({})) : {};
+    setThinking(false);
+    if (!r?.ok) { setAskError(j.error ?? "Sorry, try again?"); setMood("worried"); return; }
+    setReply(j as Answer);
+    setMood(j.verdict === "likely_scam" ? "surprised" : j.verdict === "looks_ok" ? "happy" : j.verdict === "unsure" ? "worried" : "wink");
   }
-
-  const toggle = (v: boolean) => { setOpen(v); write("hl_sly_open", v ? "1" : "0"); };
 
   if (!ready || !on || hiddenOn(path)) return null;
-  const tornado = still ? { opacity: 0 } : { rotateY: [0, 360, 720, 1080], scale: [1, 0.8, 0.45, 0.15], y: [0, -14, -24, 10], opacity: [1, 1, 1, 0] };
+  const tornado = still ? { opacity: 0 } : { rotateY: [0, 360, 720, 1080], scale: [1, 0.8, 0.45, 0.1], opacity: [1, 1, 1, 0] };
 
   return (
-    <div className="pointer-events-none fixed bottom-4 right-4 z-50 flex flex-col items-end gap-2 sm:bottom-6 sm:right-6" style={{ perspective: 600 }}>
-      <AnimatePresence mode="wait" initial={false}>
-        {open ? (
-          <motion.div
-            key="sly-open"
-            className="pointer-events-auto flex flex-col items-end gap-2"
-            initial={still ? { opacity: 0 } : { rotateY: -1080, scale: 0.15, y: 10, opacity: 0 }}
-            animate={{ rotateY: 0, scale: 1, y: 0, opacity: 1 }}
+    <motion.div
+      ref={avatar}
+      drag
+      dragListener={false}
+      dragControls={controls}
+      dragMomentum={false}
+      dragElastic={0.1}
+      dragConstraints={{ left: -window.innerWidth + 96, right: 0, top: -window.innerHeight + 96, bottom: 0 }}
+      onDragEnd={(_, info) => {
+        setHeld(false);
+        setMood("happy");
+        setTimeout(() => setMood("neutral"), 1200);
+        const next = { x: pos.x + info.offset.x, y: pos.y + info.offset.y };
+        setPos(next);
+        write("hl_sly_pos", JSON.stringify(next));
+        setTimeout(() => (dragged.current = false), 50);
+      }}
+      style={{ x: pos.x, y: pos.y, perspective: 600, touchAction: "none" }}
+      className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"
+    >
+      <AnimatePresence>
+        {open && (
+          <motion.section
+            key="ask"
+            aria-label="Ask Sly"
+            className={`absolute w-[18rem] max-w-[calc(100vw-2rem)] rounded-2xl bg-card p-3.5 text-sm leading-snug shadow-2xl ring-1 ring-line ${side.up ? "bottom-full mb-3" : "top-full mt-3"} ${side.left ? "right-0" : "left-0"}`}
+            initial={still ? { opacity: 0 } : { rotateY: -1080, scale: 0.1, opacity: 0 }}
+            animate={{ rotateY: 0, scale: 1, opacity: 1 }}
             exit={tornado}
-            transition={{ duration: 0.75, ease: [0.22, 0.61, 0.36, 1] }}
+            transition={{ duration: 0.7, ease: [0.22, 0.61, 0.36, 1] }}
+            onPointerDownCapture={(e) => e.stopPropagation()}
           >
-            <AnimatePresence>
-            {bubble && <motion.div layout initial={{ opacity: 0, y: 8, scale: 0.95 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 8, scale: 0.95 }} className="glass max-w-[15rem] rounded-2xl rounded-br-sm px-3.5 py-2.5 text-sm leading-snug shadow-lg">
-              <p>{SLY_LINES[line]}</p>
-              <div className="mt-1.5 flex items-center justify-end gap-1">
-                <button type="button" onClick={() => say(line)} aria-label="Hear Sly say this" className="grid size-9 place-items-center rounded-full bg-tide text-white hover:brightness-110"><Volume2 className="size-4" aria-hidden /></button>
-                <button type="button" onClick={() => toggle(false)} aria-label="Minimise Sly" className="grid size-9 place-items-center rounded-full hover:bg-secondary"><Minus className="size-4" aria-hidden /></button>
+            <div className="flex items-center justify-between">
+              <p className="font-semibold">Would you like to ask me a question?</p>
+              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid size-8 place-items-center rounded-full hover:bg-secondary"><X className="size-4" aria-hidden /></button>
+            </div>
+            {reply ? (
+              <div aria-live="polite" className="mt-2">
+                <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${reply.verdict === "likely_scam" ? "bg-alarm text-white" : reply.verdict === "looks_ok" ? "bg-safe text-white" : reply.verdict === "unsure" ? "bg-mark text-black" : "bg-secondary"}`}>
+                  {reply.verdict === "likely_scam" ? "Likely a scam" : reply.verdict === "looks_ok" ? "Looks OK" : reply.verdict === "unsure" ? "Not sure: be careful" : "Sly says"}
+                </span>
+                <p className="mt-1.5">{reply.answer}</p>
+                {reply.flags.length > 0 && <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-ink-soft">{reply.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
+                {reply.do && <p className="mt-1.5 font-medium">{reply.do}</p>}
+                <button type="button" onClick={() => { setReply(null); setQuestion(""); }} className="mt-2 text-xs font-semibold text-tide">Ask something else</button>
               </div>
-            </motion.div>}
-            </AnimatePresence>
-            <motion.div
-              ref={box}
-              animate={{ x: dodge.x, y: dodge.y }}
-              transition={{ type: "spring", stiffness: 260, damping: 18 }}
-            >
-              <motion.button
-                type="button"
-                key={hop}
-                onClick={tap}
-                aria-label="Sly, Hookline's mascot. Tap to say hello"
-                className="sly-bob block cursor-pointer"
-                initial={false}
-                animate={still || hop === 0 ? {} : { y: [0, -34, 0], rotateY: [0, 360], scaleY: [1, 1.08, 1] }}
-                transition={{ duration: 0.7, ease: "easeOut" }}
-              >
-                <SlyArt mood={mood} look={look} size={104} />
-              </motion.button>
-            </motion.div>
-          </motion.div>
-        ) : (
-          <motion.button
-            key="sly-closed"
-            type="button"
-            onClick={() => toggle(true)}
-            aria-label="Open Sly, Hookline's mascot"
-            ref={avatar}
-            className="pointer-events-auto relative grid size-16 place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] shadow-lg ring-1 ring-line"
-            initial={still ? { opacity: 0 } : { rotateY: 90, opacity: 0 }}
-            animate={{ rotateY: 0, opacity: 1 }}
-            exit={still ? { opacity: 0 } : { rotateY: -90, opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-          >
-            <span className="grid size-[58px] place-items-center overflow-hidden rounded-full">
-              <SlyArt mood={asleep ? "sleepy" : "neutral"} look={asleep ? { x: 0, y: 0 } : look} size={58} faceOnly />
-            </span>
-            {asleep && !still && (
-              <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 font-semibold text-tide">
-                <span className="sly-z absolute right-3 top-3 text-[11px]">z</span>
-                <span className="sly-z absolute right-1 top-0 text-[14px]" style={{ animationDelay: ".6s" }}>z</span>
-                <span className="sly-z absolute -right-1 -top-3 text-[17px]" style={{ animationDelay: "1.2s" }}>Z</span>
-              </span>
+            ) : (
+              <form onSubmit={ask} className="mt-2 space-y-2">
+                <label htmlFor="ask-sly" className="block text-ink-soft">Paste a message you got, or ask me about scams and staying safe.</label>
+                <textarea id="ask-sly" value={question} onChange={(e) => setQuestion(e.target.value)} rows={3} maxLength={2000} autoFocus
+                  placeholder="e.g. Is this text from my bank real?" className="w-full resize-none rounded-xl bg-background px-2.5 py-2 text-sm ring-1 ring-line" />
+                <p className="text-xs text-ink-soft">Numbers are hidden before I read it. Never share codes or passwords.</p>
+                {askError && <p role="status" className="text-xs text-alarm">{askError}</p>}
+                <button type="submit" disabled={thinking || !question.trim()} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-tide font-semibold text-white disabled:opacity-50">
+                  <Send className="size-4" aria-hidden />{thinking ? "Sly is looking…" : "Ask Sly"}
+                </button>
+              </form>
             )}
-          </motion.button>
+          </motion.section>
         )}
       </AnimatePresence>
-    </div>
+      <motion.button
+        type="button"
+        onClick={openPanel}
+        onPointerDown={pressStart}
+        onPointerUp={pressEnd}
+        onPointerLeave={pressEnd}
+        onContextMenu={(e) => e.preventDefault()}
+        animate={held && !still ? { scale: 1.18, y: -10, rotate: [0, -6, 6, -4, 0], boxShadow: "0 18px 30px rgba(11,42,68,0.28)" } : { scale: 1, y: 0, rotate: 0, boxShadow: "0 6px 14px rgba(11,42,68,0.14)" }}
+        transition={held ? { rotate: { duration: 0.5, repeat: Infinity }, default: { type: "spring", stiffness: 400, damping: 18 } } : { type: "spring", stiffness: 400, damping: 22 }}
+        aria-label="Sly, Hookline's mascot. Tap to ask her about a scam; press and hold to move her"
+        aria-expanded={open}
+        className={`relative grid size-16 select-none place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] ring-1 ring-line ${held ? "cursor-grabbing" : "cursor-pointer"}`}
+      >
+        <span className="grid size-[58px] place-items-center overflow-hidden rounded-full">
+          <SlyArt mood={asleep && mood === "neutral" ? "sleepy" : mood} look={asleep ? { x: 0, y: 0 } : look} size={58} faceOnly />
+        </span>
+        {asleep && mood === "neutral" && !still && (
+          <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 font-semibold text-tide">
+            <span className="sly-z absolute right-3 top-3 text-[11px]">z</span>
+            <span className="sly-z absolute right-1 top-0 text-[14px]" style={{ animationDelay: ".6s" }}>z</span>
+            <span className="sly-z absolute -right-1 -top-3 text-[17px]" style={{ animationDelay: "1.2s" }}>Z</span>
+          </span>
+        )}
+      </motion.button>
+    </motion.div>
   );
 }
