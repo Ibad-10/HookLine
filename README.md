@@ -126,11 +126,18 @@ flowchart LR
 
 ### Adapters so far
 
-The first adapter trained overnight: the call coach, v1 on **Qwen3-4B-Instruct**, matched the big model on
-7.1% of 14 test cases. Mubit's target to go live is 95%. That result taught us something useful: the coach's
-answers mixed a fixed label with free text, and a small model can't match free text word for word. So we split
-that job. **Intent** (one label) and **Gatecheck** (yes or no) are now separate tasks, each with hundreds of
-varied calls sent, and both are much better adapter candidates.
+Two adapters trained overnight, both on **Qwen3-4B-Instruct**, for the call coach (one per model side):
+
+| Adapter | Matched the big model | Test cases | Target |
+|---|---|---|---|
+| Call coach, Claude Haiku side | **50%** | 12 | 95% |
+| Call coach, small-model side | 7.1% | 14 | 95% |
+
+Neither is live yet, but the jump from 7.1% to 50% in a few hours shows the loop working: more varied calls in, a better
+small model out. What we learned: the coach's answer mixed a fixed label with free text, and a small model can't match
+free text word for word. So we split that job: **Intent** ("Label one reply", 601 calls) and **Gatecheck** ("Check one
+reply", 691 calls) now answer with a single label or a yes/no at temperature 0, and are queued for review as the next
+adapter candidates.
 
 <p align="center">
   <img src="docs/images/mubit-console-adapters.png" width="49%" alt="Mubit console: first adapter trained, Qwen3-4B, 7.1% quality" />
