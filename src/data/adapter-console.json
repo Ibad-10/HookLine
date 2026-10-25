@@ -1,11 +1,53 @@
 {
-  "copied_at": "2026-10-25 03:30",
+  "copied_at": "2026-10-25 04:20",
   "note": "Copied by hand from the Mubit console (Adapters and Tasks). Mubit has no API for these numbers yet.",
-  "coach": { "label": "Call coach (Claude Haiku side)", "status": "v1 trained on Qwen3-4B-Instruct, below target; testing again", "kept_examples": 25, "agreement_pct": 50, "test_cases": 12 },
-  "coach_small": { "label": "Call coach (small model side)", "status": "v1 trained on Qwen3-4B-Instruct, below target", "kept_examples": 38, "agreement_pct": 7.1, "test_cases": 14 },
-  "gatecheck": { "label": "Spots secrets being shared", "status": "Reviewing examples (691 calls)", "kept_examples": 0, "agreement_pct": null, "test_cases": null },
-  "intent": { "label": "Labels your reply", "status": "Reviewing examples (601 calls)", "kept_examples": 0, "agreement_pct": null, "test_cases": null },
-  "talker": { "label": "Live caller's words", "status": "Reviewing examples (758 calls)", "kept_examples": 1, "agreement_pct": null, "test_cases": null },
-  "mailer": { "label": "Writes practice emails", "status": "Reviewing examples", "kept_examples": 3, "agreement_pct": null, "test_cases": null },
-  "teacher": { "label": "Lesson writer", "status": "Reviewing examples", "kept_examples": 0, "agreement_pct": null, "test_cases": null }
+  "coach": {
+    "label": "Call coach (Claude Haiku side)",
+    "status": "v1 trained on Qwen3-4B-Instruct, below target; testing again",
+    "kept_examples": 25,
+    "agreement_pct": 50,
+    "test_cases": 12
+  },
+  "coach_small": {
+    "label": "Call coach (small model side)",
+    "status": "v1 trained on Qwen3-4B-Instruct, below target",
+    "kept_examples": 38,
+    "agreement_pct": 7.1,
+    "test_cases": 14
+  },
+  "gatecheck": {
+    "label": "Spots secrets being shared",
+    "status": "Reviewing examples (691 calls)",
+    "kept_examples": 0,
+    "agreement_pct": null,
+    "test_cases": null
+  },
+  "intent": {
+    "label": "Labels your reply",
+    "status": "Reviewing examples (601 calls)",
+    "kept_examples": 0,
+    "agreement_pct": null,
+    "test_cases": null
+  },
+  "talker": {
+    "label": "Live caller's words",
+    "status": "v1 trained on Qwen3-4B-Instruct, below target",
+    "kept_examples": 25,
+    "agreement_pct": 14.3,
+    "test_cases": 21
+  },
+  "mailer": {
+    "label": "Writes practice emails",
+    "status": "Reviewing examples",
+    "kept_examples": 3,
+    "agreement_pct": null,
+    "test_cases": null
+  },
+  "teacher": {
+    "label": "Lesson writer",
+    "status": "Reviewing examples",
+    "kept_examples": 0,
+    "agreement_pct": null,
+    "test_cases": null
+  }
 }

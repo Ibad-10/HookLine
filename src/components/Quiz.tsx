@@ -11,6 +11,7 @@ import Buoy, { BuoyTip } from "./Buoy";
 import type { Question } from "@/lib/schemas";
 import { LABELS } from "@/lib/taxonomy";
 import MessageMock, { chunks } from "./MessageMock";
+import { slyEvent } from "@/lib/sly";
 
 export type Item = { lessonId: string; q: number; question: Question };
 type Result = { ok: boolean; answer_index?: number };
@@ -82,6 +83,7 @@ export default function Quiz({
     try {
       const r: Result = await (await fetch("/api/answer", { method: "POST", body: JSON.stringify(body) })).json();
       setResult(r);
+      window.dispatchEvent(slyEvent(r.ok ? "right" : "wrong"));
       if (r.ok) {
         setScore((s) => s + 1);
         setInARow((n) => n + 1);

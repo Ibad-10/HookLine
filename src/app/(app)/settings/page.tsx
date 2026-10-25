@@ -12,7 +12,11 @@ function readPrefs() {
 
 export default function Settings() {
   const [prefs, setPrefs] = useState({ large: false, slow: false, mute: false, dark: false });
-  useEffect(() => setPrefs(readPrefs()), []);
+  const [sly, setSly] = useState(true);
+  useEffect(() => {
+    setPrefs(readPrefs());
+    try { setSly(localStorage.getItem("hl_sly") !== "off"); } catch {}
+  }, []);
 
   async function save(next: typeof prefs) {
     setPrefs(next);
@@ -26,6 +30,7 @@ export default function Settings() {
     <main className="mx-auto max-w-xl px-4 py-8">
       <h1 className="text-[2.6rem] font-medium leading-none tracking-[-0.045em]">Settings</h1>
       <div className="mt-6 space-y-3">
+        <Toggle label="Show Sly" hint="Hookline's cat mascot, in the corner of each screen." on={sly} onChange={(v) => { setSly(v); try { localStorage.setItem("hl_sly", v ? "on" : "off"); } catch {} window.dispatchEvent(new Event("sly-pref")); }} />
         <Toggle label="Larger text" hint="Makes every word on Hookline bigger." on={prefs.large} onChange={(v) => save({ ...prefs, large: v })} />
         <Toggle label="Slower voice on calls" hint="The caller speaks more slowly." on={prefs.slow} onChange={(v) => save({ ...prefs, slow: v })} />
         <Toggle label="Dark theme" hint="Light text on a black background." on={prefs.dark} onChange={(v) => { document.documentElement.classList.toggle("dark", v); save({ ...prefs, dark: v }); }} />

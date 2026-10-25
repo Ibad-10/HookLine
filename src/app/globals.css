@@ -331,3 +331,9 @@ html.dark {
     @apply font-sans;
   }
 }
+/* Sly the mascot: idle float and a blink every few seconds. */
+@keyframes sly-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-5px); } }
+@keyframes sly-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
+.sly-bob { animation: sly-bob 3s ease-in-out infinite; }
+.sly-blink { transform-box: fill-box; transform-origin: center; animation: sly-blink 4.2s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .sly-bob, .sly-blink { animation: none; } }

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import Motion from "@/components/Motion";
 import "./globals.css";
 import { cn } from "@/lib/utils";
+import Sly from "@/components/Sly";
 
 const geist = Geist({ variable: "--font-geist", subsets: ["latin"] });
 const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], style: ["italic"], weight: ["300"] });
@@ -29,7 +30,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
             formFieldInput: "!h-13 !rounded-2xl !bg-secondary",
             card: "!shadow-none !border !border-line",
           },
-        }}><Motion>{children}</Motion></ClerkProvider></body>
+        }}><Motion>{children}<Sly /></Motion></ClerkProvider></body>
     </html>
   );
 }

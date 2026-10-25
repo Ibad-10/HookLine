@@ -5,6 +5,7 @@ import { SCENARIOS } from "@/lib/call/scenarios";
 import type { CallState, Scenario } from "@/lib/call/types";
 import { LABELS } from "@/lib/taxonomy";
 import MakeCall from "@/components/MakeCall";
+import { slyEvent } from "@/lib/sly";
 
 const HEAD = {
   pass: { title: "You kept your money safe", body: "Hanging up, asking questions or checking if it's real is exactly what works on a real call." },
@@ -20,6 +21,8 @@ export default function Debrief() {
     if (!raw) return;
     const d = JSON.parse(raw) as { state: CallState; scenarioId: string; sc?: Scenario };
     setData(d);
+    // Sly reacts to how the call went.
+    setTimeout(() => window.dispatchEvent(slyEvent(d.state.outcome === "stopped" ? "stopped" : d.state.outcome === "scammed" ? "wrong" : "right")), 600);
     const nodes = d.state.transcript.filter((t) => t.who === "caller" && t.node).map((t) => t.node!);
     // Suggest the next calls once this result is on the profile.
     fetch("/api/call/outcome", { method: "POST", body: JSON.stringify({ scenarioId: d.scenarioId, outcome: d.state.outcome, nodes }) })
