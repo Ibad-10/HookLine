@@ -24,6 +24,23 @@ your name, a £1.45 parcel fee, a "grandson in trouble" call at night: they work
 fast, sound official and leave no time to think. Most scam advice is a list of tips you read once.
 Nobody practises saying no to a convincing caller before it matters.
 
+### How big it is
+
+| | |
+|---|---|
+| **£1.17 billion** | stolen by fraud in the UK in 2024 ([UK Finance, Annual Fraud Report 2025](https://www.ukfinance.org.uk/policy-and-guidance/reports-and-publications/annual-fraud-report-2025)) |
+| **About 186,000** | UK cases where people were tricked into sending money (APP fraud, £450.7m lost), and banks paid back £267m of it ([UK Finance press release](https://www.ukfinance.org.uk/news-and-insight/press-release/fraud-report-2025-press-release)) |
+| **$12.5 billion** | reported lost to fraud in the US in 2024, up 25% on 2023; 2.6 million people reported fraud ([FTC, March 2025](https://www.ftc.gov/news-events/news/press-releases/2025/03/new-ftc-data-show-big-jump-reported-losses-fraud-125-billion-2024)) |
+| **38%** | of people who reported fraud to the FTC lost money, up from 27% the year before (same source) |
+
+### Who pays for it
+
+- **Banks.** They pay back hundreds of millions in scam losses a year; every customer who hangs up on a fake fraud team is money not lost. Hookline can be offered to customers inside a bank's app.
+- **Employers and insurers.** Staff who spot a fake call protect payroll and accounts; insurers cut fraud claims.
+- **Families and care providers.** A gentle three-minute habit for parents and grandparents, with calls they can practise on safely.
+
+Mubit is what makes this affordable at that scale: each AI job moves to a small trained model once it matches the big one (see the savings below).
+
 ## What Hookline does
 
 Hookline is practice, not a leaflet.
