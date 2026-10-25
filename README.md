@@ -128,11 +128,13 @@ flowchart LR
 
 ### Adapters so far
 
-Two adapters trained overnight, both on **Qwen3-4B-Instruct**, for the call coach (one per model side):
+Four adapters trained overnight, all on **Qwen3-4B-Instruct**:
 
 | Adapter | Matched the big model | Test cases | Target |
 |---|---|---|---|
-| Call coach, Claude Haiku side | **50%** | 12 | 95% |
+| **Labels your reply (Intent)** | **62.5%** | 32 | 95% |
+| Call coach, Claude Haiku side | 50% | 12 | 95% |
+| Live caller's words (Talker) | 14.3% | 21 | 95% |
 | Call coach, small-model side | 7.1% | 14 | 95% |
 
 Neither is live yet, but the jump from 7.1% to 50% in a few hours shows the loop working: more varied calls in, a better

@@ -1,5 +1,5 @@
 {
-  "copied_at": "2026-10-25 04:20",
+  "copied_at": "2026-10-25 04:10",
   "note": "Copied by hand from the Mubit console (Adapters and Tasks). Mubit has no API for these numbers yet.",
   "coach": {
     "label": "Call coach (Claude Haiku side)",
@@ -17,17 +17,17 @@
   },
   "gatecheck": {
     "label": "Spots secrets being shared",
-    "status": "Reviewing examples (691 calls)",
-    "kept_examples": 0,
+    "status": "Can't train yet: too few distinct examples (more being sent)",
+    "kept_examples": null,
     "agreement_pct": null,
     "test_cases": null
   },
   "intent": {
     "label": "Labels your reply",
-    "status": "Reviewing examples (601 calls)",
-    "kept_examples": 0,
-    "agreement_pct": null,
-    "test_cases": null
+    "status": "v1 trained on Qwen3-4B-Instruct, below target; testing again",
+    "kept_examples": 32,
+    "agreement_pct": 62.5,
+    "test_cases": 32
   },
   "talker": {
     "label": "Live caller's words",
