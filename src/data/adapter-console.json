@@ -1,6 +1,10 @@
 {
-  "copied_at": "2026-10-25",
+  "copied_at": "2026-10-25 01:30",
   "note": "Copied by hand from the Mubit console (Adapters and Tasks). Mubit has no API for these numbers yet.",
-  "teacher": { "status": "Reviewing examples", "kept_examples": 0, "agreement_pct": null, "test_cases": null },
-  "coach": { "status": "v1 trained on Qwen3-4B-Instruct: below target", "kept_examples": 38, "agreement_pct": 7.1, "test_cases": 14 }
+  "teacher": { "label": "Lesson writer", "status": "Reviewing examples", "kept_examples": 0, "agreement_pct": null, "test_cases": null },
+  "coach": { "label": "Call coach", "status": "v1 trained on Qwen3-4B-Instruct, below target", "kept_examples": 38, "agreement_pct": 7.1, "test_cases": 14 },
+  "talker": { "label": "Live caller's words", "status": "Reviewing examples", "kept_examples": 0, "agreement_pct": null, "test_cases": null },
+  "intent": { "label": "Labels your reply", "status": "Collecting examples", "kept_examples": null, "agreement_pct": null, "test_cases": null },
+  "gatecheck": { "label": "Spots secrets being shared", "status": "Collecting examples", "kept_examples": null, "agreement_pct": null, "test_cases": null },
+  "learner": { "label": "Reads scam reports", "status": "Reviewing examples", "kept_examples": 4, "agreement_pct": null, "test_cases": null }
 }

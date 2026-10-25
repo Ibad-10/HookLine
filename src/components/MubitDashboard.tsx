@@ -1,7 +1,7 @@
 import Link from "next/link";
 import adapterFile from "@/data/adapter-console.json";
 import { GRID_G_PER_KWH } from "@/lib/carbon";
-import { project, summarize, type ArmSummary, type CallRow } from "@/lib/compare";
+import { costOf, project, summarize, type ArmSummary, type CallRow } from "@/lib/compare";
 import { db, migrate } from "@/lib/db";
 import { modelFor, type Arm, type TaskName } from "@/lib/llm";
 import { simulate } from "@/lib/sim";
@@ -61,6 +61,9 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
       </header>
 
       <main className="mx-auto max-w-5xl space-y-10 px-5 py-8">
+        <TaskOverview rows={all} />
+        <AdapterProgress adapter={adapter} />
+
         <Tabs defaultValue="teacher">
           <TabsList className="h-12">
             <TabsTrigger value="teacher" className="px-4 text-base">Writing a lesson</TabsTrigger>
@@ -95,26 +98,13 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
           <Growth plain={teacher.plain} stuffed={teacher.stuffed} />
         </section>
 
-        <section className="grid gap-4 md:grid-cols-2">
+        <section className="grid gap-4">
           <div className="rounded-2xl bg-card p-5">
             <h2 className="text-xl font-semibold tracking-tight">Where the learner's profile goes</h2>
             <ul className="mt-3 space-y-2">
               <li><span className="font-bold">Big model, profile pasted in:</span> every call sends their history of mistakes to the model provider.</li>
               <li><span className="font-bold">Mubit adapter:</span> the model is trained for this one job and can run on infrastructure you control. The profile need not leave it.</li>
             </ul>
-          </div>
-          <div className="rounded-2xl bg-card p-5">
-            <h2 className="text-xl font-semibold tracking-tight">Trained adapters (from the Mubit console)</h2>
-            <p className="mt-1 text-sm text-ink-soft">
-              Mubit has no API for adapter results yet, so these are copied by hand{adapter.copied_at ? ` at ${adapter.copied_at}` : ""}.
-            </p>
-            {(["teacher", "coach"] as const).map((t) => (
-              <p key={t} className="mt-3">
-                <span className="font-bold">{t === "teacher" ? "Lesson writer" : "Call coach"}:</span> {adapter[t].status}
-                {adapter[t].agreement_pct != null && `, matched the big model on ${adapter[t].agreement_pct}% of ${adapter[t].test_cases} test cases`}
-                {adapter[t].kept_examples != null && ` (${adapter[t].kept_examples} kept examples)`}
-              </p>
-            ))}
           </div>
         </section>
 
@@ -306,6 +296,164 @@ function Stat({ value, label }: { value: string; label: string }) {
     <div className="rounded-2xl bg-card p-5">
       <p className="text-4xl font-semibold tracking-tight tabular-nums">{value}</p>
       <p className="mt-1 text-ink-soft">{label}</p>
+    </div>
+  );
+}
+
+// Every AI job in Hookline, one bar chart per measure. One series per chart, so the title names
+// it; tasks keep the same order in every chart. Hover a bar for its exact value and model.
+const TASKS: { task: string; label: string }[] = [
+  { task: "teacher", label: "Writes lessons" },
+  { task: "talker", label: "Live caller's words" },
+  { task: "intent", label: "Labels your reply" },
+  { task: "gatecheck", label: "Spots secrets being shared" },
+  { task: "coach", label: "Call coach (first version)" },
+  { task: "caller", label: "Writes calls for you" },
+  { task: "mailer", label: "Writes practice emails" },
+  { task: "learner", label: "Reads scam reports" },
+  { task: "agent", label: "Phone voice agent turns" },
+];
+
+function TaskOverview({ rows }: { rows: CallRow[] }) {
+  const stats = TASKS.map(({ task, label }) => {
+    const rs = rows.filter((r) => r.task === task && !JSON.parse(r.checks || "{}").error);
+    const ms = rs.map((r) => r.ms).sort((a, b) => a - b);
+    const cost = rs.map((r) => costOf(r.model, r.in_tok, r.out_tok)).filter((c): c is number => c !== null);
+    return {
+      task,
+      label,
+      n: rs.length,
+      model: rs.at(-1)?.model ?? "",
+      p50: ms.length ? ms[ms.length >> 1] : null,
+      cost: cost.length ? (cost.reduce((a, b) => a + b, 0) / cost.length) * 1000 : null,
+      ok: rs.length ? rs.filter((r) => r.ok).length / rs.length : null,
+    };
+  }).filter((t) => t.n > 0);
+  const charts: { name: string; unit: string; v: (t: (typeof stats)[number]) => number | null; fmt: (v: number) => string }[] = [
+    { name: "Calls made", unit: "logged by the app", v: (t) => t.n, fmt: (v) => String(v) },
+    { name: "Time to answer", unit: "median", v: (t) => (t.p50 === null ? null : t.p50 / 1000), fmt: (v) => `${v.toFixed(1)} s` },
+    { name: "Cost", unit: "per 1,000 calls, USD", v: (t) => t.cost, fmt: money },
+    { name: "Passed our checks", unit: "share of calls", v: (t) => (t.ok === null ? null : t.ok * 100), fmt: (v) => `${Math.round(v)}%` },
+  ];
+  const chartView = (
+    <div className="grid gap-4 md:grid-cols-2">
+      {charts.map((c) => {
+        const max = Math.max(...stats.map((t) => c.v(t) ?? 0), 0.0001);
+        return (
+          <figure key={c.name} className="rounded-2xl border border-line bg-card p-5">
+            <figcaption className="text-lg font-medium">
+              {c.name} <span className="font-normal text-ink-soft">({c.unit})</span>
+            </figcaption>
+            <div className="mt-3 space-y-2">
+              {stats.map((t) => {
+                const v = c.v(t);
+                const text = v === null ? "n/a" : c.fmt(v);
+                return (
+                  <div key={t.task} className="group relative grid grid-cols-[minmax(0,9.5rem)_1fr_4.5rem] items-center gap-3 text-sm">
+                    <span className="truncate text-ink-soft" title={t.label}>{t.label}</span>
+                    <div className="h-5 overflow-hidden rounded-[4px] bg-secondary">
+                      <div className="h-full rounded-r-[4px] bg-tide" style={{ width: `${v === null ? 0 : Math.max(2, (v / max) * 100)}%` }} />
+                    </div>
+                    <span className="text-right tabular-nums">{text}</span>
+                    <span role="tooltip" className="pointer-events-none absolute -top-8 left-1/3 z-10 hidden whitespace-nowrap rounded-md bg-navy px-2 py-1 text-xs text-white group-hover:block">
+                      {t.label}: {text} ({t.model})
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+          </figure>
+        );
+      })}
+    </div>
+  );
+  const tableView = (
+    <div className="overflow-x-auto rounded-2xl bg-card">
+      <table className="w-full min-w-[640px] text-left">
+        <thead>
+          <tr className="border-b border-line">
+            <th className="p-3">Task</th>
+            <th className="p-3">Model</th>
+            <th className="p-3">Calls</th>
+            <th className="p-3">Median time</th>
+            <th className="p-3">Cost per 1,000</th>
+            <th className="p-3">Passed checks</th>
+          </tr>
+        </thead>
+        <tbody>
+          {stats.map((t) => (
+            <tr key={t.task} className="border-b border-line last:border-0">
+              <th scope="row" className="p-3 font-bold">{t.label}</th>
+              <td className="p-3">{t.model}</td>
+              <td className="p-3 tabular-nums">{t.n}</td>
+              <td className="p-3 tabular-nums">{t.p50 === null ? "n/a" : secs(t.p50)}</td>
+              <td className="p-3 tabular-nums">{money(t.cost)}</td>
+              <td className="p-3 tabular-nums">{t.ok === null ? "n/a" : pctf(t.ok)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+  return (
+    <section>
+      <h2 className="text-2xl font-semibold tracking-tight">Every AI job in Hookline, all through Mubit</h2>
+      <p className="mt-1 max-w-3xl text-ink-soft">
+        Each job is its own Mubit task, so each can get its own small trained model (an adapter). Measured from the calls this app has made.
+      </p>
+      <div className="mt-4">
+        <ViewSwitch charts={chartView} table={tableView} />
+      </div>
+    </section>
+  );
+}
+
+type AdapterRow = { label?: string; status: string; kept_examples: number | null; agreement_pct: number | null; test_cases: number | null };
+
+// How close each task's adapter is: kept examples against the 25 needed to train, and the
+// share of the big model's answers matched against Mubit's 95% target (the dark tick).
+function AdapterProgress({ adapter }: { adapter: AdapterInfo }) {
+  const items = Object.entries(adapter).filter(([, v]) => typeof v === "object" && v !== null) as [string, AdapterRow][];
+  return (
+    <section>
+      <h2 className="text-2xl font-semibold tracking-tight">Small trained models (Mubit adapters)</h2>
+      <p className="mt-1 max-w-3xl text-ink-soft">
+        Mubit keeps good examples of each task and trains a small model once it has 25. A version goes live once it matches the big model on 95%
+        of test cases. Copied by hand from the Mubit console{adapter.copied_at ? ` at ${adapter.copied_at}` : ""}, since Mubit has no API for
+        these yet.
+      </p>
+      <div className="mt-3 flex flex-wrap gap-x-5 gap-y-1 text-sm">
+        <span className="flex items-center gap-2"><span aria-hidden className="size-3 rounded-sm bg-tide" />Kept examples (of 25 needed)</span>
+        <span className="flex items-center gap-2"><span aria-hidden className="size-3 rounded-sm" style={{ background: HUE.small }} />Matched the big model</span>
+        <span className="flex items-center gap-2"><span aria-hidden className="h-3 w-0.5 bg-ink" />Target</span>
+      </div>
+      <div className="mt-4 grid gap-4 md:grid-cols-2">
+        {items.map(([key, a]) => (
+          <figure key={key} className="rounded-2xl border border-line bg-card p-5">
+            <figcaption className="text-lg font-medium">{a.label ?? key}</figcaption>
+            <p className="text-sm text-ink-soft">{a.status}</p>
+            <Bar label="Kept examples" value={Math.min(25, a.kept_examples ?? 0)} max={25} target={25} colour="#0068ad"
+              text={a.kept_examples === null ? "not shown yet" : `${a.kept_examples} of 25`} />
+            <Bar label="Matched big model" value={a.agreement_pct ?? 0} max={100} target={95} colour={HUE.small}
+              text={a.agreement_pct === null ? "no version yet" : `${a.agreement_pct}% of ${a.test_cases} tests (needs 95%)`} />
+          </figure>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function Bar({ label, value, max, target, colour, text }: { label: string; value: number; max: number; target: number; colour: string; text: string }) {
+  return (
+    <div className="mt-3" title={`${label}: ${text}`}>
+      <div className="flex justify-between gap-3 text-sm">
+        <span>{label}</span>
+        <span className="text-right tabular-nums text-ink-soft">{text}</span>
+      </div>
+      <div className="relative mt-1 h-4 rounded-[4px] bg-secondary" role="img" aria-label={`${label}: ${text}`}>
+        <div className="h-full rounded-[4px]" style={{ width: `${(value / max) * 100}%`, background: colour, minWidth: value ? 4 : 0 }} />
+        <span aria-hidden className="absolute -top-1 h-6 w-0.5 bg-ink" style={{ left: `calc(${(target / max) * 100}% - 1px)` }} />
+      </div>
     </div>
   );
 }
