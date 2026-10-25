@@ -267,7 +267,11 @@ npm test                # 111 tests
 
 ## Demo
 
-**[Watch the demo video (MP4)](docs/hookline-demo.mp4)**. It is also uploaded with our hackathon submission. It shows:
+<p align="center">
+  <a href="docs/hookline-demo.mp4"><img src="docs/images/demo.gif" width="720" alt="Hookline demo, sped up three times: a fake prize text asks for card details, then lessons, a practice call, Sly and the Mubit dashboard" /></a>
+</p>
+
+**[Watch the demo video (MP4)](docs/hookline-demo.mp4)**. The GIF above is the same video at three times speed, without sound. It is also uploaded with our hackathon submission. It shows:
 
 1. The landing page and the business case, then the one-minute starting check.
 2. A lesson built from this week's real scam report, with the weak-spot profile choosing what comes next.
