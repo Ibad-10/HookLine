@@ -86,6 +86,7 @@ export default function Sly() {
   // Sly naps 10 s after the last touch or keypress, but never while the chat is open.
   const poke = () => {
     clearTimeout(nap.current);
+    if (chatOpen) return; // never nap mid-conversation
     nap.current = setTimeout(() => setAwake((a) => (a ? false : a)), 10000);
   };
   useEffect(() => {

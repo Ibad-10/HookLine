@@ -63,7 +63,7 @@ Hookline is practice, not a leaflet.
   <img src="docs/images/call-phone.jpg" width="24%" alt="Practice call on a phone: caller from BrightLine Broadband asking for an access code" />
   <img src="docs/images/start-phone.png" width="24%" alt="Starting check on a phone" />
   <img src="docs/images/email-review.png" width="24%" alt="The page a practice email link opens, explaining the red flags" />
-  <img src="docs/images/landing-phone.png" width="24%" alt="Landing page on a phone" />
+  <img src="docs/images/sly-chat.png" width="24%" alt="Sly the cat chatbot on a phone, saying a parcel text is likely a scam and listing the red flags" />
 </p>
 
 ### Works on any phone, and installs like an app
@@ -137,11 +137,25 @@ Four adapters trained overnight, all on **Qwen3-4B-Instruct**:
 | Live caller's words (Talker) | 14.3% | 21 | 95% |
 | Call coach, small-model side | 7.1% | 14 | 95% |
 
-Neither is live yet, but the jump from 7.1% to 50% in a few hours shows the loop working: more varied calls in, a better
-small model out. What we learned: the coach's answer mixed a fixed label with free text, and a small model can't match
-free text word for word. So we split that job: **Intent** ("Label one reply", 601 calls) and **Gatecheck** ("Check one
-reply", 691 calls) now answer with a single label or a yes/no at temperature 0, and are queued for review as the next
-adapter candidates.
+None is live yet, but the jump from 7.1% to 62.5% in a few hours shows the loop working: more varied calls in, a
+better small model out. What we learned: the first coach answer mixed a fixed label with free text, and a small model
+can't match free text word for word. So we split that job into **Intent** (one label) and **Gatecheck** (yes or no),
+both at temperature 0. Intent's first adapter is already the best of the four.
+
+**When does an adapter take over?** Hookline never picks a model per task in code. Every call goes to the Mubit
+gateway, and Mubit keeps answering with the big model until a task's adapter passes its own tests at 95%. Then Mubit
+routes that task to the adapter by itself: cheaper and faster, with no code change and no redeploy. Until then the
+console shows "Adapters serving 0" and "Routed requests 0%", which is where we are at submission time.
+
+**Feeding the loop overnight.** Repeated or near-identical calls don't count, so Mubit kept too few examples for
+Gatecheck at first ("Can't train"). In the last round we sent about 900 new, deliberately varied calls:
+
+| Task | New calls | How they were varied |
+|---|---|---|
+| Gatecheck | 420 | 18 kinds of request (codes, PINs, card numbers, passwords, NI number…) and 14 kinds of speaker, half starting to give the secret away (made-up values, numbers spoken as words) and half refusing |
+| Intent | 290 | Replies written by different personas, against different caller lines |
+| Talker | 145 | Caller turns across every scenario and step |
+| Call coach (both sides) | 186 | The same persona replies at different points in each call |
 
 <p align="center">
   <img src="docs/images/mubit-console-adapters.png" width="49%" alt="Mubit console: four adapters on Qwen3-4B, best is Intent at 62.5%, all below the 95% target" />
