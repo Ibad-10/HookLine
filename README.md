@@ -267,7 +267,7 @@ npm test                # 111 tests
 
 ## Demo
 
-The two-minute demo video is uploaded with our hackathon submission. It shows:
+**[Watch the demo video (MP4)](docs/hookline-demo.mp4)**. It is also uploaded with our hackathon submission. It shows:
 
 1. The landing page and the business case, then the one-minute starting check.
 2. A lesson built from this week's real scam report, with the weak-spot profile choosing what comes next.
