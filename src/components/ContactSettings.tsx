@@ -29,7 +29,7 @@ export default function ContactSettings() {
     const r = await fetch("/api/phone/verify", { method: "POST", body: JSON.stringify(withCode ? { code: withCode } : {}) }).catch(() => null);
     const j = r ? await r.json().catch(() => ({})) : {};
     if (r?.ok && withCode) { setP(j); setCode(""); setCodeSent(false); setMsg("Number confirmed."); }
-    else if (r?.ok) { setCodeSent(true); setWait(60); setMsg("Code sent. Check your texts."); }
+    else if (r?.ok) { setCodeSent(true); setWait(60); setMsg(j.by === "call" ? "We're ringing your phone now to read you the code." : "Code sent. Check your texts."); }
     else setMsg(j.error ?? "That didn't work. Try again.");
     setBusy("");
   }

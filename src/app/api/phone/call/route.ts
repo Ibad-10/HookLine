@@ -47,12 +47,14 @@ export async function POST() {
         },
       }),
     }).catch(() => null);
-    if (r?.ok) {
+    // ElevenLabs answers 200 even when Twilio refuses the call; trust only success: true.
+    const j = r?.ok ? ((await r.json().catch(() => ({}))) as { success?: boolean; message?: string }) : null;
+    if (j?.success !== false && r?.ok) {
       const code = sc?.nodes.verify?.ask === "code";
       if (code) after(() => new Promise((res) => setTimeout(res, 20_000)).then(() => sendRealCode(id)));
       return Response.json({ ok: true });
     }
-    console.error("phone: ElevenLabs outbound failed", r?.status, r ? (await r.text()).slice(0, 300) : "");
+    console.error("phone: ElevenLabs outbound failed, using our Twilio loop", r?.status, j?.message ?? "");
   }
 
   const res = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${sid}/Calls.json`, {

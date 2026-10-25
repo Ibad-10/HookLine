@@ -1,6 +1,8 @@
 // Confirms the learner owns their practice-call number with Twilio Verify (works on trial
 // accounts), then marks it verified. "Call me now" only rings numbers confirmed here.
+import { createHash, randomInt } from "node:crypto";
 import { db } from "@/lib/db";
+import { NARRATOR } from "@/lib/voices";
 import { requireLearner } from "@/lib/learner";
 import { contactPrefs } from "@/lib/practice";
 
@@ -23,6 +25,30 @@ export async function GET() {
   return Response.json({ pending: left > 0, wait: Math.max(0, Math.ceil((left - 9 * 60_000) / 1000)) });
 }
 
+const hash = (s: string) => createHash("sha256").update(s).digest("hex");
+
+// Rings the number from the ElevenLabs line and reads the code twice, then hangs up.
+async function callWithCode(to: string, code: string): Promise<boolean> {
+  const { ELEVENLABS_AGENT_ID: agent, ELEVENLABS_PHONE_NUMBER_ID: line } = process.env;
+  if (!agent || !line) return false;
+  const spoken = code.split("").join(", ");
+  const r = await fetch("https://api.elevenlabs.io/v1/convai/twilio/outbound-call", {
+    method: "POST",
+    headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "", "content-type": "application/json" },
+    body: JSON.stringify({
+      agent_id: agent,
+      agent_phone_number_id: line,
+      to_number: to,
+      conversation_initiation_client_data: {
+        conversation_config_override: { agent: { first_message: `Hello, this is Hookline. Your code is ${spoken}. Again, ${spoken}. Goodbye.` }, tts: { voice_id: NARRATOR } },
+        custom_llm_extra_body: { mode: "code" },
+      },
+    }),
+  }).catch(() => null);
+  const j = r?.ok ? ((await r.json().catch(() => ({}))) as { success?: boolean }) : null;
+  return Boolean(r?.ok && j?.success !== false);
+}
+
 export async function POST(req: Request) {
   const id = await requireLearner({ signedIn: true });
   if (!id) return Response.json({ error: "Sign in first." }, { status: 401 });
@@ -35,24 +61,42 @@ export async function POST(req: Request) {
     const last = (await db().execute({ sql: "SELECT expires_at FROM phone_codes WHERE learner_id = ?", args: [id] })).rows[0];
     if (last && Number(last.expires_at) - 9 * 60_000 > Date.now()) return Response.json({ error: "Wait a minute before asking for another code." }, { status: 429 });
     const res = await twilio("Verifications", { To: prefs.phone.number, Channel: "sms" });
-    if (!res.ok) {
-      const j = await res.json().catch(() => ({}));
-      console.error("phone verify: send failed", res.status, j.code, j.message);
-      return Response.json({ error: `The code couldn't be sent: ${j.message ?? res.status}` }, { status: 502 });
+    if (res.ok) {
+      await db().execute({
+        sql: "INSERT OR REPLACE INTO phone_codes (learner_id, number, hash, expires_at, tries) VALUES (?, ?, '', ?, 0)",
+        args: [id, prefs.phone.number, Date.now() + 10 * 60_000],
+      });
+      return Response.json({ sent: true });
     }
-    await db().execute({
-      sql: "INSERT OR REPLACE INTO phone_codes (learner_id, number, hash, expires_at, tries) VALUES (?, ?, '', ?, 0)",
-      args: [id, prefs.phone.number, Date.now() + 10 * 60_000],
-    });
-    return Response.json({ sent: true });
+    const j = await res.json().catch(() => ({}));
+    console.error("phone verify: text failed, trying a voice code", res.status, j.code, j.message);
+    // Text refused (e.g. a trial account's tester list): ring the number instead and read our
+    // own code out, from the ElevenLabs line. Only the person holding that phone hears it.
+    const fresh = String(randomInt(100000, 1000000));
+    if (await callWithCode(prefs.phone.number, fresh)) {
+      await db().execute({
+        sql: "INSERT OR REPLACE INTO phone_codes (learner_id, number, hash, expires_at, tries) VALUES (?, ?, ?, ?, 0)",
+        args: [id, prefs.phone.number, hash(fresh), Date.now() + 10 * 60_000],
+      });
+      return Response.json({ sent: true, by: "call" });
+    }
+    return Response.json({ error: `The code couldn't be sent: ${j.message ?? res.status}` }, { status: 502 });
   }
 
-  const row = (await db().execute({ sql: "SELECT number, expires_at FROM phone_codes WHERE learner_id = ?", args: [id] })).rows[0];
-  if (!row || Number(row.expires_at) < Date.now() || row.number !== prefs.phone.number)
+  const row = (await db().execute({ sql: "SELECT number, hash, expires_at, tries FROM phone_codes WHERE learner_id = ?", args: [id] })).rows[0];
+  if (!row || Number(row.expires_at) < Date.now() || row.number !== prefs.phone.number || Number(row.tries) >= 5)
     return Response.json({ error: "That code has expired. Ask for a new one." }, { status: 400 });
-  const res = await twilio("VerificationCheck", { To: prefs.phone.number, Code: code.trim() });
-  const j = await res.json().catch(() => ({}));
-  if (!res.ok || j.status !== "approved") return Response.json({ error: "That code isn't right. Check the text and try again." }, { status: 400 });
+  let right = false;
+  if (row.hash) right = hash(code.trim()) === row.hash; // our own code, read out by call
+  else {
+    const res = await twilio("VerificationCheck", { To: prefs.phone.number, Code: code.trim() });
+    const j = await res.json().catch(() => ({}));
+    right = res.ok && j.status === "approved";
+  }
+  if (!right) {
+    await db().execute({ sql: "UPDATE phone_codes SET tries = tries + 1 WHERE learner_id = ?", args: [id] });
+    return Response.json({ error: "That code isn't right. Check it and try again." }, { status: 400 });
+  }
   await db().execute({ sql: "DELETE FROM phone_codes WHERE learner_id = ?", args: [id] });
   const next = { ...prefs, phone: { ...prefs.phone, verified: true } };
   await db().execute({ sql: "UPDATE learners SET contact_prefs = ? WHERE id = ?", args: [JSON.stringify(next), id] });

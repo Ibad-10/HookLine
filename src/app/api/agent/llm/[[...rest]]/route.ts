@@ -19,7 +19,7 @@ async function record(learner: string, sc: Scenario | null, ok: boolean) {
 
 export async function POST(req: Request) {
   if (!process.env.AGENT_SECRET || req.headers.get("x-hookline-agent") !== process.env.AGENT_SECRET) return new Response("forbidden", { status: 403 });
-  const body = (await req.json().catch(() => ({}))) as { messages?: Msg[]; elevenlabs_extra_body?: { scenario?: string; learner?: string } };
+  const body = (await req.json().catch(() => ({}))) as { messages?: Msg[]; elevenlabs_extra_body?: { scenario?: string; learner?: string; mode?: string } };
   const extra = body.elevenlabs_extra_body ?? {};
   const sc = await getScenario(extra.scenario ?? "");
   const learner = extra.learner ?? "";
@@ -34,6 +34,12 @@ export async function POST(req: Request) {
         ctl.close();
       };
       const callerLine = [...turns].reverse().find((m) => m.role === "assistant")?.content ?? "";
+      // A code-reading call: the code was in the opening line; just say goodbye and hang up.
+      if (extra.mode === "code") {
+        ctl.enqueue(chunk({ role: "assistant", content: "Goodbye." }));
+        ctl.enqueue(endCall("code read"));
+        return finish();
+      }
       const exit = safetyExit(said, String(callerLine));
       if (exit || !sc) {
         ctl.enqueue(chunk({ role: "assistant", content: exit?.say ?? "Sorry, wrong number." }));
