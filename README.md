@@ -239,4 +239,5 @@ first trained adapter.
 
 ## Team
 
-Ibad Ullah Zuberi ([@Ibad-10](https://github.com/Ibad-10)). Thanks to Sahid for lending the phone line for the live call demo.
+
+Ibad Ullah Zuberi ([@Ibad-10](https://github.com/Ibad-10)).

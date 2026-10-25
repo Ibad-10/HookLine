@@ -19,7 +19,9 @@ test("a clean practice email comes back", async () => {
 });
 
 test("emails naming a real brand, carrying a link or with made-up flags are refused", async () => {
-  expect(await writeEmail(brief, [], "t", fake({ ...good, brand: "HSBC" }))).toBeNull();
+  expect((await writeEmail(brief, [], "t", fake({ ...good, brand: "HSBC" })))?.brand).not.toBe("HSBC"); // rewritten, never sent
   expect(await writeEmail(brief, [], "t", fake({ ...good, paragraphs: ["Go to www.claim-now.co.uk", "Today."] }))).toBeNull();
-  expect(await writeEmail(brief, [], "t", fake({ ...good, flags: [{ span: "not in it", why: "x" }, good.flags[0]] }))).toBeNull();
+  expect(await writeEmail(brief, [], "t", fake({ ...good, flags: [{ span: "not in it", why: "x" }] }))).toBeNull();
+  const snapped = await writeEmail(brief, [], "t", fake({ ...good, flags: [{ span: "Within 24 hours.", why: "x" }, { span: "nope", why: "y" }] }));
+  expect(snapped?.flags).toEqual([{ span: "within 24 hours", why: "x" }]);
 });

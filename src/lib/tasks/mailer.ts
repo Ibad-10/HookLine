@@ -1,7 +1,7 @@
 // Mailer: writes one practice scam email from a public scam brief, so every practice email is
 // different. Output is structured fields only; the app builds the HTML and adds the only link.
 import { z } from "zod";
-import { checkBrands } from "../brands";
+import { checkBrands, scrubBrands } from "../brands";
 import { callLLM, type Complete } from "../llm";
 import type { Brief } from "../schemas";
 
@@ -32,7 +32,23 @@ const NO_CONTACT = /https?:|www\.|\.[a-z]{2,}\/|@|\+?\d[\d ]{7,}/i;
 export function emailOk(e: Email): boolean {
   const all = [e.brand, e.subject, ...e.paragraphs, e.button].join("\n");
   if (!checkBrands(all).ok || NO_CONTACT.test(all)) return false;
-  return e.flags.every((f) => all.includes(f.span));
+  return e.flags.length >= 1 && e.flags.every((f) => all.includes(f.span));
+}
+
+// The model often quotes a red flag with different case or edge punctuation, and sometimes
+// names a real agency. Snap each flag to the exact words in the email (dropping any that aren't
+// there) and swap real names for made-up ones, rather than throwing the whole email away.
+export function repairEmail(e: Email): Email {
+  const fix = (t: string) => scrubBrands(t);
+  const out = { ...e, brand: fix(e.brand), subject: fix(e.subject), paragraphs: e.paragraphs.map(fix), button: fix(e.button) };
+  const all = [out.subject, ...out.paragraphs].join("\n");
+  const lower = all.toLowerCase();
+  out.flags = e.flags.flatMap((f) => {
+    const want = fix(f.span).trim().replace(/^[\s"'“‘(]+|[\s"'”’).,:;!?]+$/g, "");
+    const i = want ? lower.indexOf(want.toLowerCase()) : -1;
+    return i < 0 ? [] : [{ span: all.slice(i, i + want.length), why: fix(f.why) }];
+  });
+  return out;
 }
 
 export async function writeEmail(brief: Brief, used: string[], sessionId: string, complete?: Complete): Promise<Email | null> {
@@ -48,5 +64,7 @@ export async function writeEmail(brief: Brief, used: string[], sessionId: string
     sessionId,
     complete,
   });
-  return r.ok && emailOk(r.data) ? r.data : null;
+  if (!r.ok) return null;
+  const e = repairEmail(r.data);
+  return emailOk(e) ? e : null;
 }
