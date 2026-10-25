@@ -83,10 +83,10 @@ Fixed-answer tasks use temperature 0, so the big model answers the same way ever
 
 ```mermaid
 flowchart LR
-  subgraph Sources
+  subgraph SRC [Sources]
     F[Public scam feeds<br/>Which?, IC3, FTC, NCSC]
   end
-  subgraph Mubit gateway
+  subgraph MG [Mubit gateway]
     L[Learner]:::m
     T[Teacher]:::m
     C[Caller]:::m

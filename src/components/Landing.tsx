@@ -20,19 +20,19 @@ function Nav() {
   return (
     <nav
       aria-label="Main"
-      className="fixed left-1/2 top-4 z-40 flex w-[min(calc(100%-2rem),56rem)] -translate-x-1/2 items-center justify-between rounded-full bg-[#111]/75 py-1.5 pl-5 pr-1.5 ring-1 ring-white/12 backdrop-blur-xl"
+      className="fixed left-1/2 top-4 z-40 flex w-[min(calc(100%-2rem),56rem)] -translate-x-1/2 items-center justify-between rounded-full bg-[#111]/75 py-1.5 pl-3 pr-1.5 sm:pl-5 ring-1 ring-white/12 backdrop-blur-xl"
     >
       <Link href="/"><Logo /></Link>
       <div className="hidden items-center gap-1 text-[0.95rem] text-white/70 sm:flex">
         <a href="#how" className="rounded-full px-3 py-2 hover:text-white">How it works</a>
         <Link href="/mubit" className="rounded-full px-3 py-2 hover:text-white">Our AI</Link>
       </div>
-      <div className="flex items-center gap-1">
+      <div className="flex shrink-0 items-center gap-1 whitespace-nowrap">
         {isSignedIn ? (
           <PillButton href="/home" size="sm">Open Hookline</PillButton>
         ) : (
           <>
-            <Link href="/sign-in" className="rounded-full px-3 py-2 text-[0.95rem] text-white/80 hover:text-white">Sign in</Link>
+            <Link href="/sign-in" className="rounded-full px-2 py-2 text-[0.95rem] text-white/80 hover:text-white sm:px-3">Sign in</Link>
             <PillButton href="/sign-up" size="sm">Get started</PillButton>
           </>
         )}

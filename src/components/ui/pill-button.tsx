@@ -10,7 +10,7 @@ const base =
   "group relative inline-flex items-center justify-center gap-2 overflow-hidden rounded-full font-medium tracking-[-0.01em] focus-visible:outline-3 focus-visible:outline-offset-2 focus-visible:outline-glow";
 
 export function PillButton({ href, children, className, variant = "light", size = "md" }: Props) {
-  const sizes = size === "sm" ? "h-10 px-4 text-[0.95rem]" : "h-12 px-6 text-base";
+  const sizes = size === "sm" ? "h-10 whitespace-nowrap px-4 text-[0.95rem]" : "h-12 whitespace-nowrap px-6 text-base";
   const look =
     variant === "light"
       ? "bg-white text-black"
