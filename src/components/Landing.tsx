@@ -23,7 +23,7 @@ function Nav() {
       aria-label="Main"
       className="fixed left-1/2 top-4 z-40 flex w-[min(calc(100%-1.5rem),56rem)] -translate-x-1/2 items-center justify-between gap-2 rounded-full bg-[#111]/75 py-1.5 pl-2.5 pr-1.5 ring-1 ring-white/12 backdrop-blur-xl sm:pl-5"
     >
-      <Link href="/" aria-label="Hookline home"><Logo compact /></Link>
+      <Link href="/" aria-label="Hookline home"><Logo className="text-base sm:text-lg" /></Link>
       <div className="hidden items-center gap-1 text-[0.95rem] text-white/70 sm:flex">
         <a href="#why" className="rounded-full px-3 py-2 hover:text-white">Why it matters</a>
         <a href="#how" className="rounded-full px-3 py-2 hover:text-white">How it works</a>
@@ -98,14 +98,14 @@ export default function Landing() {
       <motion.div aria-hidden className="fixed inset-x-0 top-0 z-50 h-0.5 origin-left bg-glow" style={{ scaleX: page }} />
       <Nav />
 
-      <section ref={hero} className="relative flex min-h-[84dvh] flex-col items-center justify-start overflow-hidden px-5 pb-28 pt-32 text-center sm:min-h-[88dvh] sm:justify-center sm:pt-28">
+      <section ref={hero} className="relative flex min-h-[84dvh] flex-col items-center justify-start overflow-hidden px-5 pb-24 pt-[6.5rem] text-center sm:min-h-[88dvh] sm:justify-center sm:pt-28">
         <div aria-hidden className="pointer-events-none absolute inset-x-0 -bottom-px z-[1] h-48 bg-gradient-to-b from-transparent via-black/70 to-black" />
         <motion.div aria-hidden style={{ scaleY: glow }} className="pointer-events-none absolute inset-x-0 bottom-0 flex h-[65%] origin-bottom items-end justify-center gap-6 sm:gap-10">
           {[55, 85, 100, 75, 50].map((h, k) => (
             <span key={k} className="glow-bar w-12 sm:w-16" style={{ height: `${h}%`, animationDelay: `${k * 0.9}s` }} />
           ))}
         </motion.div>
-        <motion.div style={{ y, opacity: fade }} className="relative w-full max-w-4xl">
+        <motion.div style={{ y, opacity: fade }} className="relative z-10 w-full max-w-4xl">
           <motion.h1
             className="text-[2.9rem] font-medium leading-[0.98] tracking-[-0.055em] sm:text-7xl md:text-[5.5rem]"
             initial={{ opacity: 0, y: 24 }}
