@@ -145,3 +145,7 @@ contact anyone who has not opted in.
   stuck at "initiated"). Needs Hookline's own Twilio number: upgrade Twilio, buy a US voice number, set
   `TWILIO_FROM_NUMBER`, set `PHONE_AGENT=on`, test one call and read Twilio Monitor, Logs, Errors.
 - Same agent could also run the web practice call in the browser (no Twilio needed).
+- **Update (25 Oct):** real calls now go through ElevenLabs' outbound-call API from the Twilio number
+  imported in the ElevenLabs workspace ("Donna (Twilio)", owned by Ibad's friend Sahid, who agreed),
+  using the Hookline agent (`ELEVENLABS_PHONE_NUMBER_ID`). Falls back to our Twilio loop if it fails.
+  Agent voice: eleven_v3_conversational with expressive mode; 1.5 s "Mm, right." filler if the brain is slow.
