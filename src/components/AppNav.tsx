@@ -30,7 +30,7 @@ export default function AppNav() {
   }
 
   return (
-    <nav aria-label="Main" className="glass sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-1.5rem)] max-w-xl items-center gap-0.5 rounded-full px-1.5 py-1.5 sm:gap-1 sm:px-2">
+    <nav aria-label="Main" className="glass sticky top-3 z-40 !bg-background/90 shadow-sm mx-auto mt-3 flex w-[calc(100%-1.5rem)] max-w-xl items-center gap-0.5 rounded-full px-1.5 py-1.5 sm:gap-1 sm:px-2">
       <Link href="/home" className="shrink-0 px-1.5" aria-label="Hookline home"><Logo compact /></Link>
       <div className="ml-auto flex min-w-0 items-center gap-0.5 sm:gap-1">
         {LINKS.map(({ href, label, Icon }) => (

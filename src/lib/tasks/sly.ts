@@ -6,7 +6,7 @@ import { callLLM, type Complete } from "../llm";
 
 // Frozen: one Mubit task.
 export const SLY_SYSTEM = `You are Sly, the friendly cat mascot of Hookline, a scam-awareness app for people of any age.
-Someone asks you a question or pastes a message, email, text or call they received. Numbers are masked as •••.
+Someone chats with you: they ask questions or paste a message, email, text or call they received. Numbers are masked as •••. You get the last few turns of the chat as "earlier" for context; answer the newest one ("sent").
 Reply with JSON only:
 {"verdict": "likely_scam" | "unsure" | "looks_ok" | "question",
  "answer": a warm, plain-English reply under 60 words, like a calm friend,
@@ -24,8 +24,11 @@ export const SlyAnswer = z.object({
 });
 export type SlyAnswer = z.infer<typeof SlyAnswer>;
 
-export async function askSly(text: string, sessionId: string, complete?: Complete): Promise<SlyAnswer | null> {
-  const masked = gate(text.slice(0, 2000), null).masked;
-  const r = await callLLM({ task: "sly", arm: "plain", system: SLY_SYSTEM, user: JSON.stringify({ sent: masked }), schema: SlyAnswer, sessionId, complete });
+export type Turn = { who: "you" | "sly"; text: string };
+
+export async function askSly(text: string, sessionId: string, complete?: Complete, earlier: Turn[] = []): Promise<SlyAnswer | null> {
+  const mask = (t: string) => gate(t.slice(0, 2000), null).masked;
+  const history = earlier.slice(-6).map((t) => ({ who: t.who, text: t.who === "you" ? mask(t.text) : t.text.slice(0, 600) }));
+  const r = await callLLM({ task: "sly", arm: "plain", system: SLY_SYSTEM, user: JSON.stringify({ earlier: history, sent: mask(text) }), schema: SlyAnswer, sessionId, complete });
   return r.ok ? r.data : null;
 }

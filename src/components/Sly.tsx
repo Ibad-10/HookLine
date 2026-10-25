@@ -1,9 +1,10 @@
 "use client";
-// Sly, Hookline's mascot: a small avatar you can drag anywhere. Her eyes follow you, she naps
-// with floating Z's when idle, and her face reacts to lessons and calls. Tap her to open
-// "Ask Sly" for real questions (answered through Mubit); it whirls away like a tornado.
+// Sly, Hookline's mascot. Asleep she's a small round avatar with floating Z's; tap her and she
+// wakes as full-body Sly with a chat beside her (a real conversation, answered through Mubit,
+// scam topics only, numbers masked). Close the chat and she stays awake, then naps after 10 s
+// without a touch. Press and hold to pick her up and drag her anywhere; her face reacts to lessons.
 import { AnimatePresence, motion, useDragControls, useReducedMotion } from "motion/react";
-import { Send, X } from "lucide-react";
+import { Minus, Send } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { useEffect, useId, useRef, useState } from "react";
 import { hiddenOn, moodFor, type Mood, type SlyLine } from "@/lib/sly";
@@ -28,7 +29,7 @@ export function SlyArt({ mood = "neutral", look = { x: 0, y: 0 }, size = 120, fa
     serious: <><rect x={74 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><rect x={114 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><path d="M71 84 l16 -4 M129 84 l-16 -4" stroke="#0b2a44" strokeWidth="3" strokeLinecap="round" /><path d="M95 127 h10" stroke="#0b2a44" strokeWidth="2.6" strokeLinecap="round" /></>,
   };
   return (
-    <svg width={size} height={faceOnly ? size : size * 1.1} viewBox={faceOnly ? "26 8 148 148" : "0 0 200 220"} aria-hidden>
+    <svg width={faceOnly ? "100%" : size} height={faceOnly ? "100%" : size * 1.1} viewBox={faceOnly ? "30 16 140 140" : "0 0 200 220"} preserveAspectRatio="xMidYMid meet" aria-hidden className={faceOnly ? "block" : undefined}>
       <defs>
         <linearGradient id={`b${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#6cc4ff" /><stop offset=".45" stopColor="#2a92dd" /><stop offset="1" stopColor="#156fb6" /></linearGradient>
         <linearGradient id={`v${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#e6edf6" /></linearGradient>
@@ -63,64 +64,53 @@ export default function Sly() {
   const still = useReducedMotion();
   const [on, setOn] = useState(true);
   const [ready, setReady] = useState(false);
-  const [open, setOpen] = useState(false);
+  const [awake, setAwake] = useState(false); // full-body Sly beside you
+  const [chatOpen, setChatOpen] = useState(false);
   const [mood, setMood] = useState<Mood>("neutral");
   const [look, setLook] = useState({ x: 0, y: 0 });
-  const [asleep, setAsleep] = useState(false);
   const [pos, setPos] = useState({ x: 0, y: 0 });
   const [side, setSide] = useState({ up: true, left: true });
-  const [question, setQuestion] = useState("");
-  const [thinking, setThinking] = useState(false);
+  const [held, setHeld] = useState(false);
   type Answer = { verdict: "likely_scam" | "unsure" | "looks_ok" | "question"; answer: string; flags: string[]; do: string };
-  const [reply, setReply] = useState<Answer | null>(null);
-  const [askError, setAskError] = useState("");
-  const avatar = useRef<HTMLDivElement>(null);
+  type Msg = { who: "you"; text: string } | { who: "sly"; text: string; a?: Answer };
+  const [chat, setChat] = useState<Msg[]>([{ who: "sly", text: "Hi, I'm Sly! Paste a message you got, or ask me anything about scams." }]);
+  const [draft, setDraft] = useState("");
+  const [thinking, setThinking] = useState(false);
+  const box = useRef<HTMLDivElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   const dragged = useRef(false);
   const controls = useDragControls();
   const press = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-  const [held, setHeld] = useState(false);
+  const nap = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  // Long-press picks her up (she lifts, grows and wiggles); then she can be dragged anywhere.
-  function pressStart(e: React.PointerEvent) {
-    clearTimeout(press.current);
-    const ev = e.nativeEvent;
-    press.current = setTimeout(() => {
-      dragged.current = true;
-      setHeld(true);
-      setOpen(false);
-      setMood("surprised");
-      controls.start(ev, { snapToCursor: false });
-    }, 350);
-  }
-  const pressEnd = () => clearTimeout(press.current);
-  const idle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  const wake = () => {
-    setAsleep(false);
-    clearTimeout(idle.current);
-    idle.current = setTimeout(() => setAsleep(true), 12000);
+  // Sly naps 10 s after the last touch or keypress, but never while the chat is open.
+  const poke = () => {
+    clearTimeout(nap.current);
+    nap.current = setTimeout(() => setAwake((a) => (a ? false : a)), 10000);
   };
+  useEffect(() => {
+    if (!awake || chatOpen) clearTimeout(nap.current);
+    else poke();
+    return () => clearTimeout(nap.current);
+  }, [awake, chatOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // On or off (Settings), and where she was last dropped.
   useEffect(() => {
     const sync = () => setOn(read("hl_sly") !== "off");
     sync();
     try { const p = JSON.parse(read("hl_sly_pos") ?? "null"); if (p) setPos(p); } catch {}
-    if (window.matchMedia("(hover: none)").matches) setAsleep(true);
-    else wake();
     setReady(true);
     window.addEventListener("sly-pref", sync);
-    return () => { window.removeEventListener("sly-pref", sync); clearTimeout(idle.current); };
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    return () => window.removeEventListener("sly-pref", sync);
+  }, []);
 
-  useEffect(() => { setOpen(false); setReply(null); }, [path]);
+  useEffect(() => { setChatOpen(false); }, [path]);
+  useEffect(() => { list.current?.scrollTo({ top: list.current.scrollHeight, behavior: "smooth" }); }, [chat, thinking]);
 
-  // Her face reacts to lessons and calls, silently.
+  // Her face reacts to lessons and calls, silently; she wakes for a moment to do it.
   useEffect(() => {
     let t: ReturnType<typeof setTimeout>;
     const react = (e: Event) => {
       const d = (e as CustomEvent<{ line: SlyLine; mood?: Mood }>).detail;
-      setAsleep(false);
       setMood(d.mood ?? moodFor(d.line));
       clearTimeout(t);
       t = setTimeout(() => setMood("neutral"), 3000);
@@ -132,15 +122,14 @@ export default function Sly() {
   // Eyes follow the pointer.
   useEffect(() => {
     const move = (e: PointerEvent) => {
-      if (e.pointerType === "mouse") wake();
-      const r = avatar.current?.getBoundingClientRect();
+      const r = box.current?.getBoundingClientRect();
       if (!r) return;
       const dx = e.clientX - (r.left + r.width / 2), dy = e.clientY - (r.top + r.height / 2);
       setLook({ x: Math.max(-1, Math.min(1, dx / 160)), y: Math.max(-1, Math.min(1, dy / 160)) });
     };
     window.addEventListener("pointermove", move);
     return () => window.removeEventListener("pointermove", move);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // Leave room at the bottom of every page so Sly never sits on a button.
   useEffect(() => {
@@ -149,41 +138,66 @@ export default function Sly() {
     return () => { document.body.style.paddingBottom = ""; };
   }, [ready, on, path]);
 
-  function openPanel() {
+  // Long-press picks her up (she lifts, grows and wiggles); then she can be dragged anywhere.
+  function pressStart(e: React.PointerEvent) {
+    clearTimeout(press.current);
+    const ev = e.nativeEvent;
+    press.current = setTimeout(() => {
+      dragged.current = true;
+      setHeld(true);
+      setMood("surprised");
+      controls.start(ev, { snapToCursor: false });
+    }, 350);
+  }
+  const pressEnd = () => clearTimeout(press.current);
+
+  function tap() {
     if (dragged.current) return; // that was a drag, not a tap
-    const r = avatar.current?.getBoundingClientRect();
+    const r = box.current?.getBoundingClientRect();
     if (r) setSide({ up: r.top > window.innerHeight / 2, left: r.left > window.innerWidth / 2 });
-    setOpen(true);
-    setAsleep(false);
+    setAwake(true);
+    setChatOpen(true);
     setMood("happy");
+    setTimeout(() => setMood("neutral"), 1200);
   }
 
-  async function ask(e: React.FormEvent) {
+  async function send(e: React.FormEvent) {
     e.preventDefault();
-    if (!question.trim() || thinking) return;
+    const text = draft.trim();
+    if (!text || thinking) return;
+    const earlier = chat.map((m) => ({ who: m.who, text: m.who === "sly" && m.a ? `${m.a.answer} ${m.a.do}` : m.text }));
+    setChat((c) => [...c, { who: "you", text }]);
+    setDraft("");
     setThinking(true);
-    setAskError("");
     setMood("serious");
-    const r = await fetch("/api/sly", { method: "POST", body: JSON.stringify({ text: question }) }).catch(() => null);
+    const r = await fetch("/api/sly", { method: "POST", body: JSON.stringify({ text, earlier }) }).catch(() => null);
     const j = r ? await r.json().catch(() => ({})) : {};
     setThinking(false);
-    if (!r?.ok) { setAskError(j.error ?? "Sorry, try again?"); setMood("worried"); return; }
-    setReply(j as Answer);
-    setMood(j.verdict === "likely_scam" ? "surprised" : j.verdict === "looks_ok" ? "happy" : j.verdict === "unsure" ? "worried" : "wink");
+    if (!r?.ok) {
+      setChat((c) => [...c, { who: "sly", text: j.error ?? "Sorry, I lost my train of thought. Try again?" }]);
+      setMood("worried");
+      return;
+    }
+    const a = j as Answer;
+    setChat((c) => [...c, { who: "sly", text: a.answer, a }]);
+    setMood(a.verdict === "likely_scam" ? "surprised" : a.verdict === "looks_ok" ? "happy" : a.verdict === "unsure" ? "worried" : "wink");
+    setTimeout(() => setMood("neutral"), 2500);
   }
 
   if (!ready || !on || hiddenOn(path)) return null;
-  const tornado = still ? { opacity: 0 } : { rotateY: [0, 360, 720, 1080], scale: [1, 0.8, 0.45, 0.1], opacity: [1, 1, 1, 0] };
+  const tornado = still ? { opacity: 0 } : { rotateY: [0, 360, 720], scale: [1, 0.6, 0.1], opacity: [1, 1, 0] };
+  const chip = (v: Answer["verdict"]) =>
+    v === "likely_scam" ? ["Likely a scam", "bg-alarm text-white"] : v === "looks_ok" ? ["Looks OK", "bg-safe text-white"] : v === "unsure" ? ["Not sure: be careful", "bg-mark text-black"] : null;
 
   return (
     <motion.div
-      ref={avatar}
+      ref={box}
       drag
       dragListener={false}
       dragControls={controls}
       dragMomentum={false}
       dragElastic={0.1}
-      dragConstraints={{ left: -window.innerWidth + 96, right: 0, top: -window.innerHeight + 96, bottom: 0 }}
+      dragConstraints={{ left: -window.innerWidth + 110, right: 0, top: -window.innerHeight + 140, bottom: 0 }}
       onDragEnd={(_, info) => {
         setHeld(false);
         setMood("happy");
@@ -192,74 +206,107 @@ export default function Sly() {
         setPos(next);
         write("hl_sly_pos", JSON.stringify(next));
         setTimeout(() => (dragged.current = false), 50);
+        poke();
       }}
-      style={{ x: pos.x, y: pos.y, perspective: 600, touchAction: "none" }}
+      style={{ x: pos.x, y: pos.y, perspective: 700, touchAction: "none" }}
       className="fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"
+      onPointerDown={poke}
+      onKeyDown={poke}
     >
       <AnimatePresence>
-        {open && (
+        {chatOpen && (
           <motion.section
-            key="ask"
-            aria-label="Ask Sly"
-            className={`absolute w-[18rem] max-w-[calc(100vw-2rem)] rounded-2xl bg-card p-3.5 text-sm leading-snug shadow-2xl ring-1 ring-line ${side.up ? "bottom-full mb-3" : "top-full mt-3"} ${side.left ? "right-0" : "left-0"}`}
-            initial={still ? { opacity: 0 } : { rotateY: -1080, scale: 0.1, opacity: 0 }}
-            animate={{ rotateY: 0, scale: 1, opacity: 1 }}
-            exit={tornado}
-            transition={{ duration: 0.7, ease: [0.22, 0.61, 0.36, 1] }}
+            key="chat"
+            aria-label="Chat with Sly"
             onPointerDownCapture={(e) => e.stopPropagation()}
+            className={`absolute flex max-h-[min(30rem,calc(100dvh-10rem))] w-[calc(100vw-2rem)] sm:w-[22rem] flex-col overflow-hidden rounded-3xl bg-card text-sm shadow-2xl ring-1 ring-line ${side.up ? "bottom-full mb-3" : "top-full mt-3"} ${side.left ? "right-0" : "left-0"}`}
+            initial={still ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.92 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={tornado}
+            transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
           >
-            <div className="flex items-center justify-between">
-              <p className="font-semibold">Would you like to ask me a question?</p>
-              <button type="button" onClick={() => setOpen(false)} aria-label="Close" className="grid size-8 place-items-center rounded-full hover:bg-secondary"><X className="size-4" aria-hidden /></button>
-            </div>
-            {reply ? (
-              <div aria-live="polite" className="mt-2">
-                <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${reply.verdict === "likely_scam" ? "bg-alarm text-white" : reply.verdict === "looks_ok" ? "bg-safe text-white" : reply.verdict === "unsure" ? "bg-mark text-black" : "bg-secondary"}`}>
-                  {reply.verdict === "likely_scam" ? "Likely a scam" : reply.verdict === "looks_ok" ? "Looks OK" : reply.verdict === "unsure" ? "Not sure: be careful" : "Sly says"}
-                </span>
-                <p className="mt-1.5">{reply.answer}</p>
-                {reply.flags.length > 0 && <ul className="mt-1.5 list-disc space-y-0.5 pl-4 text-ink-soft">{reply.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
-                {reply.do && <p className="mt-1.5 font-medium">{reply.do}</p>}
-                <button type="button" onClick={() => { setReply(null); setQuestion(""); }} className="mt-2 text-xs font-semibold text-tide">Ask something else</button>
+            <header className="flex items-center gap-2 border-b border-line bg-secondary/60 px-3 py-2">
+              <span className="block size-8 overflow-hidden rounded-full bg-background"><SlyArt mood={mood} size={32} faceOnly /></span>
+              <div className="flex-1 leading-tight">
+                <p className="font-semibold">Sly</p>
+                <p className="text-xs text-ink-soft">{thinking ? "Looking…" : "Scam questions only"}</p>
               </div>
-            ) : (
-              <form onSubmit={ask} className="mt-2 space-y-2">
-                <label htmlFor="ask-sly" className="block text-ink-soft">Paste a message you got, or ask me about scams and staying safe.</label>
-                <textarea id="ask-sly" value={question} onChange={(e) => setQuestion(e.target.value)} rows={3} maxLength={2000} autoFocus
-                  placeholder="e.g. Is this text from my bank real?" className="w-full resize-none rounded-xl bg-background px-2.5 py-2 text-sm ring-1 ring-line" />
-                <p className="text-xs text-ink-soft">Numbers are hidden before I read it. Never share codes or passwords.</p>
-                {askError && <p role="status" className="text-xs text-alarm">{askError}</p>}
-                <button type="submit" disabled={thinking || !question.trim()} className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-tide font-semibold text-white disabled:opacity-50">
-                  <Send className="size-4" aria-hidden />{thinking ? "Sly is looking…" : "Ask Sly"}
-                </button>
-              </form>
-            )}
+              <button type="button" onClick={() => setChatOpen(false)} aria-label="Minimise chat" className="grid size-9 place-items-center rounded-full hover:bg-background"><Minus className="size-4" aria-hidden /></button>
+            </header>
+            <div ref={list} aria-live="polite" className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
+              {chat.map((m, i) =>
+                m.who === "you" ? (
+                  <p key={i} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-tide px-3 py-2 text-white">{m.text}</p>
+                ) : (
+                  <div key={i} className="w-fit max-w-[90%] rounded-2xl rounded-bl-md bg-secondary px-3 py-2">
+                    {m.a && chip(m.a.verdict) && <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${chip(m.a.verdict)![1]}`}>{chip(m.a.verdict)![0]}</span>}
+                    <p>{m.text}</p>
+                    {m.a && m.a.flags.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-ink-soft">{m.a.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
+                    {m.a?.do && <p className="mt-1 font-medium">{m.a.do}</p>}
+                  </div>
+                ),
+              )}
+              {thinking && <p className="w-fit rounded-2xl rounded-bl-md bg-secondary px-3 py-2 text-ink-soft">Sly is typing…</p>}
+            </div>
+            <form onSubmit={send} className="flex items-end gap-2 border-t border-line p-2.5">
+              <label htmlFor="sly-chat" className="sr-only">Message Sly</label>
+              <textarea id="sly-chat" value={draft} onChange={(e) => { setDraft(e.target.value); poke(); }} rows={1} maxLength={2000} autoFocus
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
+                placeholder="Paste a message or ask…" className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl bg-secondary px-3 py-2.5 text-sm" />
+              <button type="submit" disabled={thinking || !draft.trim()} aria-label="Send" className="grid size-11 shrink-0 place-items-center rounded-full bg-tide text-white disabled:opacity-50"><Send className="size-4" aria-hidden /></button>
+            </form>
+            <p className="px-3 pb-2 text-[11px] text-ink-soft">Numbers are hidden before Sly reads them. Never share codes or passwords.</p>
           </motion.section>
         )}
       </AnimatePresence>
+
       <motion.button
         type="button"
-        onClick={openPanel}
+        onClick={tap}
         onPointerDown={pressStart}
         onPointerUp={pressEnd}
         onPointerLeave={pressEnd}
         onContextMenu={(e) => e.preventDefault()}
-        animate={held && !still ? { scale: 1.18, y: -10, rotate: [0, -6, 6, -4, 0], boxShadow: "0 18px 30px rgba(11,42,68,0.28)" } : { scale: 1, y: 0, rotate: 0, boxShadow: "0 6px 14px rgba(11,42,68,0.14)" }}
+        aria-label={awake ? "Sly, Hookline's mascot. Tap to chat; press and hold to move her" : "Sly is asleep. Tap to wake her and chat; press and hold to move her"}
+        aria-expanded={chatOpen}
+        animate={held && !still ? { scale: 1.15, y: -10, rotate: [0, -6, 6, -4, 0] } : { scale: 1, y: 0, rotate: 0 }}
         transition={held ? { rotate: { duration: 0.5, repeat: Infinity }, default: { type: "spring", stiffness: 400, damping: 18 } } : { type: "spring", stiffness: 400, damping: 22 }}
-        aria-label="Sly, Hookline's mascot. Tap to ask her about a scam; press and hold to move her"
-        aria-expanded={open}
-        className={`relative grid size-14 select-none sm:size-16 place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] ring-1 ring-line ${held ? "cursor-grabbing" : "cursor-pointer"}`}
+        className={`relative block select-none ${held ? "cursor-grabbing" : "cursor-pointer"}`}
       >
-        <span className="grid size-[50px] place-items-center overflow-hidden rounded-full sm:size-[58px]">
-          <SlyArt mood={asleep && mood === "neutral" ? "sleepy" : mood} look={asleep ? { x: 0, y: 0 } : look} size={58} faceOnly />
-        </span>
-        {asleep && mood === "neutral" && !still && (
-          <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 font-semibold text-tide">
-            <span className="sly-z absolute right-3 top-3 text-[11px]">z</span>
-            <span className="sly-z absolute right-1 top-0 text-[14px]" style={{ animationDelay: ".6s" }}>z</span>
-            <span className="sly-z absolute -right-1 -top-3 text-[17px]" style={{ animationDelay: "1.2s" }}>Z</span>
-          </span>
-        )}
+        <AnimatePresence mode="wait" initial={false}>
+          {awake ? (
+            <motion.span
+              key="awake"
+              className="sly-bob block drop-shadow-[0_10px_14px_rgba(11,42,68,0.25)]"
+              initial={still ? { opacity: 0 } : { scale: 0.4, y: 30, opacity: 0, rotateY: -180 }}
+              animate={{ scale: 1, y: 0, opacity: 1, rotateY: 0 }}
+              exit={still ? { opacity: 0 } : { scale: 0.4, y: 30, opacity: 0 }}
+              transition={{ type: "spring", stiffness: 260, damping: 18 }}
+            >
+              <SlyArt mood={mood} look={look} size={92} />
+            </motion.span>
+          ) : (
+            <motion.span
+              key="asleep"
+              className="relative grid size-14 place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] shadow-lg ring-1 ring-line sm:size-16"
+              initial={still ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={still ? { opacity: 0 } : { scale: 0.6, opacity: 0 }}
+              transition={{ duration: 0.25 }}
+            >
+              <span className="block size-[48px] overflow-hidden rounded-full sm:size-[56px]">
+                <SlyArt mood={mood === "neutral" ? "sleepy" : mood} size={58} faceOnly />
+              </span>
+              {mood === "neutral" && !still && (
+                <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 font-semibold text-tide">
+                  <span className="sly-z absolute right-3 top-3 text-[11px]">z</span>
+                  <span className="sly-z absolute right-1 top-0 text-[14px]" style={{ animationDelay: ".6s" }}>z</span>
+                  <span className="sly-z absolute -right-1 -top-3 text-[17px]" style={{ animationDelay: "1.2s" }}>Z</span>
+                </span>
+              )}
+            </motion.span>
+          )}
+        </AnimatePresence>
       </motion.button>
     </motion.div>
   );
