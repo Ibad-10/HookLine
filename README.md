@@ -144,7 +144,7 @@ reply", 691 calls) now answer with a single label or a yes/no at temperature 0, 
 adapter candidates.
 
 <p align="center">
-  <img src="docs/images/mubit-console-adapters.png" width="49%" alt="Mubit console: first adapter trained, Qwen3-4B, 7.1% quality" />
+  <img src="docs/images/mubit-console-adapters.png" width="49%" alt="Mubit console: four adapters on Qwen3-4B, best is Intent at 62.5%, all below the 95% target" />
   <img src="docs/images/mubit-console-tasks.png" width="49%" alt="Mubit console: Hookline's tasks and their calls" />
 </p>
 
