@@ -5,7 +5,7 @@
 <h1 align="center">Hookline</h1>
 
 <p align="center"><b>Spot the hook before it catches you.</b><br/>
-Three-minute scam-spotting practice built from this week's real scam reports, with practice calls and emails that feel like the real thing, and nine AI jobs that all run through Mubit.</p>
+Three-minute scam-spotting practice built from this week's real scam reports, with practice calls and emails that feel like the real thing, and ten AI jobs that all run through Mubit.</p>
 
 <p align="center">
   <a href="https://hookline-one-iota.vercel.app">Live app</a> ·
@@ -52,6 +52,7 @@ Hookline is practice, not a leaflet.
 | **Practice calls you can talk to** | A caller rings with a realistic scam (fake bank fraud team, courier fee, broadband "hack", solicitor, crypto offer). You talk back with your voice. The caller answers what you actually say, pushes like a real scammer, and is voiced by human-sounding British ElevenLabs voices. |
 | **Calls written for you** | "Make me a new call" writes a brand-new call from a real report about your weakest scam type. |
 | **Real phone and email practice (opt-in)** | Confirm your number and Hookline rings your actual phone with a practice scam call, or sends a practice scam email to your inbox. Each email is written fresh in one of four layouts. Its one link opens a page that shows the red flags you missed. |
+| **Sly, the mascot and chatbot** | A small cat in the corner of every screen. Her eyes follow you, she naps with floating Z's, her face reacts to your answers, and you can press and hold to drag her anywhere. Tap her and she wakes up with a chat: paste a text or email you got, or ask about scams, and she tells you if it looks like a scam, the red flags, and what to do. Scam topics only, numbers hidden before she reads anything, answered through Mubit. |
 | **The Gatekeeper** | Every reply is checked before it goes anywhere. Start reading out a code, card number or bank details and the call stops at once. Practice never needs real details, and the AI never sees them. |
 
 <p align="center">
@@ -95,6 +96,7 @@ examples, and trains a small model (an adapter) for that one job.
 | Caller | Writes a whole practice call from a brief | JSON lines | Medium |
 | Mailer | Writes a practice scam email from a brief | JSON fields | Medium |
 | Agent | Phone voice agent turns (fallback path) | Short text | Medium |
+| Sly | Chat: "is this a scam?" for messages people paste | JSON verdict and short text | Medium |
 
 Fixed-answer tasks use temperature 0, so the big model answers the same way every time and an adapter can match it.
 
