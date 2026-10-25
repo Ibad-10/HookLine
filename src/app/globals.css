@@ -336,4 +336,6 @@ html.dark {
 @keyframes sly-blink { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.12); } }
 .sly-bob { animation: sly-bob 3s ease-in-out infinite; }
 .sly-blink { transform-box: fill-box; transform-origin: center; animation: sly-blink 4.2s ease-in-out infinite; }
-@media (prefers-reduced-motion: reduce) { .sly-bob, .sly-blink { animation: none; } }
+@keyframes sly-z { 0% { opacity: 0; transform: translate(0, 4px) scale(0.7); } 30% { opacity: 1; } 100% { opacity: 0; transform: translate(6px, -14px) scale(1.1); } }
+.sly-z { animation: sly-z 1.8s ease-out infinite; opacity: 0; }
+@media (prefers-reduced-motion: reduce) { .sly-bob, .sly-blink, .sly-z { animation: none; } }

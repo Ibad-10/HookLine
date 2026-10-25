@@ -29,7 +29,7 @@ export function SlyArt({ mood = "neutral", look = { x: 0, y: 0 }, size = 120, fa
     serious: <><rect x={74 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><rect x={114 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><path d="M71 84 l16 -4 M129 84 l-16 -4" stroke="#0b2a44" strokeWidth="3" strokeLinecap="round" /><path d="M95 127 h10" stroke="#0b2a44" strokeWidth="2.6" strokeLinecap="round" /></>,
   };
   return (
-    <svg width={size} height={faceOnly ? size : size * 1.1} viewBox={faceOnly ? "40 30 120 120" : "0 0 200 220"} aria-hidden>
+    <svg width={size} height={faceOnly ? size : size * 1.1} viewBox={faceOnly ? "26 8 148 148" : "0 0 200 220"} aria-hidden>
       <defs>
         <linearGradient id={`b${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#6cc4ff" /><stop offset=".45" stopColor="#2a92dd" /><stop offset="1" stopColor="#156fb6" /></linearGradient>
         <linearGradient id={`v${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#e6edf6" /></linearGradient>
@@ -71,12 +71,25 @@ export default function Sly() {
   const [dodge, setDodge] = useState({ x: 0, y: 0 });
   const [hop, setHop] = useState(0);
   const [bubble, setBubble] = useState(true);
+  const [asleep, setAsleep] = useState(false);
+  const idle = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const wake = () => {
+    setAsleep(false);
+    clearTimeout(idle.current);
+    idle.current = setTimeout(() => setAsleep(true), 12000);
+  };
+  useEffect(() => {
+    if (window.matchMedia("(hover: none)").matches) setAsleep(true);
+    else wake();
+    return () => clearTimeout(idle.current);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => {
     if (!bubble || typeof window === "undefined" || window.innerWidth >= 768) return;
     const t = setTimeout(() => setBubble(false), 6000);
     return () => clearTimeout(t);
   }, [bubble, line, open]);
   const box = useRef<HTMLDivElement>(null);
+  const avatar = useRef<HTMLButtonElement>(null);
   const audio = useRef<HTMLAudioElement | null>(null);
 
   // On or off (Settings), and open or closed (phones start closed to save space).
@@ -111,7 +124,8 @@ export default function Sly() {
   // Eyes follow the pointer; she slides away when it comes close (not on touch).
   useEffect(() => {
     const move = (e: PointerEvent) => {
-      const r = box.current?.getBoundingClientRect();
+      if (e.pointerType === "mouse") wake();
+      const r = (box.current ?? avatar.current)?.getBoundingClientRect();
       if (!r) return;
       const cx = r.left + r.width / 2, cy = r.top + r.height / 2;
       const dx = e.clientX - cx, dy = e.clientY - cy, dist = Math.hypot(dx, dy) || 1;
@@ -192,13 +206,23 @@ export default function Sly() {
             type="button"
             onClick={() => toggle(true)}
             aria-label="Open Sly, Hookline's mascot"
-            className="pointer-events-auto grid size-14 place-items-center overflow-hidden rounded-2xl bg-white shadow-lg ring-1 ring-line"
+            ref={avatar}
+            className="pointer-events-auto relative grid size-16 place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] shadow-lg ring-1 ring-line"
             initial={still ? { opacity: 0 } : { rotateY: 90, opacity: 0 }}
             animate={{ rotateY: 0, opacity: 1 }}
             exit={still ? { opacity: 0 } : { rotateY: -90, opacity: 0 }}
             transition={{ duration: 0.3, ease: "easeOut" }}
           >
-            <SlyArt mood="happy" size={52} faceOnly />
+            <span className="grid size-[58px] place-items-center overflow-hidden rounded-full">
+              <SlyArt mood={asleep ? "sleepy" : "neutral"} look={asleep ? { x: 0, y: 0 } : look} size={58} faceOnly />
+            </span>
+            {asleep && !still && (
+              <span aria-hidden className="pointer-events-none absolute -right-1 -top-3 font-semibold text-tide">
+                <span className="sly-z absolute right-3 top-3 text-[11px]">z</span>
+                <span className="sly-z absolute right-1 top-0 text-[14px]" style={{ animationDelay: ".6s" }}>z</span>
+                <span className="sly-z absolute -right-1 -top-3 text-[17px]" style={{ animationDelay: "1.2s" }}>Z</span>
+              </span>
+            )}
           </motion.button>
         )}
       </AnimatePresence>
