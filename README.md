@@ -253,10 +253,16 @@ npm test                # 111 tests
 
 ## Demo
 
-The demo video is linked here once it's recorded. It shows: the landing page and starting check, a lesson built from
-this week's scam report, a practice call where the caller answers back and the Gatekeeper stops the call when a code
-is read out, a real practice call to a phone, a practice email and its review page, and the Mubit dashboard with the
-first trained adapter.
+The two-minute demo video is uploaded with our hackathon submission. It shows:
+
+1. The landing page and the business case, then the one-minute starting check.
+2. A lesson built from this week's real scam report, with the weak-spot profile choosing what comes next.
+3. A practice call where the caller answers what you actually say, and the Gatekeeper stops the call the moment a code is read out.
+4. A real practice call to a phone and a practice scam email with its review page.
+5. Sly the mascot: drag her around, then ask her "is this text a scam?".
+6. The Mubit dashboard: every AI job, measured costs and speed, and the trained adapters (Intent at 62.5%).
+
+Try it yourself: https://hookline-one-iota.vercel.app
 
 ## Honest notes
 
