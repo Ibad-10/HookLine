@@ -4,6 +4,7 @@ import { createHash, randomInt } from "node:crypto";
 import { db } from "@/lib/db";
 import { NARRATOR } from "@/lib/voices";
 import { requireLearner } from "@/lib/learner";
+import { allow } from "@/lib/limits";
 import { contactPrefs } from "@/lib/practice";
 
 const twilio = (path: string, body: Record<string, string>) => {
@@ -73,7 +74,9 @@ export async function POST(req: Request) {
     // Text refused (e.g. a trial account's tester list): ring the number instead and read our
     // own code out, from the ElevenLabs line. Only the person holding that phone hears it.
     const fresh = String(randomInt(100000, 1000000));
-    if (await callWithCode(prefs.phone.number, fresh)) {
+    // Code calls ring a number nobody has confirmed yet: at most 3 a day per number and 20 a day overall.
+    const okToRing = (await allow("code-call", prefs.phone.number, 3, 86_400_000)) && (await allow("code-call-all", "all", 20, 86_400_000));
+    if (okToRing && (await callWithCode(prefs.phone.number, fresh))) {
       await db().execute({
         sql: "INSERT OR REPLACE INTO phone_codes (learner_id, number, hash, expires_at, tries) VALUES (?, ?, ?, ?, 0)",
         args: [id, prefs.phone.number, hash(fresh), Date.now() + 10 * 60_000],

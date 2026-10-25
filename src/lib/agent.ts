@@ -3,7 +3,7 @@
 // safety exits are handled here, and only then does the caller's reply come from Claude via Mubit.
 import { matchIntent } from "./call/matcher";
 import type { Scenario } from "./call/types";
-import { type Ask, gate } from "./gatekeeper";
+import { type Ask, gate, normalizeSpoken } from "./gatekeeper";
 
 export type Exit = { kind: "stopped" | "pass"; say: string };
 
@@ -25,7 +25,10 @@ export function askedFor(callerLine: string): Ask {
 }
 
 export function safetyExit(said: string, callerLine = ""): Exit | null {
-  if (gate(said, askedFor(callerLine)).stop) return { kind: "stopped", say: STOP_LINE };
+  // A practice call never needs real numbers, and the live caller's wording varies, so any
+  // four or more digits in a row stop the call, whatever was just asked.
+  const digits = normalizeSpoken(said).match(/\d{4,}/);
+  if (digits || gate(said, askedFor(callerLine)).stop) return { kind: "stopped", say: STOP_LINE };
   const i = matchIntent(said);
   if (i === "is_real" || i === "distress") return { kind: "pass", say: TRUTH };
   if (i === "hang_up") return { kind: "pass", say: BYE };

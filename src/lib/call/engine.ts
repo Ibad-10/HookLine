@@ -1,6 +1,6 @@
 // Practice-call state machine. Pure, so it runs in the browser: the Gatekeeper
 // sees every user turn before anything leaves the device.
-import { gate } from "../gatekeeper";
+import { gate, normalizeSpoken } from "../gatekeeper";
 import { matchIntent } from "./matcher";
 import type { CallState, Intent, Scenario } from "./types";
 
@@ -48,7 +48,8 @@ export function step(
 ): { state: CallState; needCoach: boolean; masked: string } {
   const g = gate(userText, sc.nodes[s.node].ask);
   const withTurn = { ...s, transcript: [...s.transcript, { who: "you" as const, text: g.masked }] };
-  if (g.stop) return { state: { ...withTurn, outcome: "stopped", checkpoints: [...s.checkpoints, "gave_secret"] }, needCoach: false, masked: g.masked };
+  // Live replies can ask for numbers on any step, so 4+ digits in a row always stop the call.
+  if (g.stop || /\d{4,}/.test(normalizeSpoken(userText))) return { state: { ...withTurn, outcome: "stopped", checkpoints: [...s.checkpoints, "gave_secret"] }, needCoach: false, masked: g.masked };
   // Only the safety exits are decided here; everything else gets a real answer from the caller.
   const intent = matchIntent(userText);
   if (!intent || !FAST.includes(intent)) return { state: withTurn, needCoach: true, masked: g.masked };

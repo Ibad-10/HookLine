@@ -29,3 +29,9 @@ test("sounds and greetings never stop the call, even right after an ask", () => 
   }
   expect(safetyExit("I'd rather tell you about my day")).toBeNull();
 });
+
+test("any four digits stop the live call, however the caller asked", () => {
+  expect(safetyExit("okay it's 4829", "And the last four digits on the front, please?")?.kind).toBe("stopped");
+  expect(safetyExit("four eight two nine", "What number do you use at the cash machine?")?.kind).toBe("stopped");
+  expect(safetyExit("I was born in nineteen", "Where are you from?")).toBeNull();
+});

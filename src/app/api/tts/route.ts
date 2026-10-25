@@ -2,10 +2,14 @@
 // Signed-in only, short text only, and never a real brand.
 import { checkBrands } from "@/lib/brands";
 import { requireLearner } from "@/lib/learner";
+import { allow } from "@/lib/limits";
 import { ALL_VOICES } from "@/lib/voices";
 
 export async function POST(req: Request) {
-  if (!(await requireLearner({ signedIn: true }))) return new Response(null, { status: 401 });
+  const id = await requireLearner({ signedIn: true });
+  if (!id) return new Response(null, { status: 401 });
+  // About one call's worth of live lines per few minutes; stops scripts burning voice credit.
+  if (!(await allow("tts", id, 40, 10 * 60_000))) return new Response(null, { status: 429 });
   const { text, voice: asked } = (await req.json().catch(() => ({}))) as { text?: string; voice?: string };
   const key = process.env.ELEVENLABS_API_KEY;
   if (!key || !text || text.length > 300 || !checkBrands(text).ok) return new Response(null, { status: 400 });

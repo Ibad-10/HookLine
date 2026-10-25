@@ -2,6 +2,7 @@
 // caller's short small-talk replies. Same call token as the webhook; voiced in the caller's voice.
 import { checkBrands } from "@/lib/brands";
 import { getScenario } from "@/lib/call/getScenario";
+import { allow } from "@/lib/limits";
 import { validToken } from "@/lib/phone";
 import { speech } from "@/lib/voiceCache";
 
@@ -11,6 +12,8 @@ export async function GET(req: Request) {
   if (!validToken(s, sp.get("l") ?? "", sp.get("t"))) return new Response(null, { status: 403 });
   const sc = await getScenario(s);
   const text = sp.get("say") ?? (sc && sc.nodes[sp.get("node") ?? ""]?.line);
+  // Free-text lines cost voice credit: cap them per learner (a call has a few dozen at most).
+  if (sp.get("say") && !(await allow("phone-say", sp.get("l") ?? "", 60, 30 * 60_000))) return new Response(null, { status: 429 });
   if (!sc || !text || text.length > 300 || !checkBrands(text).ok) return new Response(null, { status: 400 });
   const mp3 = await speech(sc.voice || "JBFqnCBsd6RMkjVDRZzb", text);
   if (!mp3) return new Response(null, { status: 502 });

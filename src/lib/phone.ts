@@ -4,7 +4,7 @@ import { createHmac, timingSafeEqual } from "node:crypto";
 import { applyIntent, startCall } from "./call/engine";
 import { matchIntent } from "./call/matcher";
 import type { Intent, Scenario } from "./call/types";
-import { gate } from "./gatekeeper";
+import { gate, normalizeSpoken } from "./gatekeeper";
 import { NARRATION } from "./voices";
 
 // Twilio signs each webhook: base64(HMAC-SHA1(authToken, url + sorted key+value pairs)).
@@ -78,7 +78,8 @@ export function nextTurn(base: string, sc: Scenario, node: string, learner: stri
     return { twiml: gather(base, sc, node, learner, "", [sayUrl(base, sc, learner, "Hello? Are you still there?")], quiet + 1, answers), end: null, node, masked: "" };
   }
   const g = gate(speech, sc.nodes[node]?.ask ?? null);
-  if (g.stop) return { twiml: finish(base, "stopped"), end: "stopped", node, masked: g.masked };
+  // Live replies can ask for numbers on any step, so 4+ digits in a row always stop the call.
+  if (g.stop || /\d{4,}/.test(normalizeSpoken(speech))) return { twiml: finish(base, "stopped"), end: "stopped", node, masked: g.masked };
   const fast = matchIntent(speech);
   const intent = coach?.intent ?? (fast && FAST.includes(fast) ? fast : null);
   if (!intent) return { twiml: "", end: null, node, masked: g.masked, needCoach: true };
