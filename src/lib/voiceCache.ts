@@ -11,7 +11,7 @@ export async function speech(voice: string, text: string): Promise<Uint8Array | 
   const res = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voice}?output_format=mp3_22050_32`, {
     method: "POST",
     headers: { "xi-api-key": process.env.ELEVENLABS_API_KEY ?? "", "content-type": "application/json" },
-    body: JSON.stringify({ text, model_id: "eleven_flash_v2_5" }),
+    body: JSON.stringify({ text, model_id: "eleven_turbo_v2_5" }),
   }).catch(() => null);
   if (!res?.ok) return null;
   const mp3 = Buffer.from(await res.arrayBuffer());
