@@ -84,3 +84,9 @@ test("the caller answers questions in place twice, then moves on; agreeing moves
   expect(coachTurn(s0, sc, { intent: "comply", say: "Great." }).node).toBe("verify");
   expect(coachTurn({ ...s0, node: "secrecy" }, sc, { intent: "comply" }).outcome).toBe("scammed");
 });
+
+test("if the caller's words fail to come back, the call asks again instead of skipping ahead", () => {
+  const s = coachTurn(startCall(sc), sc, { intent: "stall" });
+  expect(s.node).toBe("open");
+  expect(s.transcript.at(-1)?.text).toBe("Sorry, the line's a bit bad. Did you make that payment?");
+});

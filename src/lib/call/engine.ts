@@ -55,15 +55,20 @@ export function step(
   return { state: applyIntent(withTurn, sc, intent), needCoach: false, masked: g.masked };
 }
 
+// The step's own question (its last sentence ending in "?").
+const question = (line: string) => line.match(/[^.?!]*\?\s*$/)?.[0].trim() ?? "";
+
 // Applies the caller's move. Questions and small talk get a real answer and the call stays on
 // this step (up to twice in a row, then it moves on as a pushy caller would). Agreeing or
 // refusing moves the call to its next scripted step.
 export function coachTurn(s: CallState, sc: Scenario, move: { intent: Intent; say?: string }): CallState {
   const sinceLine = s.transcript.length - 1 - [...s.transcript].reverse().findIndex((t) => t.who === "caller" && t.node);
   const answers = s.transcript.slice(sinceLine + 1).filter((t) => t.who === "caller").length;
-  if ((move.intent === "stall" || move.intent === "question_identity") && move.say && answers < 2) {
+  // No words came back (the model failed): don't skip ahead; the caller asks again.
+  const say = move.say ?? (move.intent === "stall" || move.intent === "question_identity" ? `Sorry, the line's a bit bad. ${question(sc.nodes[s.node].line)}`.trim() : undefined);
+  if ((move.intent === "stall" || move.intent === "question_identity") && say && answers < 2) {
     const cp = move.intent === "question_identity" && !s.checkpoints.includes("asked_identity") ? ["asked_identity"] : [];
-    return { ...s, checkpoints: [...s.checkpoints, ...cp], transcript: [...s.transcript, { who: "caller", text: move.say }] };
+    return { ...s, checkpoints: [...s.checkpoints, ...cp], transcript: [...s.transcript, { who: "caller", text: say }] };
   }
   return applyIntent(s, sc, move.intent);
 }

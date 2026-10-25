@@ -1,9 +1,9 @@
 "use client";
 // Practice call. The engine and Gatekeeper run here in the browser: only masked
 // text ever leaves the device. Caller audio: pre-made clip if present, else the
-// browser's own voice. Replies: hold to talk (browser speech-to-text) or type.
+// browser's own voice. Replies: open mic (tap to turn on or off) or type.
 import { CommitStrategy, RealtimeEvents, Scribe, type RealtimeConnection } from "@elevenlabs/client";
-import { ChevronLeft, Mic } from "lucide-react";
+import { ChevronLeft, Mic, MicOff } from "lucide-react";
 import { motion } from "motion/react";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
@@ -37,7 +37,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     setAnswered(true);
     navigator.mediaDevices
       ?.getUserMedia({ audio: true })
-      .then((stream) => stream.getTracks().forEach((t) => t.stop())) // permission granted; Scribe opens its own stream
+      .then((stream) => { stream.getTracks().forEach((t) => t.stop()); micOn(); }) // permission granted; Scribe opens its own stream
       .catch(() => {
         setMicHint("The microphone isn't available, so you can type your replies instead.");
         setShowType(true);
@@ -45,7 +45,8 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   }
   const rec = useRef<SR | null>(null);
   const scribe = useRef<RealtimeConnection | null>(null);
-  const pressed = useRef(false);
+  const micWanted = useRef(false);
+  const busy = useRef(false); // caller talking or thinking: ignore what the mic hears
   const audio = useRef<HTMLAudioElement | null>(null);
   const spoken = useRef(0);
   const end = useRef<HTMLDivElement>(null);
@@ -86,10 +87,15 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     clip.playbackRate = slow ? 0.8 : 1;
     clip.onerror = () => {
       const u = new SpeechSynthesisUtterance(text);
+      u.onend = () => { if (audio.current === clip) busy.current = false; };
       u.rate = slow ? 0.8 : 1;
       u.lang = "en-GB";
       window.speechSynthesis?.speak(u);
     };
+    busy.current = true;
+    const done = () => { if (audio.current === clip) busy.current = false; };
+    clip.addEventListener("ended", done);
+    clip.addEventListener("pause", done);
     audio.current = clip;
     if (recorded) clip.play().catch(() => clip.onerror?.(new Event("error")));
   }
@@ -100,6 +106,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     setState(r.state);
     if (!r.needCoach) return;
     setThinking(true);
+    busy.current = true;
     try {
       const res = await fetch("/api/call/coach", { method: "POST", body: JSON.stringify({ scenarioId: sc.id, node: r.state.node, masked: r.masked, sessionId, recent: r.state.transcript.slice(-7, -1).map(({ who, text }) => ({ who, text })) }) });
       const move = await res.json();
@@ -108,70 +115,85 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         setState((s) => coachTurn(s, sc, { intent: move.intent ?? "stall", say: move.say }));
       }
     } catch {
-      setState((s) => applyIntent(s, sc, "stall")); // server trouble: the caller just carries on
+      setState((s) => coachTurn(s, sc, { intent: "stall" })); // server trouble: the caller asks again
     } finally {
       setThinking(false);
+      if (!audio.current || audio.current.paused || audio.current.ended) busy.current = false;
     }
   }
 
-  // Hold to talk: ElevenLabs Scribe first (works on every browser), browser speech-to-text as fallback.
-  async function hold() {
-    pressed.current = true;
+  // Open mic, like a video call: tap once to turn it on, then just talk. ElevenLabs Scribe
+  // notices when you stop (voice activity) and sends what you said; browser speech-to-text is
+  // the fallback. While the caller is talking or thinking, what the mic hears is ignored, so the
+  // caller's own voice from the speaker isn't taken as your reply.
+  async function micOn() {
+    micWanted.current = true;
     setListening(true);
+    setMicHint("");
     try {
       const res = await fetch("/api/scribe-token", { method: "POST" });
       if (!res.ok) throw new Error("no scribe");
       const { token } = await res.json();
+      if (!micWanted.current) return;
       const conn = Scribe.connect({
         token,
         modelId: "scribe_v2_realtime",
-        commitStrategy: CommitStrategy.MANUAL,
+        commitStrategy: CommitStrategy.VAD,
+        vadSilenceThresholdSecs: 0.9,
         languageCode: "en",
         keyterms: sc.keyterms,
-        microphone: { echoCancellation: true, noiseSuppression: true },
+        microphone: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       conn.on(RealtimeEvents.COMMITTED_TRANSCRIPT, (d: { text: string }) => {
-        conn.close();
-        setListening(false);
-        reply(d.text, "voice");
+        if (d.text.trim() && !busy.current) reply(d.text, "voice");
       });
-      // Mic denied or connection lost: stop "Listening…" and point to the type box.
       const fail = () => {
         if (scribe.current !== conn) return;
         scribe.current = null;
-        pressed.current = false;
-        setListening(false);
-        setMicHint("The microphone isn't available. Type your reply instead.");
-        setShowType(true);
+        if (micWanted.current) browserMic(); // fall back rather than go silent
       };
       conn.on(RealtimeEvents.ERROR, fail);
       conn.on(RealtimeEvents.AUTH_ERROR, fail);
-      conn.on(RealtimeEvents.CLOSE, () => scribe.current === conn && fail());
+      conn.on(RealtimeEvents.CLOSE, fail);
       scribe.current = conn;
-      if (!pressed.current) release(); // let go before the connection opened
     } catch {
-      const r = speechRecognition();
-      if (!r) {
-        setMicHint("Talking isn't available on this browser. Type your reply instead.");
-        setShowType(true);
-        return setListening(false);
-      }
-      r.lang = "en-GB";
-      r.interimResults = false;
-      r.onresult = (e) => reply(e.results[0][0].transcript, "voice");
-      r.onend = () => setListening(false);
-      rec.current = r;
-      r.start();
+      browserMic();
     }
   }
 
-  function release() {
-    pressed.current = false;
-    if (scribe.current) {
-      scribe.current.commit();
-      scribe.current = null;
-    } else rec.current?.stop();
+  function browserMic() {
+    const r = speechRecognition();
+    if (!r) {
+      micWanted.current = false;
+      setListening(false);
+      setMicHint("Talking isn't available on this browser. Type your reply instead.");
+      setShowType(true);
+      return;
+    }
+    r.lang = "en-GB";
+    r.interimResults = false;
+    (r as unknown as { continuous: boolean }).continuous = true;
+    r.onresult = (e) => {
+      const last = e.results[e.results.length - 1];
+      if (!busy.current) reply(last[0].transcript, "voice");
+    };
+    r.onend = () => { if (micWanted.current && rec.current === r) r.start(); }; // keep listening
+    rec.current = r;
+    r.start();
   }
+
+  function micOff() {
+    micWanted.current = false;
+    setListening(false);
+    scribe.current?.close();
+    scribe.current = null;
+    const r = rec.current;
+    rec.current = null;
+    r?.stop();
+  }
+
+  useEffect(() => () => micOff(), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { if (state.outcome) micOff(); }, [state.outcome]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function hangUp() {
     window.speechSynthesis?.cancel();
@@ -240,25 +262,28 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         <footer className="space-y-3 bg-navy-2 px-5 pb-6 pt-4">
           {micHint && <p role="status" className="text-sm text-mark">{micHint}</p>}
           {canTalk && !showType && (
-            <button type="button" onPointerDown={hold} onPointerUp={release} onPointerCancel={release} onPointerLeave={() => listening && release()}
-              onContextMenu={(e) => e.preventDefault()}
-              className={`btn-chunky flex w-full touch-none select-none items-center justify-center gap-2 text-lg text-white ${listening ? "bg-safe" : "bg-tide"}`}
-              style={{ minHeight: 72 }}>
-              <Mic aria-hidden className="size-6" />
-              {listening ? "Listening… let go to send" : "Hold to talk"}
-            </button>
+            <div className="flex items-center gap-4">
+              <button type="button" onClick={() => (listening ? micOff() : micOn())} aria-pressed={listening}
+                aria-label={listening ? "Turn microphone off" : "Turn microphone on"}
+                className={`grid size-16 shrink-0 place-items-center rounded-full transition ${listening ? "bg-safe shadow-[0_0_0_8px_rgba(15,122,70,0.25)]" : "bg-white/15"}`}>
+                {listening ? <Mic className="size-7" aria-hidden /> : <MicOff className="size-7" aria-hidden />}
+              </button>
+              <p className="text-lg font-medium" role="status">
+                {!listening ? "Mic off. Tap to talk." : thinking ? "Caller is thinking…" : "Mic on. Just talk."}
+              </p>
+            </div>
           )}
           {(showType || !canTalk) && (
           <form onSubmit={(e) => { e.preventDefault(); reply(typed, "typed"); setTyped(""); }} className="flex gap-2">
             <label className="sr-only" htmlFor="reply">Type what you would say</label>
             <input id="reply" value={typed} onChange={(e) => setTyped(e.target.value)} placeholder="Type what you'd say" autoComplete="off"
-              className="min-h-14 flex-1 rounded-full bg-[#1f1f1f] px-5 text-lg text-white placeholder:text-white/50" />
-            <button className="rounded-full bg-white px-5 font-semibold text-black">Send</button>
+              className="min-h-14 min-w-0 flex-1 rounded-full bg-[#1f1f1f] px-5 text-lg text-white placeholder:text-white/50" />
+            <button className="shrink-0 rounded-full bg-white px-5 font-semibold text-black">Send</button>
           </form>
           )}
           <div className="flex items-center gap-3">
             {canTalk && (
-              <button type="button" onClick={() => setShowType((v) => !v)} className="min-h-12 flex-1 rounded-full px-4 text-left font-medium text-white/80 underline-offset-4 hover:underline">
+              <button type="button" onClick={() => { if (!showType) micOff(); setShowType((v) => !v); }} className="min-h-12 flex-1 rounded-full px-4 text-left font-medium text-white/80 underline-offset-4 hover:underline">
                 {showType ? "Talk instead" : "Type instead"}
               </button>
             )}
