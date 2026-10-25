@@ -33,7 +33,8 @@ export async function POST(req: Request) {
         ctl.enqueue(enc.encode("data: [DONE]\n\n"));
         ctl.close();
       };
-      const exit = safetyExit(said);
+      const callerLine = [...turns].reverse().find((m) => m.role === "assistant")?.content ?? "";
+      const exit = safetyExit(said, String(callerLine));
       if (exit || !sc) {
         ctl.enqueue(chunk({ role: "assistant", content: exit?.say ?? "Sorry, wrong number." }));
         ctl.enqueue(endCall(exit?.kind ?? "error"));

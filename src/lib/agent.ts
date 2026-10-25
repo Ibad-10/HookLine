@@ -3,7 +3,7 @@
 // safety exits are handled here, and only then does the caller's reply come from Claude via Mubit.
 import { matchIntent } from "./call/matcher";
 import type { Scenario } from "./call/types";
-import { gate } from "./gatekeeper";
+import { type Ask, gate } from "./gatekeeper";
 
 export type Exit = { kind: "stopped" | "pass"; say: string };
 
@@ -13,9 +13,19 @@ const BYE = "This is Hookline. Well done, hanging up is always the right move. O
 
 // Decided before any model sees the reply: secrets stop the call, and the learner can always
 // leave by hanging up, asking if it's real, or sounding upset.
-export function safetyExit(said: string): Exit | null {
-  const asks = ["code", "card", "bank"] as const;
-  if (asks.some((a) => gate(said, a).stop)) return { kind: "stopped", say: STOP_LINE };
+// What the caller's last line asked for, so the Gatekeeper's "you were asked, so this is an
+// answer" rule only applies right after an ask, as on the web call.
+export function askedFor(callerLine: string): Ask {
+  const l = callerLine.toLowerCase();
+  if (/sort code|account number|bank details/.test(l)) return "bank";
+  if (/card|long number|expiry|three (numbers|digits)/.test(l)) return "card";
+  if (/code|pin/.test(l)) return "code";
+  if (/password|memorable word|log ?in details|username/.test(l)) return "password";
+  return null;
+}
+
+export function safetyExit(said: string, callerLine = ""): Exit | null {
+  if (gate(said, askedFor(callerLine)).stop) return { kind: "stopped", say: STOP_LINE };
   const i = matchIntent(said);
   if (i === "is_real" || i === "distress") return { kind: "pass", say: TRUTH };
   if (i === "hang_up") return { kind: "pass", say: BYE };

@@ -43,7 +43,7 @@ export function luhn(digits: string): boolean {
 
 const SECRET_WORD = /\b(password|passcode|pin|memorable word|secret word)\b\s*(?:is|was|:)?\s*/i;
 // Bare assent or stalling ("ok", "hold on") is not handing over the secret.
-const ASSENT = /^\s*((yes|yeah|ok|okay|sure|right|alright|fine|go on|hold on|wait|one (sec|second|moment)|a moment|um+|hmm+|er+)[\s.,!]*)+$/i;
+const ASSENT = /^\s*((yes|yeah|ok|okay|sure|right|alright|fine|go on|hold on|wait|one (sec|second|moment)|a moment|um+|hmm+|er+|ah+|uh+|uh-huh|mm+|oh|hello|hi|sorry|pardon)[\s.,!?]*)+$/i;
 const SAFE_REPLY =
   /\b(no|nope|won't|will not|not giving|call (you|my bank|them) back|hang up|who|why|what|which|is this real|scam|scared|frightened|afraid|upset|panick?ing|crying|bye|goodbye|end (the|this) call)\b|\?/i;
 
