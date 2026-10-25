@@ -2,6 +2,7 @@
 // written from their weak spots.
 // A Twilio trial account can only call numbers verified on it.
 import { after } from "next/server";
+import { nativePrompt } from "@/lib/agent";
 import { getScenario } from "@/lib/call/getScenario";
 import { SCENARIOS } from "@/lib/call/scenarios";
 import { sendRealCode } from "@/lib/realCode";
@@ -41,7 +42,11 @@ export async function POST() {
         agent_phone_number_id: phoneId,
         to_number: prefs.phone.number,
         conversation_initiation_client_data: {
-          conversation_config_override: { agent: { first_message: sc?.nodes[sc.start].line }, tts: { voice_id: sc?.voice } },
+          // ElevenLabs runs the whole call: listening, its own model for the answers, and the voice.
+          conversation_config_override: {
+            agent: { first_message: sc?.nodes[sc.start].line, prompt: sc ? { prompt: nativePrompt(sc) } : undefined },
+            tts: { voice_id: sc?.voice },
+          },
           custom_llm_extra_body: { scenario, learner: id },
           dynamic_variables: { learner: id },
         },

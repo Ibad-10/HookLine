@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { agentPrompt, mask, safetyExit } from "./agent";
+import { agentPrompt, mask, nativePrompt, safetyExit } from "./agent";
 import { SCENARIOS } from "./call/scenarios";
 
 test("reading out digits stops the call before any model sees them", () => {
@@ -34,4 +34,12 @@ test("any four digits stop the live call, however the caller asked", () => {
   expect(safetyExit("okay it's 4829", "And the last four digits on the front, please?")?.kind).toBe("stopped");
   expect(safetyExit("four eight two nine", "What number do you use at the cash machine?")?.kind).toBe("stopped");
   expect(safetyExit("I was born in nineteen", "Where are you from?")).toBeNull();
+});
+
+test("the ElevenLabs-run call carries the safety rules in its instructions", () => {
+  const p = nativePrompt(SCENARIOS["safe-account"]);
+  expect(p).toContain("end_call");
+  expect(p).toContain("We stopped the call there");
+  expect(p).toContain("not a real one");
+  expect(p).not.toContain("END_SAFE");
 });

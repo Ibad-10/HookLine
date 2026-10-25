@@ -219,3 +219,12 @@ checks for every number and address, a legal check) stays as section 10 describe
   moment they ask "is this real?", and whenever the Gatekeeper stops the call. The ElevenLabs live
   agent is built (`/api/agent/llm`) but off on the phone (`PHONE_AGENT`), because Twilio's shared
   trial number can't open a media stream; it needs Hookline's own Twilio number.
+- **Update (25 Oct, Ibad chose): ElevenLabs runs the whole real call.** Listening, turn-taking, the
+  answers (ElevenLabs' built-in `claude-haiku-5-5`) and the voice all happen inside the ElevenLabs
+  agent. Per call we send the caller brief (`nativePrompt`), first line and voice. Trade-off accepted:
+  these turns skip Mubit and the server-side Gatekeeper; the safety rules (stop at digits or secrets,
+  tell the truth on "is this real?", end on upset or goodbye) are in the agent's instructions instead.
+  If ElevenLabs can't place the call, Hookline falls back to its own Twilio loop (Gatekeeper and
+  Mubit on every turn). The web practice call is unchanged (Gatekeeper and Mubit on every turn).
+  To return the phone brain to Mubit: set the agent's LLM back to `custom-llm` with
+  `https://hookline-one-iota.vercel.app/api/agent/llm` and the `x-hookline-agent` header.
