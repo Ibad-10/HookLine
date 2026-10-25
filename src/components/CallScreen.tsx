@@ -24,20 +24,28 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   const [listening, setListening] = useState(false);
   const [typed, setTyped] = useState("");
   const [thinking, setThinking] = useState(false);
+  const thinkingRef = useRef(false);
+  thinkingRef.current = thinking;
   const [canTalk, setCanTalk] = useState(false);
   const [micHint, setMicHint] = useState("");
   const [showType, setShowType] = useState(false);
+  const [push, setPush] = useState(false); // noisy room: tap to talk, tap to send
+  const pushRef = useRef(false);
+  pushRef.current = push;
 
   // Voice first: answering asks for the microphone straight away. Typing is the fallback.
   function answer() {
     // iPhones only allow sound that starts inside the tap, so the caller's first line plays
     // here, before any await; the microphone prompt follows.
+    const p = player();
+    p.src = "data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4LjI5LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAASW5mbwAAAA8AAAABAAABhgC7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7u7//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjU0AAAAAAAAAAAAAAAAJAAAAAAAAAAAAYYoRBqpAAAAAAD/+xBkAA/wAABpAAAACAAADSAAAAEAAAGkAAAAIAAANIAAAARMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV";
+    p.play().catch(() => undefined); // unlocks this player for later lines
     speak(sc.nodes[sc.start].line, sc.start);
     spoken.current = 1;
     setAnswered(true);
     navigator.mediaDevices
       ?.getUserMedia({ audio: true })
-      .then((stream) => { stream.getTracks().forEach((t) => t.stop()); micOn(); }) // permission granted; Scribe opens its own stream
+      .then((stream) => { stream.getTracks().forEach((t) => t.stop()); if (!pushRef.current) micOn(); }) // permission granted; Scribe opens its own stream
       .catch(() => {
         setMicHint("The microphone isn't available, so you can type your replies instead.");
         setShowType(true);
@@ -72,33 +80,56 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     }
   }, [state.outcome]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // One audio player for the whole call, unlocked by the Answer tap: phones (iPhone especially)
+  // only let a page play sound later if that same player first played inside a tap.
+  function player(): HTMLAudioElement {
+    if (!audio.current) {
+      const p = new Audio();
+      p.addEventListener("ended", () => (busy.current = false));
+      audio.current = p;
+    }
+    return audio.current;
+  }
+  const lineNo = useRef(0);
+
   function speak(text: string, node?: string) {
     window.speechSynthesis?.cancel();
-    audio.current?.pause();
-    // Recorded clip for script lines; the same voice made on the fly for the Coach's short replies.
-    const recorded = node && !sc.generated;
-    const clip = recorded ? new Audio(`/audio/${sc.id}/${node}.mp3`) : new Audio();
-    if (!recorded) {
-      fetch("/api/tts", { method: "POST", body: JSON.stringify({ text, voice: sc.voice }) })
-        .then((r) => (r.ok ? r.blob() : Promise.reject()))
-        .then((b) => { if (audio.current !== clip) return; clip.src = URL.createObjectURL(b); clip.play().catch(() => clip.onerror?.(new Event("error"))); })
-        .catch(() => clip.onerror?.(new Event("error")));
-    }
-    clip.playbackRate = slow ? 0.8 : 1;
-    clip.onerror = () => {
+    const p = player();
+    p.pause();
+    const my = ++lineNo.current;
+    busy.current = true;
+    const fallback = () => {
+      if (lineNo.current !== my) return;
       const u = new SpeechSynthesisUtterance(text);
-      u.onend = () => { if (audio.current === clip) busy.current = false; };
+      u.onend = () => (busy.current = false);
       u.rate = slow ? 0.8 : 1;
       u.lang = "en-GB";
       window.speechSynthesis?.speak(u);
     };
-    busy.current = true;
-    const done = () => { if (audio.current === clip) busy.current = false; };
-    clip.addEventListener("ended", done);
-    clip.addEventListener("pause", done);
-    audio.current = clip;
-    if (recorded) clip.play().catch(() => clip.onerror?.(new Event("error")));
+    const play = (src: string) => {
+      if (lineNo.current !== my) return;
+      p.src = src;
+      p.playbackRate = slow ? 0.8 : 1;
+      p.play().catch(fallback);
+    };
+    // Recorded clip for script lines; the caller's own voice made on the fly for live replies.
+    if (node && !sc.generated) return play(`/audio/${sc.id}/${node}.mp3`);
+    fetch("/api/tts", { method: "POST", body: JSON.stringify({ text, voice: sc.voice }) })
+      .then((r) => (r.ok ? r.blob() : Promise.reject()))
+      .then((b) => play(URL.createObjectURL(b)))
+      .catch(fallback);
   }
+
+  // Interrupting: stop the caller mid-sentence, like a real call.
+  function bargeIn() {
+    lineNo.current++;
+    window.speechSynthesis?.cancel();
+    audio.current?.pause();
+    busy.current = false;
+  }
+
+  const replyRef = useRef<(text: string, input: "voice" | "typed") => void>(() => undefined);
+  replyRef.current = (t, i) => void reply(t, i); // mic callbacks always use the latest call state
 
   async function reply(text: string, input: "voice" | "typed") {
     if (!text.trim() || state.outcome || thinking) return;
@@ -126,7 +157,7 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
   // notices when you stop (voice activity) and sends what you said; browser speech-to-text is
   // the fallback. While the caller is talking or thinking, what the mic hears is ignored, so the
   // caller's own voice from the speaker isn't taken as your reply.
-  async function micOn() {
+  async function micOn(manual = pushRef.current) {
     micWanted.current = true;
     setListening(true);
     setMicHint("");
@@ -138,14 +169,18 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
       const conn = Scribe.connect({
         token,
         modelId: "scribe_v2_realtime",
-        commitStrategy: CommitStrategy.VAD,
-        vadSilenceThresholdSecs: 0.9,
+        // Noisy room: nothing is sent until you tap again (manual commit).
+        commitStrategy: manual ? CommitStrategy.MANUAL : CommitStrategy.VAD,
+        vadSilenceThresholdSecs: 1.0,
+        vadThreshold: 0.6, // less sensitive: a voice right at the phone, not the room
+        minSpeechDurationMs: 300,
         languageCode: "en",
         keyterms: sc.keyterms,
         microphone: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
       });
       conn.on(RealtimeEvents.COMMITTED_TRANSCRIPT, (d: { text: string }) => {
-        if (d.text.trim() && !busy.current) reply(d.text, "voice");
+        if (manual) { micOff(); replyRef.current(d.text, "voice"); } // you chose to send it
+        else heard(d.text);
       });
       const fail = () => {
         if (scribe.current !== conn) return;
@@ -159,6 +194,19 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     } catch {
       browserMic();
     }
+  }
+
+  // What the open mic heard. Noise and stray words from people nearby are dropped: a reply needs
+  // a real word, and to cut in while the caller is talking it needs a few words, not a murmur.
+  function heard(raw: string) {
+    const text = raw.replace(/\[[^\]]*\]|\([^)]*\)/g, " ").trim(); // drop "(background noise)" tags
+    const words = text.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w));
+    if (!words.length || thinkingRef.current) return;
+    if (busy.current) {
+      if (words.length < 3) return; // a murmur while the caller talks
+      bargeIn();
+    }
+    replyRef.current(text, "voice");
   }
 
   function browserMic() {
@@ -175,11 +223,19 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
     (r as unknown as { continuous: boolean }).continuous = true;
     r.onresult = (e) => {
       const last = e.results[e.results.length - 1];
-      if (!busy.current) reply(last[0].transcript, "voice");
+      heard(last[0].transcript);
     };
     r.onend = () => { if (micWanted.current && rec.current === r) r.start(); }; // keep listening
     rec.current = r;
     r.start();
+  }
+
+  // Noisy-room send: tap again to send what you said.
+  function sendNow() {
+    if (scribe.current) {
+      micWanted.current = false;
+      scribe.current.commit();
+    } else micOff();
   }
 
   function micOff() {
@@ -262,15 +318,23 @@ export default function CallScreen({ sc, sessionId, slow }: { sc: Scenario; sess
         <footer className="space-y-3 bg-navy-2 px-5 pb-6 pt-4">
           {micHint && <p role="status" className="text-sm text-mark">{micHint}</p>}
           {canTalk && !showType && (
-            <div className="flex items-center gap-4">
-              <button type="button" onClick={() => (listening ? micOff() : micOn())} aria-pressed={listening}
-                aria-label={listening ? "Turn microphone off" : "Turn microphone on"}
-                className={`grid size-16 shrink-0 place-items-center rounded-full transition ${listening ? "bg-safe shadow-[0_0_0_8px_rgba(15,122,70,0.25)]" : "bg-white/15"}`}>
-                {listening ? <Mic className="size-7" aria-hidden /> : <MicOff className="size-7" aria-hidden />}
-              </button>
-              <p className="text-lg font-medium" role="status">
-                {!listening ? "Mic off. Tap to talk." : thinking ? "Caller is thinking…" : "Mic on. Just talk."}
-              </p>
+            <div className="space-y-2">
+              <div className="flex items-center gap-4">
+                <button type="button"
+                  onClick={() => (push ? (listening ? sendNow() : micOn(true)) : listening ? micOff() : micOn(false))}
+                  aria-pressed={listening}
+                  aria-label={push ? (listening ? "Send what you said" : "Start talking") : listening ? "Turn microphone off" : "Turn microphone on"}
+                  className={`grid size-16 shrink-0 place-items-center rounded-full transition ${listening ? "bg-safe shadow-[0_0_0_8px_rgba(15,122,70,0.25)]" : "bg-white/15"}`}>
+                  {listening ? <Mic className="size-7" aria-hidden /> : <MicOff className="size-7" aria-hidden />}
+                </button>
+                <p className="text-lg font-medium" role="status">
+                  {thinking ? "Caller is thinking…" : push ? (listening ? "Talking… tap to send" : "Tap the mic, talk, tap again to send") : listening ? "Mic on. Just talk." : "Mic off. Tap to talk."}
+                </p>
+              </div>
+              <label className="flex items-center gap-2 text-sm text-white/70">
+                <input type="checkbox" checked={push} onChange={(e) => { micOff(); setPush(e.target.checked); if (!e.target.checked) micOn(false); }} className="size-4 accent-[#0f7a46]" />
+                Noisy room? Tap to talk, tap to send
+              </label>
             </div>
           )}
           {(showType || !canTalk) && (
