@@ -1,12 +1,12 @@
-// Hookline mark: a fishing hook on its line with the bait (amber) about to be taken.
+// Hookline mark: a fishing hook (eye, shank, barbed point) with the bait in amber.
 // "Spot the bait before you bite." Uses the app's blue and highlighter amber.
 export function LogoMark({ className = "size-7" }: { className?: string }) {
   return (
     <svg viewBox="0 0 32 32" className={className} aria-hidden>
       <rect width="32" height="32" rx="9" fill="#0068ad" />
-      <path d="M16 4.5v13.2a5.3 5.3 0 1 1-10.6 0v-1.8" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
-      <path d="M5.4 15.9l2.7 2.2" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" />
-      <circle cx="23" cy="20.5" r="3.6" fill="#ffb840" />
+      <circle cx="18" cy="6.6" r="2.3" fill="none" stroke="#fff" strokeWidth="2.2" />
+      <path d="M18 9v10.2a5.2 5.2 0 1 1-10.4 0v-3.4l3 2.8" fill="none" stroke="#fff" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="7.6" cy="11.4" r="2.6" fill="#ffb840" />
     </svg>
   );
 }

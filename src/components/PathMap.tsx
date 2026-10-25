@@ -54,7 +54,7 @@ export default function PathMap({ stops }: { stops: Stop[] }) {
               transition={{ delay: i * 0.04, duration: 0.4, ease: [0.22, 0.61, 0.36, 1] }}
             >
               {s.next && (
-                <span className="absolute -top-9 whitespace-nowrap rounded-xl bg-foreground px-3 py-1 text-sm font-bold text-background after:absolute after:left-1/2 after:top-full after:-translate-x-1/2 after:border-[6px] after:border-transparent after:border-t-foreground">
+                <span className="absolute left-[calc(50%+46px)] top-6 whitespace-nowrap rounded-xl bg-foreground px-3 py-1 text-sm font-bold text-background after:absolute after:right-full after:top-1/2 after:-translate-y-1/2 after:border-[6px] after:border-transparent after:border-r-foreground">
                   Start
                 </span>
               )}
