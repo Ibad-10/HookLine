@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useRef } from "react";
 import { PillButton } from "./ui/pill-button";
 import Logo from "./Logo";
+import WhyItMatters from "./WhyItMatters";
 
 const ease = [0.22, 0.61, 0.36, 1] as const;
 
@@ -24,6 +25,7 @@ function Nav() {
     >
       <Link href="/"><Logo /></Link>
       <div className="hidden items-center gap-1 text-[0.95rem] text-white/70 sm:flex">
+        <a href="#why" className="rounded-full px-3 py-2 hover:text-white">Why it matters</a>
         <a href="#how" className="rounded-full px-3 py-2 hover:text-white">How it works</a>
         <Link href="/mubit" className="rounded-full px-3 py-2 hover:text-white">Our AI</Link>
       </div>
@@ -125,6 +127,8 @@ export default function Landing() {
           </motion.div>
         </motion.div>
       </section>
+
+      <WhyItMatters />
 
       <section id="how" className="mx-auto grid max-w-6xl gap-10 px-5 py-20 md:grid-cols-2 md:items-start md:gap-16">
         <div className="md:sticky md:top-28">

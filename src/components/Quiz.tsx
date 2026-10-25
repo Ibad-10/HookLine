@@ -291,13 +291,13 @@ function Choice({
       aria-disabled={!!result}
       onClick={() => !result && onPick(n)}
       aria-pressed={picked}
-      className={`btn-chunky w-full text-left text-[1.05rem] font-bold border-2 bg-card text-ink ${
+      className={`lift flex min-h-14 w-full items-center gap-3 rounded-2xl border-2 bg-card px-4 py-3 text-left text-[1.05rem] font-semibold leading-snug text-ink transition-colors ${
         right ? "border-safe" : wrong ? "border-alarm" : picked ? "border-tide bg-accent" : "border-line"
       }`}
       style={{ "--btn-edge": right ? "var(--safe)" : wrong ? "var(--alarm)" : picked ? "var(--tide)" : "var(--line)" } as React.CSSProperties}
     >
-      <span className="mr-3 inline-grid size-7 place-items-center rounded-md border border-line text-sm text-ink-soft">{n + 1}</span>
-      {label}
+      <span aria-hidden className={`grid size-8 shrink-0 place-items-center rounded-lg text-sm font-bold ${right ? "bg-safe text-white" : wrong ? "bg-alarm text-white" : picked ? "bg-tide text-white" : "bg-secondary text-ink-soft"}`}>{n + 1}</span>
+      <span className="min-w-0 flex-1">{label}</span>
     </button>
   );
 }

@@ -11,11 +11,12 @@ export function LogoMark({ className = "size-7" }: { className?: string }) {
   );
 }
 
-export default function Logo({ className = "" }: { className?: string }) {
+// compact: just the mark on small phones, so the nav fits on one line.
+export default function Logo({ className = "", compact = false }: { className?: string; compact?: boolean }) {
   return (
     <span className={`inline-flex items-center gap-2 text-lg font-semibold tracking-tight ${className}`}>
       <LogoMark />
-      Hookline
+      <span className={compact ? "hidden min-[400px]:inline" : ""}>Hookline</span>
     </span>
   );
 }
