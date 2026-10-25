@@ -12,6 +12,7 @@ const fraunces = Fraunces({ variable: "--font-fraunces", subsets: ["latin"], sty
 export const metadata: Metadata = {
   title: "Hookline: practise spotting scams",
   description: "Short lessons from this week's scam reports, and practice calls you can hang up on.",
+  appleWebApp: { capable: true, title: "Hookline", statusBarStyle: "default" },
 };
 
 export const viewport: Viewport = { themeColor: "#000000", width: "device-width", initialScale: 1 };
