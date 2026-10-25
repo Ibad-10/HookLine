@@ -278,13 +278,6 @@ The two-minute demo video is uploaded with our hackathon submission. It shows:
 
 Try it yourself: https://hookline-one-iota.vercel.app
 
-## Honest notes
-
-- The first adapter is below target (7.1% against 95%). We changed the tasks so that better candidates can train; their results depend on Mubit's training runs after the deadline.
-- Costs are measured from our own calls using list prices and projected; they are not quotes.
-- Real calls run on trial Twilio accounts, so they can only reach confirmed numbers.
-- Carbon figures on the dashboard are estimates from published energy-per-token figures.
-
 ## Team
 
 
