@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "./Logo";
 import adapterFile from "@/data/adapter-console.json";
 import { GRID_G_PER_KWH } from "@/lib/carbon";
 import { costOf, project, summarize, type ArmSummary, type CallRow } from "@/lib/compare";
@@ -48,13 +49,20 @@ export default async function MubitDashboard({ admin = false }: { admin?: boolea
 
   return (
     <div className="min-h-dvh">
-      <header className="bg-navy text-white">
-        <div className="mx-auto max-w-5xl px-5 py-8">
-          <Link href="/" className="text-sm font-bold text-white/80 hover:text-white">Back to Hookline</Link>
-          <h1 className="mt-4 max-w-2xl text-[2.2rem] font-semibold tracking-tight leading-tight">Same lesson, three ways to write it</h1>
-          <p className="mt-3 max-w-2xl text-lg text-white/85">
-            Every AI call in Hookline goes through Mubit. Here we send the same inputs three ways and measure what each costs, how fast it is, and
-            how often the output passes our checks. All numbers below come from real calls unless they say projected or estimated.
+      {!admin && <nav aria-label="Main" className="glass sticky top-3 z-40 mx-auto mt-3 flex w-[calc(100%-2rem)] max-w-5xl items-center rounded-full px-3 py-1.5">
+        <Link href="/"><Logo /></Link>
+        <span className="ml-auto rounded-full bg-secondary px-3 py-1 text-sm font-medium">Our AI</span>
+      </nav>}
+      <header className="relative overflow-hidden">
+        <div aria-hidden className="pointer-events-none absolute -top-32 left-1/2 h-72 w-[42rem] -translate-x-1/2 rounded-full bg-[#0099ff]/15 blur-3xl" />
+        <div className="relative mx-auto max-w-5xl px-5 pb-6 pt-12">
+          <p className="w-fit rounded-full bg-mark px-3 py-1 text-sm font-semibold text-black">Every AI call goes through Mubit</p>
+          <h1 className="mt-4 max-w-3xl text-[2.6rem] font-medium leading-[1.05] tracking-[-0.045em] md:text-[3.2rem]">
+            How Hookline&rsquo;s AI <span className="font-serif font-light italic tracking-[-0.02em]">learns</span> and what it costs
+          </h1>
+          <p className="mt-4 max-w-2xl text-lg text-ink-soft">
+            Nine AI jobs run the app. Each is a Mubit task that can train its own small model. Below: what each job costs, how fast it is, how often
+            it passes our checks, and how close each small model is. All numbers come from real calls unless they say projected or estimated.
           </p>
           {admin && <div className="mt-5"><RunCompare /></div>}
         </div>

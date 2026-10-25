@@ -104,8 +104,13 @@ export async function POST(req: Request) {
     const state = { ...startCall(sc), node, transcript: [...history, { who: "you" as const, text: fast.masked }] };
     const move = await liveTurn(state, sc, fast.masked, `phone-${sid}`);
     const turn = nextTurn(base, sc, node, learner, speech, move ?? { intent: "stall" }, quiet, answers);
-    if (move?.say && turn.twiml.includes("say=")) await speech_(sc.voice || "JBFqnCBsd6RMkjVDRZzb", move.say);
-    await db().execute({ sql: "UPDATE phone_pending SET twiml = ? WHERE id = ?", args: [turn.twiml, id] });
+    let twiml = turn.twiml;
+    // Voice the reply now so it's ready; if ElevenLabs' voice is down, Twilio's own British voice reads it.
+    if (move?.say && twiml.includes("say=") && !(await speech_(sc.voice || "JBFqnCBsd6RMkjVDRZzb", move.say))) {
+      const said = move.say.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+      twiml = twiml.replace(/<Play>[^<]*say=[^<]*<\/Play>/, `<Say voice="Polly.Brian-Neural" language="en-GB">${said}</Say>`);
+    }
+    await db().execute({ sql: "UPDATE phone_pending SET twiml = ? WHERE id = ?", args: [twiml, id] });
     await finishTurn(sc, node, learner, sid, turn, move?.say ?? "");
     console.log("phone turn", { s: sc.id, from: node, to: turn.node, heard: turn.masked.length, conf: params.Confidence, end: turn.end, ms: Date.now() - t0 });
   });

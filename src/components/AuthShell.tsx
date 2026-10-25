@@ -1,5 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import Logo from "./Logo";
 
 // Sign-in and sign-up frame (design canvas: Sign in).
 export default function AuthShell({ title, em, lead, children }: { title: string; em: string; lead: string; children: React.ReactNode }) {
@@ -11,7 +12,7 @@ export default function AuthShell({ title, em, lead, children }: { title: string
           <ChevronLeft className="size-5" strokeWidth={2.4} aria-hidden />
           Back
         </Link>
-        <span className="text-lg font-semibold tracking-tight">Hookline</span>
+        <Logo />
       </nav>
       <h1 className="relative mt-9 text-[2.6rem] font-medium leading-none tracking-[-0.05em]">
         {title} <span className="font-serif font-light italic tracking-[-0.02em]">{em}</span>

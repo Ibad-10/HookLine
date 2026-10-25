@@ -6,6 +6,7 @@ import { db, migrate } from "@/lib/db";
 import { isAdmin } from "@/lib/learner";
 import { CATEGORIES, LABELS } from "@/lib/taxonomy";
 import { AdapterForm, RefreshNews } from "./AdminActions";
+import AppNav from "@/components/AppNav";
 
 const DAY = 86_400_000;
 const n = async (sql: string, args: (string | number)[] = []) => Number((await db().execute({ sql, args })).rows[0]?.n ?? 0);
@@ -33,11 +34,12 @@ export default async function Admin() {
   const adapter = await readAdapterInfo();
 
   return (
+    <>
+    <AppNav />
     <main className="mx-auto max-w-6xl px-4 py-8 sm:px-8">
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <h1 className="text-4xl font-medium tracking-[-0.04em]">Admin console</h1>
-        <Link href="/home" className="text-ink-soft underline">Back to Hookline</Link>
-      </div>
+      <h1 className="text-[2.6rem] font-medium leading-none tracking-[-0.045em]">
+        Admin <span className="font-serif font-light italic tracking-[-0.02em]">console</span>
+      </h1>
       <Tabs defaultValue="mubit" className="mt-6">
         <TabsList className="h-12 flex-wrap">
           <TabsTrigger value="mubit" className="px-4">Mubit</TabsTrigger>
@@ -122,5 +124,6 @@ export default async function Admin() {
         </TabsContent>
       </Tabs>
     </main>
+    </>
   );
 }

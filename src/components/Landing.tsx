@@ -5,6 +5,7 @@ import { motion, useScroll, useTransform } from "motion/react";
 import Link from "next/link";
 import { useRef } from "react";
 import { PillButton } from "./ui/pill-button";
+import Logo from "./Logo";
 
 const ease = [0.22, 0.61, 0.36, 1] as const;
 
@@ -21,7 +22,7 @@ function Nav() {
       aria-label="Main"
       className="fixed left-1/2 top-4 z-40 flex w-[min(calc(100%-2rem),56rem)] -translate-x-1/2 items-center justify-between rounded-full bg-[#111]/75 py-1.5 pl-5 pr-1.5 ring-1 ring-white/12 backdrop-blur-xl"
     >
-      <Link href="/" className="text-lg font-semibold tracking-tight">Hookline</Link>
+      <Link href="/"><Logo /></Link>
       <div className="hidden items-center gap-1 text-[0.95rem] text-white/70 sm:flex">
         <a href="#how" className="rounded-full px-3 py-2 hover:text-white">How it works</a>
         <Link href="/mubit" className="rounded-full px-3 py-2 hover:text-white">Our AI</Link>
