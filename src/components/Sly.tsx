@@ -29,7 +29,7 @@ export function SlyArt({ mood = "neutral", look = { x: 0, y: 0 }, size = 120, fa
     serious: <><rect x={74 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><rect x={114 + ex} y={88 + ey} width="12" height="14" rx="6" fill="#0b2a44" /><path d="M71 84 l16 -4 M129 84 l-16 -4" stroke="#0b2a44" strokeWidth="3" strokeLinecap="round" /><path d="M95 127 h10" stroke="#0b2a44" strokeWidth="2.6" strokeLinecap="round" /></>,
   };
   return (
-    <svg width={faceOnly ? "100%" : size} height={faceOnly ? "100%" : size * 1.1} viewBox={faceOnly ? "30 16 140 140" : "0 0 200 220"} preserveAspectRatio="xMidYMid meet" aria-hidden className={faceOnly ? "block" : undefined}>
+    <svg width="100%" height={faceOnly ? "100%" : undefined} data-size={size} viewBox={faceOnly ? "30 16 140 140" : "0 0 200 220"} preserveAspectRatio="xMidYMid meet" aria-hidden className={faceOnly ? "block" : undefined}>
       <defs>
         <linearGradient id={`b${id}`} x1="0" y1="0" x2="1" y2="1"><stop offset="0" stopColor="#6cc4ff" /><stop offset=".45" stopColor="#2a92dd" /><stop offset="1" stopColor="#156fb6" /></linearGradient>
         <linearGradient id={`v${id}`} x1="0" y1="0" x2="0" y2="1"><stop offset="0" stopColor="#fff" /><stop offset="1" stopColor="#e6edf6" /></linearGradient>
@@ -151,6 +151,20 @@ export default function Sly() {
   }
   const pressEnd = () => clearTimeout(press.current);
 
+  // Letting go always drops her, even if she was picked up but never moved (no drag-end fires then).
+  useEffect(() => {
+    if (!held) return;
+    const drop = () => {
+      setHeld(false);
+      setMood("neutral");
+      setTimeout(() => (dragged.current = false), 50);
+      poke();
+    };
+    window.addEventListener("pointerup", drop);
+    window.addEventListener("pointercancel", drop);
+    return () => { window.removeEventListener("pointerup", drop); window.removeEventListener("pointercancel", drop); };
+  }, [held]); // eslint-disable-line react-hooks/exhaustive-deps
+
   function tap() {
     if (dragged.current) return; // that was a drag, not a tap
     const r = box.current?.getBoundingClientRect();
@@ -219,13 +233,13 @@ export default function Sly() {
             key="chat"
             aria-label="Chat with Sly"
             onPointerDownCapture={(e) => e.stopPropagation()}
-            className={`absolute flex max-h-[min(30rem,calc(100dvh-10rem))] w-[calc(100vw-2rem)] sm:w-[22rem] flex-col overflow-hidden rounded-3xl bg-card text-sm shadow-2xl ring-1 ring-line ${side.up ? "bottom-full mb-3" : "top-full mt-3"} ${side.left ? "right-0" : "left-0"}`}
+            className={`absolute flex max-h-[min(22rem,55dvh)] w-[min(18rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl bg-card text-[13px] leading-snug shadow-2xl ring-1 ring-line ${side.up ? "bottom-full mb-3" : "top-full mt-3"} ${side.left ? "right-0" : "left-0"}`}
             initial={still ? { opacity: 0 } : { opacity: 0, y: 16, scale: 0.92 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={tornado}
             transition={{ duration: 0.45, ease: [0.22, 0.61, 0.36, 1] }}
           >
-            <header className="flex items-center gap-2 border-b border-line bg-secondary/60 px-3 py-2">
+            <header className="flex items-center gap-2 border-b border-line bg-secondary/60 px-2.5 py-1.5">
               <span className="block size-8 overflow-hidden rounded-full bg-background"><SlyArt mood={mood} size={32} faceOnly /></span>
               <div className="flex-1 leading-tight">
                 <p className="font-semibold">Sly</p>
@@ -233,12 +247,12 @@ export default function Sly() {
               </div>
               <button type="button" onClick={() => setChatOpen(false)} aria-label="Minimise chat" className="grid size-9 place-items-center rounded-full hover:bg-background"><Minus className="size-4" aria-hidden /></button>
             </header>
-            <div ref={list} aria-live="polite" className="flex-1 space-y-2 overflow-y-auto px-3 py-3">
+            <div ref={list} aria-live="polite" className="flex-1 space-y-1.5 overflow-y-auto px-2.5 py-2">
               {chat.map((m, i) =>
                 m.who === "you" ? (
-                  <p key={i} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-tide px-3 py-2 text-white">{m.text}</p>
+                  <p key={i} className="ml-auto w-fit max-w-[85%] whitespace-pre-wrap rounded-2xl rounded-br-md bg-tide px-2.5 py-1.5 text-white">{m.text}</p>
                 ) : (
-                  <div key={i} className="w-fit max-w-[90%] rounded-2xl rounded-bl-md bg-secondary px-3 py-2">
+                  <div key={i} className="w-fit max-w-[92%] rounded-2xl rounded-bl-md bg-secondary px-2.5 py-1.5">
                     {m.a && chip(m.a.verdict) && <span className={`mb-1 inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${chip(m.a.verdict)![1]}`}>{chip(m.a.verdict)![0]}</span>}
                     <p>{m.text}</p>
                     {m.a && m.a.flags.length > 0 && <ul className="mt-1 list-disc space-y-0.5 pl-4 text-ink-soft">{m.a.flags.map((f) => <li key={f}>{f}</li>)}</ul>}
@@ -248,14 +262,14 @@ export default function Sly() {
               )}
               {thinking && <p className="w-fit rounded-2xl rounded-bl-md bg-secondary px-3 py-2 text-ink-soft">Sly is typing…</p>}
             </div>
-            <form onSubmit={send} className="flex items-end gap-2 border-t border-line p-2.5">
+            <form onSubmit={send} className="flex items-end gap-1.5 border-t border-line p-2">
               <label htmlFor="sly-chat" className="sr-only">Message Sly</label>
               <textarea id="sly-chat" value={draft} onChange={(e) => { setDraft(e.target.value); poke(); }} rows={1} maxLength={2000} autoFocus
                 onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); e.currentTarget.form?.requestSubmit(); } }}
-                placeholder="Paste a message or ask…" className="max-h-28 min-h-11 flex-1 resize-none rounded-2xl bg-secondary px-3 py-2.5 text-sm" />
-              <button type="submit" disabled={thinking || !draft.trim()} aria-label="Send" className="grid size-11 shrink-0 place-items-center rounded-full bg-tide text-white disabled:opacity-50"><Send className="size-4" aria-hidden /></button>
+                placeholder="Paste a message or ask…" className="max-h-24 min-h-10 flex-1 resize-none rounded-xl bg-secondary px-2.5 py-2 text-[13px]" />
+              <button type="submit" disabled={thinking || !draft.trim()} aria-label="Send" className="grid size-10 shrink-0 place-items-center rounded-full bg-tide text-white disabled:opacity-50"><Send className="size-4" aria-hidden /></button>
             </form>
-            <p className="px-3 pb-2 text-[11px] text-ink-soft">Numbers are hidden before Sly reads them. Never share codes or passwords.</p>
+            <p className="px-2.5 pb-1.5 text-[10.5px] text-ink-soft">Numbers are hidden before Sly reads them.</p>
           </motion.section>
         )}
       </AnimatePresence>
@@ -283,7 +297,7 @@ export default function Sly() {
               exit={still ? { opacity: 0 } : { scale: 0.4, y: 30, opacity: 0 }}
               transition={{ type: "spring", stiffness: 260, damping: 18 }}
             >
-              <SlyArt mood={mood} look={look} size={92} />
+              <span className="block w-[72px] sm:w-[88px]"><SlyArt mood={mood} look={look} size={88} /></span>
             </motion.span>
           ) : (
             <motion.span
