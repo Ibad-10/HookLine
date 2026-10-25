@@ -22,7 +22,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const prefs = (await cookies()).get("hl_prefs")?.value ?? "";
   return (
     <html lang="en" className={cn("antialiased", geist.variable, fraunces.variable, prefs.includes("large") && "large-text", prefs.includes("dark") && "dark")}>
-      <body className="min-h-dvh"><ClerkProvider appearance={{
+      <body className="min-h-dvh"><ClerkProvider localization={{ signIn: { start: { title: "Sign in to Hookline", subtitle: "Welcome back! Sign in to carry on." } }, signUp: { start: { title: "Create your Hookline account", subtitle: "Free. Takes a minute." } } }} appearance={{
           variables: { colorPrimary: "#0068ad", borderRadius: "0.9rem", fontFamily: "var(--font-geist)", fontSize: "1rem" },
           elements: {
             formButtonPrimary: "btn-grad lift !rounded-full !h-14 !text-base !font-semibold",

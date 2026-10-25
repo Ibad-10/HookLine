@@ -120,6 +120,8 @@
 html {
   font-size: calc(18px * var(--text-scale));
 }
+html { overflow-x: clip; }
+
 html.large-text {
   --text-scale: 1.2;
 }

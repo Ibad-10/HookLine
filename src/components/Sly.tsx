@@ -142,6 +142,13 @@ export default function Sly() {
     return () => window.removeEventListener("pointermove", move);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Leave room at the bottom of every page so Sly never sits on a button.
+  useEffect(() => {
+    const show = ready && on && !hiddenOn(path);
+    document.body.style.paddingBottom = show ? "84px" : "";
+    return () => { document.body.style.paddingBottom = ""; };
+  }, [ready, on, path]);
+
   function openPanel() {
     if (dragged.current) return; // that was a drag, not a tap
     const r = avatar.current?.getBoundingClientRect();
@@ -241,9 +248,9 @@ export default function Sly() {
         transition={held ? { rotate: { duration: 0.5, repeat: Infinity }, default: { type: "spring", stiffness: 400, damping: 18 } } : { type: "spring", stiffness: 400, damping: 22 }}
         aria-label="Sly, Hookline's mascot. Tap to ask her about a scam; press and hold to move her"
         aria-expanded={open}
-        className={`relative grid size-16 select-none place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] ring-1 ring-line ${held ? "cursor-grabbing" : "cursor-pointer"}`}
+        className={`relative grid size-14 select-none sm:size-16 place-items-center rounded-full bg-gradient-to-b from-white to-[#e8f2fc] ring-1 ring-line ${held ? "cursor-grabbing" : "cursor-pointer"}`}
       >
-        <span className="grid size-[58px] place-items-center overflow-hidden rounded-full">
+        <span className="grid size-[50px] place-items-center overflow-hidden rounded-full sm:size-[58px]">
           <SlyArt mood={asleep && mood === "neutral" ? "sleepy" : mood} look={asleep ? { x: 0, y: 0 } : look} size={58} faceOnly />
         </span>
         {asleep && mood === "neutral" && !still && (
